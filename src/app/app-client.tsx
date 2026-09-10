@@ -351,9 +351,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold">Creator fees</h2>
+            <h2 className="text-lg font-semibold">Ready to collect</h2>
             <p className="text-sm text-[var(--muted)]">
-              Trading fees already sit in this wallet. Collect pulls in any new LP fees.
+              Uncollected trading fees from your launches. Collect sends them to this wallet.
             </p>
           </div>
           <button
@@ -375,9 +375,11 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             ))
           ) : (
             <li className="text-sm text-[var(--muted)]">
-              {held.length > 0
-                ? "Nothing waiting — balances above are already yours."
-                : "No fees yet. They land here after people trade your coins."}
+              {canCollect
+                ? "New trading fees are ready — collect to pull them in."
+                : held.length > 0
+                  ? "Nothing new to collect. Balances above are already yours."
+                  : "No fees yet. They land here after people trade your coins."}
             </li>
           )}
         </ul>
