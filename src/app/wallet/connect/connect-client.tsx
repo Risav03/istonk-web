@@ -134,7 +134,7 @@ function ConnectInner({ sessionToken }: { sessionToken: string }) {
         }),
       });
       const body = await res.json();
-      if (!res.ok) throw new Error(body?.error || "Could not finish setup.");
+      if (!res.ok) throw new Error(body?.error || body?.detail || "Could not finish setup.");
       router.replace("/");
     } catch (err) {
       finishingRef.current = false;
