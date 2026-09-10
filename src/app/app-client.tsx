@@ -31,15 +31,16 @@ type LaunchRow = {
   tokenSymbol: string | null;
   tokenName: string | null;
   pairSymbol: string | null;
-  txHash: string | null;
-  feeLocker: string | null;
-  createdAt: string | null;
+  txHash?: string | null;
+  feeLocker?: string | null;
+  createdAt?: string | null;
+  canCollect?: boolean;
 };
 type FeeRow = {
   token: string;
   symbol: string;
   amount: string;
-  claimable: boolean;
+  claimable?: boolean;
 };
 
 export function AppClient({ initialHasSession = false }: { initialHasSession?: boolean }) {
@@ -162,7 +163,7 @@ function AuthGate({ initialHasSession }: { initialHasSession: boolean }) {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">iStonk</h1>
         <p className="mt-2 text-sm text-[var(--muted)]">
-          Sign in to see launches and claim creator fees to your wallet.
+          Sign in to see your wallet, launches, and creator fees.
         </p>
       </div>
       {phase === "otp" ? (
@@ -221,6 +222,14 @@ function formatEth(wei: string): string {
   }
 }
 
+function formatTokenAmount(amount: string): string {
+  const n = Number(amount);
+  if (!Number.isFinite(n) || n === 0) return "0";
+  if (n < 0.0001) return n.toExponential(2);
+  if (n < 1) return n.toFixed(6);
+  return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
+}
+
 function shortAddr(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
@@ -228,32 +237,36 @@ function shortAddr(address: string): string {
 function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [launches, setLaunches] = useState<LaunchRow[]>([]);
-  const [fees, setFees] = useState<FeeRow[]>([]);
+  const [held, setHeld] = useState<FeeRow[]>([]);
+  const [pending, setPending] = useState<FeeRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
-    const [walletRes, launchRes, feeRes] = await Promise.all([
+    const [walletRes, feeRes] = await Promise.all([
       fetch("/api/app/stonks/wallet", { cache: "no-store" }),
-      fetch("/api/app/istonks/launches", { cache: "no-store" }),
       fetch("/api/app/stonks/fees", { cache: "no-store" }),
     ]);
     const walletBody = await walletRes.json().catch(() => ({}));
-    const launchBody = await launchRes.json().catch(() => ({}));
     const feeBody = await feeRes.json().catch(() => ({}));
     if (!walletRes.ok) throw new Error(walletBody?.error || "Could not load wallet.");
+    if (!feeRes.ok) throw new Error(feeBody?.error || "Could not load fees.");
     setWallet(walletBody as WalletInfo);
-    setLaunches(Array.isArray(launchBody?.items) ? launchBody.items : []);
-    setFees(Array.isArray(feeBody?.items) ? feeBody.items : []);
+    const liveLaunches = Array.isArray(feeBody?.launches) ? feeBody.launches : [];
+    setLaunches(liveLaunches);
+    const heldRows = Array.isArray(feeBody?.held) ? (feeBody.held as FeeRow[]) : [];
+    setHeld(heldRows.filter((row) => Number(row.amount) > 0));
+    const lockerRows = Array.isArray(feeBody?.items) ? (feeBody.items as FeeRow[]) : [];
+    setPending(lockerRows.filter((row) => row.claimable && Number(row.amount) > 0));
   }, []);
 
   useEffect(() => {
     void load().catch((err) => setError(err instanceof Error ? err.message : String(err)));
   }, [load]);
 
-  const claimable = fees.filter((row) => row.claimable);
+  const canCollect = launches.some((row) => row.canCollect) || pending.length > 0;
 
   async function claim() {
     setClaiming(true);
@@ -265,7 +278,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         body: JSON.stringify({}),
       });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body?.error || "Claim failed.");
+      if (!res.ok) throw new Error(body?.error || "Collect failed.");
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -286,7 +299,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       <header className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">iStonk</p>
-          <h1 className="text-2xl font-bold tracking-tight">Fees</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Wallet</h1>
         </div>
         <button
           type="button"
@@ -301,13 +314,34 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
         <p className="text-sm text-[var(--muted)]">iStonk wallet</p>
         {wallet ? (
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-            <button type="button" onClick={copyAddress} className="inline-flex items-center gap-2 font-mono text-sm">
-              {shortAddr(wallet.address)}
-              <Copy className="h-3.5 w-3.5" />
-              {copied ? <span className="text-[var(--primary)]">copied</span> : null}
-            </button>
-            <p className="text-lg font-semibold">{formatEth(wallet.ethWei)} ETH</p>
+          <div className="mt-2">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <button type="button" onClick={copyAddress} className="inline-flex items-center gap-2 font-mono text-sm">
+                {shortAddr(wallet.address)}
+                <Copy className="h-3.5 w-3.5" />
+                {copied ? <span className="text-[var(--primary)]">copied</span> : null}
+              </button>
+              <a
+                href={`https://basescan.org/address/${wallet.address}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-[var(--primary)]"
+              >
+                Basescan <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            </div>
+            <ul className="mt-4 space-y-2">
+              <li className="flex items-center justify-between text-sm">
+                <span>ETH</span>
+                <span className="font-semibold">{formatEth(wallet.ethWei)}</span>
+              </li>
+              {held.map((row) => (
+                <li key={row.token} className="flex items-center justify-between text-sm">
+                  <span>{row.symbol}</span>
+                  <span className="font-semibold">{formatTokenAmount(row.amount)}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         ) : (
           <Loader2 className="mt-3 h-5 w-5 animate-spin text-[var(--primary)]" />
@@ -317,30 +351,34 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold">Claimable fees</h2>
-            <p className="text-sm text-[var(--muted)]">Creator fees from your Stonks launches.</p>
+            <h2 className="text-lg font-semibold">Creator fees</h2>
+            <p className="text-sm text-[var(--muted)]">
+              Trading fees already sit in this wallet. Collect pulls in any new LP fees.
+            </p>
           </div>
           <button
             type="button"
             onClick={claim}
-            disabled={claiming || claimable.length === 0}
+            disabled={claiming || !canCollect}
             className="rounded-full bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-[var(--primary-foreground)] disabled:opacity-50"
           >
-            {claiming ? "Claiming…" : "Claim"}
+            {claiming ? "Collecting…" : "Collect"}
           </button>
         </div>
         <ul className="mt-4 space-y-2">
-          {fees.length === 0 ? (
-            <li className="text-sm text-[var(--muted)]">No fee balances yet.</li>
-          ) : (
-            fees.map((row) => (
+          {pending.length > 0 ? (
+            pending.map((row) => (
               <li key={row.token} className="flex items-center justify-between text-sm">
                 <span>{row.symbol}</span>
-                <span className={row.claimable ? "text-[var(--primary)]" : "text-[var(--muted)]"}>
-                  {row.amount}
-                </span>
+                <span className="text-[var(--primary)]">{formatTokenAmount(row.amount)}</span>
               </li>
             ))
+          ) : (
+            <li className="text-sm text-[var(--muted)]">
+              {held.length > 0
+                ? "Nothing waiting — balances above are already yours."
+                : "No fees yet. They land here after people trade your coins."}
+            </li>
           )}
         </ul>
       </section>
