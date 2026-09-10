@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { agentHost } from "@/lib/app-session";
+import { agentHost, agentUnreachableError } from "@/lib/app-session";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -19,10 +19,7 @@ export async function GET(req: NextRequest) {
     const data = await res.json().catch(() => ({}));
     return NextResponse.json(data, { status: res.status, headers: { "cache-control": "no-store" } });
   } catch (err) {
-    return NextResponse.json(
-      { error: "Couldn't reach wallet setup.", detail: err instanceof Error ? err.message : String(err) },
-      { status: 503 },
-    );
+    return NextResponse.json(agentUnreachableError(err, "Couldn't reach wallet setup."), { status: 503 });
   }
 }
 

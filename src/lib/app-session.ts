@@ -48,3 +48,22 @@ export async function getAppSession(): Promise<AppSession | null> {
 export function agentHost(): string | undefined {
   return process.env.AGENT_API_HOST?.trim() || undefined;
 }
+
+export function agentUnreachableError(err: unknown, what: string): { error: string; detail: string } {
+  const host = agentHost() || "(unset)";
+  const detail = fetchErrorDetail(err);
+  return {
+    error: `${what} Set AGENT_API_HOST on the istonk-web Railway service to the iStonk API public URL (https://istonk-production.up.railway.app), then restart.`,
+    detail: `${host} — ${detail}`,
+  };
+}
+
+function fetchErrorDetail(err: unknown): string {
+  if (!(err instanceof Error)) return String(err);
+  const cause = (err as Error & { cause?: unknown }).cause;
+  if (cause instanceof Error) return `${err.message}: ${cause.message}`;
+  if (cause && typeof cause === "object" && "code" in cause) {
+    return `${err.message}: ${String((cause as { code: unknown }).code)}`;
+  }
+  return err.message;
+}

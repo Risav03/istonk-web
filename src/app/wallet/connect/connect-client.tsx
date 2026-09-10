@@ -71,7 +71,7 @@ function ConnectInner({ sessionToken }: { sessionToken: string }) {
     })
       .then(async (res) => {
         const body = await res.json();
-        if (!res.ok) throw new Error(body?.error || "Could not load setup.");
+        if (!res.ok) throw new Error(body?.error || body?.detail || "Could not load setup.");
       })
       .then(() => {
         if (!cancelled) setPhase((p) => (p === "loading" ? "email" : p));

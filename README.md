@@ -19,7 +19,7 @@ Also set on this Railway service (rebuild after changing `NEXT_PUBLIC_*`):
 
 - `NEXT_PUBLIC_CDP_PROJECT_ID` — `eaa74d0f-2a2d-470b-8a13-51aba1bf5e7b` (EVM Smart Accounts)
 - `NEXT_PUBLIC_SITE_URL=https://istonk-web-production.up.railway.app`
-- `AGENT_API_HOST` — public URL of the iStonk API service
+- `AGENT_API_HOST=https://istonk-production.up.railway.app` — public URL of the iStonk API (runtime, no rebuild). `localhost` here is why the connect page says “Couldn't reach wallet setup.”
 
 On the iStonk API service:
 
