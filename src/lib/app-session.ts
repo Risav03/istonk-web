@@ -53,7 +53,7 @@ export function agentUnreachableError(err: unknown, what: string): { error: stri
   const host = agentHost() || "(unset)";
   const detail = fetchErrorDetail(err);
   return {
-    error: `${what} Set AGENT_API_HOST on the istonk-web Railway service to the iStonk API public URL (https://istonk-production.up.railway.app), then restart.`,
+    error: `${what} Set AGENT_API_HOST on the istonk-web Railway service to the iStonk API public URL (https://api.istonks.meme), then restart.`,
     detail: `${host} — ${detail}`,
   };
 }
