@@ -12,8 +12,10 @@ import {
 } from "@coinbase/cdp-hooks";
 import { Copy, ExternalLink, Loader2, LogOut, Wallet } from "lucide-react";
 
+import { cdpSignInError } from "@/lib/cdp-errors";
+
 const PROJECT_ID =
-  process.env.NEXT_PUBLIC_CDP_PROJECT_ID ?? "213ae300-ae45-48ba-b2c0-823126466b83";
+  process.env.NEXT_PUBLIC_CDP_PROJECT_ID ?? "eaa74d0f-2a2d-470b-8a13-51aba1bf5e7b";
 
 const cdpConfig = {
   projectId: PROJECT_ID,
@@ -124,7 +126,7 @@ function AuthGate({ initialHasSession }: { initialHasSession: boolean }) {
         setPhase("linking");
         return;
       }
-      setMessage(msg);
+      setMessage(cdpSignInError(err));
     } finally {
       setBusy(false);
     }

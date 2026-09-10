@@ -14,9 +14,11 @@ import {
 } from "@coinbase/cdp-hooks";
 import { AlertCircle, CheckCircle2, Loader2, Wallet } from "lucide-react";
 
+import { cdpSignInError } from "@/lib/cdp-errors";
+
 const DELEGATION_DAYS = 90;
 const PROJECT_ID =
-  process.env.NEXT_PUBLIC_CDP_PROJECT_ID ?? "213ae300-ae45-48ba-b2c0-823126466b83";
+  process.env.NEXT_PUBLIC_CDP_PROJECT_ID ?? "eaa74d0f-2a2d-470b-8a13-51aba1bf5e7b";
 
 const cdpConfig = {
   projectId: PROJECT_ID,
@@ -171,7 +173,7 @@ function ConnectInner({ sessionToken }: { sessionToken: string }) {
       setFlowId(result.flowId);
       setPhase("otp");
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Couldn't send the code.");
+      setMessage(cdpSignInError(err));
     } finally {
       setBusy(false);
     }
