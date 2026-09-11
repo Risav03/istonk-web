@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { X } from "lucide-react";
 
 import { api, ApiError } from "@/lib/api";
-import { formatTokenAmount, isAddress, shortAddr } from "@/lib/format";
+import { formatTokenAmount, isAddress, normalizeAmount, shortAddr } from "@/lib/format";
 
 import { Button, Card, ExternalIcon, Field, inputClass, TokenLogo } from "./ui";
 
@@ -14,6 +14,10 @@ export type SendAsset = {
   symbol: string;
   /** Human-readable available balance. */
   available: number;
+  /** Original amount string from the API — used for Max so we don't float-round. */
+  availableExact?: string;
+  /** Pair / name, so two $iSTONKS rows are distinguishable. */
+  note?: string | null;
   logoUrl?: string | null;
 };
 
@@ -40,15 +44,27 @@ export function SendCard({
     () => assets.find((a) => a.id === assetId) ?? assets[0],
     [assets, assetId],
   );
-  const parsed = Number(amount);
+  const sendAmount = normalizeAmount(amount);
+  const parsed = Number(sendAmount);
   const amountOk =
-    amount !== "" &&
+    sendAmount !== "" &&
     Number.isFinite(parsed) &&
     parsed > 0 &&
     asset &&
     parsed <= asset.available;
   const addressOk = isAddress(to);
   const canReview = addressOk && amountOk;
+  const trimmedTo = to.trim();
+  const toHint =
+    trimmedTo.length >= 42 && !addressOk
+      ? "That doesn't look like a Base address."
+      : null;
+  const amountHint =
+    amount !== "" && !amountOk && sendAmount !== "0."
+      ? asset && Number.isFinite(parsed) && parsed > asset.available
+        ? `Only ${formatTokenAmount(asset.available)} ${asset.symbol} available.`
+        : "Enter an amount like 0.25."
+      : null;
 
   function reset() {
     setTo("");
@@ -66,7 +82,8 @@ export function SendCard({
       const result = await api.transfer({
         to: to.trim(),
         token: asset.id,
-        amount,
+        asset: asset.id,
+        amount: sendAmount,
       });
       setTxHash(result.txHash);
       setStep("sent");
@@ -74,7 +91,6 @@ export function SendCard({
     } catch (err) {
       if (err instanceof ApiError && err.needsReauth) onReauth();
       setError(err instanceof Error ? err.message : "Send failed.");
-      setStep("form");
     } finally {
       setBusy(false);
     }
@@ -152,7 +168,7 @@ export function SendCard({
                   >
                     {assets.map((a) => (
                       <option key={a.id} value={a.id}>
-                        {a.symbol}
+                        {a.note ? `${a.symbol} · ${a.note}` : a.symbol}
                       </option>
                     ))}
                   </select>
@@ -171,7 +187,9 @@ export function SendCard({
                   />
                   <button
                     type="button"
-                    onClick={() => asset && setAmount(String(asset.available))}
+                    onClick={() =>
+                      asset && setAmount(asset.availableExact ?? String(asset.available))
+                    }
                     className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-primary hover:text-primary-hover"
                   >
                     Max
@@ -192,6 +210,10 @@ export function SendCard({
                 Review send
               </Button>
             </div>
+            {toHint ? <p className="text-[13px] text-danger">{toHint}</p> : null}
+            {amountHint ? (
+              <p className="text-[13px] text-danger">{amountHint}</p>
+            ) : null}
             {error ? <p className="text-[13px] text-danger">{error}</p> : null}
           </>
         )}
@@ -200,11 +222,15 @@ export function SendCard({
       {step === "review" && asset ? (
         <ReviewDialog
           to={to.trim()}
-          amount={amount}
+          amount={sendAmount}
           symbol={asset.symbol}
           remaining={asset.available - parsed}
           busy={busy}
-          onCancel={() => setStep("form")}
+          error={error}
+          onCancel={() => {
+            setStep("form");
+            setError(null);
+          }}
           onConfirm={send}
         />
       ) : null}
@@ -218,6 +244,7 @@ function ReviewDialog({
   symbol,
   remaining,
   busy,
+  error,
   onCancel,
   onConfirm,
 }: {
@@ -226,6 +253,7 @@ function ReviewDialog({
   symbol: string;
   remaining: number;
   busy: boolean;
+  error: string | null;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
@@ -266,7 +294,9 @@ function ReviewDialog({
         </div>
         <dl className="flex flex-col border-t border-hairline">
           <ReviewRow label="To">
-            <span className="font-mono">{shortAddr(to)}</span>
+            <span className="max-w-[240px] break-all text-right font-mono text-xs">
+              {to}
+            </span>
           </ReviewRow>
           <ReviewRow label="Network">Base</ReviewRow>
           <ReviewRow label="Gas">paid from your ETH</ReviewRow>
@@ -277,6 +307,7 @@ function ReviewDialog({
           </ReviewRow>
         </dl>
         <div className="flex flex-col gap-2.5 border-t border-hairline bg-card-inset px-5 pb-5 pt-4">
+          {error ? <p className="text-[13px] text-danger">{error}</p> : null}
           <Button className="h-12 text-sm" busy={busy} onClick={onConfirm}>
             Send {amount} {symbol}
           </Button>

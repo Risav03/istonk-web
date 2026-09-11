@@ -35,9 +35,15 @@ async function forward(req: NextRequest, segments: string[], method: "GET" | "PO
       headers: { accept: "application/json" },
     };
     if (method === "POST") {
-      const body = await req.json().catch(() => ({}));
+      const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
       init.headers = { ...init.headers, "content-type": "application/json" };
-      init.body = JSON.stringify({ ...body, user: session.user, token: session.token });
+      // Session auth is already on the query string. Never overwrite `token` —
+      // /stonks/transfer uses that field for the asset ("eth" or an ERC-20).
+      const payload: Record<string, unknown> = { ...body, user: session.user };
+      if (typeof payload.token !== "string" || payload.token.length === 0) {
+        payload.token = session.token;
+      }
+      init.body = JSON.stringify(payload);
     }
     const res = await fetch(endpoint, init);
     const data = await res.json().catch(() => ({}));

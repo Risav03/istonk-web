@@ -21,6 +21,12 @@ export function isAddress(value: string): boolean {
   return /^0x[a-fA-F0-9]{40}$/.test(value.trim());
 }
 
+/** ".1" → "0.1". Used before send so the API amount regex accepts it. */
+export function normalizeAmount(value: string): string {
+  const text = value.trim();
+  return text.startsWith(".") ? `0${text}` : text;
+}
+
 export function timeAgo(iso: string | null | undefined): string | null {
   if (!iso) return null;
   const then = new Date(iso).getTime();

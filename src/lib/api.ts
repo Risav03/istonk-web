@@ -33,6 +33,8 @@ export type TransferRequest = {
   to: string;
   /** "eth" for native ETH, otherwise the ERC-20 contract address. */
   token: "eth" | string;
+  /** Same as `token`. Preferred so session `token` cannot clobber the asset. */
+  asset: "eth" | string;
   /** Human amount, e.g. "0.25". */
   amount: string;
 };

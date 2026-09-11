@@ -84,6 +84,12 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
   }
 
   const sendAssets = useMemo<SendAsset[]>(() => {
+    const pairFor = (token: string) => {
+      const launch = launches.find(
+        (row) => row.tokenAddress?.toLowerCase() === token.toLowerCase(),
+      );
+      return launch?.pairSymbol ? `vs ${launch.pairSymbol}` : null;
+    };
     const eth: SendAsset = {
       id: "eth",
       symbol: "ETH",
@@ -96,10 +102,12 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
         id: row.token,
         symbol: row.symbol,
         available: Number(row.amount),
+        availableExact: row.amount,
+        note: pairFor(row.token),
         logoUrl: row.logoUrl,
       })),
     ];
-  }, [wallet, held]);
+  }, [wallet, held, launches]);
 
   return (
     <div className="flex min-h-[100dvh] flex-col">
