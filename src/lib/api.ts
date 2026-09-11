@@ -9,6 +9,7 @@ export type LaunchRow = {
   txHash?: string | null;
   feeLocker?: string | null;
   createdAt?: string | null;
+  imageUrl?: string | null;
   canCollect?: boolean;
 };
 
@@ -19,6 +20,7 @@ export type FeeRow = {
   amountRaw?: string;
   decimals?: number;
   claimable?: boolean;
+  logoUrl?: string;
 };
 
 export type FeesSnapshot = {

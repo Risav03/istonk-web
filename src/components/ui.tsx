@@ -1,4 +1,9 @@
-import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
+import {
+  useState,
+  type ButtonHTMLAttributes,
+  type HTMLAttributes,
+  type ReactNode,
+} from "react";
 import { Loader2 } from "lucide-react";
 
 function cx(...parts: Array<string | false | null | undefined>): string {
@@ -39,7 +44,10 @@ export function Button({
   children,
   disabled,
   ...rest
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; busy?: boolean }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: ButtonVariant;
+  busy?: boolean;
+}) {
   const base =
     "inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full px-4 text-[13px] font-semibold transition-colors disabled:cursor-not-allowed";
   const styles: Record<ButtonVariant, string> = {
@@ -50,14 +58,23 @@ export function Button({
     ghost: "text-muted hover:text-foreground disabled:text-faint",
   };
   return (
-    <button type="button" className={cx(base, styles[variant], className)} disabled={disabled || busy} {...rest}>
+    <button
+      type="button"
+      className={cx(base, styles[variant], className)}
+      disabled={disabled || busy}
+      {...rest}
+    >
       {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
       {children}
     </button>
   );
 }
 
-export function Card({ className, accent = false, ...rest }: HTMLAttributes<HTMLDivElement> & { accent?: boolean }) {
+export function Card({
+  className,
+  accent = false,
+  ...rest
+}: HTMLAttributes<HTMLDivElement> & { accent?: boolean }) {
   return (
     <div
       className={cx(
@@ -83,7 +100,9 @@ export function CardHeader({
     <div className="flex items-center justify-between gap-4 px-5 pb-3.5 pt-[18px]">
       <div className="flex flex-col gap-0.5">
         <span className="text-sm font-semibold">{title}</span>
-        {subtitle ? <span className="text-xs text-muted">{subtitle}</span> : null}
+        {subtitle ? (
+          <span className="text-xs text-muted">{subtitle}</span>
+        ) : null}
       </div>
       {action}
     </div>
@@ -93,13 +112,22 @@ export function CardHeader({
 export function Row({ className, ...rest }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cx("flex items-center justify-between gap-4 border-t border-hairline px-5 py-3.5", className)}
+      className={cx(
+        "flex items-center justify-between gap-4 border-t border-hairline px-5 py-3.5",
+        className,
+      )}
       {...rest}
     />
   );
 }
 
-export function Field({ label, children }: { label: string; children: ReactNode }) {
+export function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
   return (
     <label className="flex flex-col gap-1.5">
       <span className="text-xs text-muted">{label}</span>
@@ -111,7 +139,13 @@ export function Field({ label, children }: { label: string; children: ReactNode 
 export const inputClass =
   "h-11 w-full rounded-[10px] border border-border-strong bg-background px-3.5 text-sm outline-none transition-colors focus:border-primary";
 
-export function Pill({ tone = "neutral", children }: { tone?: "primary" | "neutral"; children: ReactNode }) {
+export function Pill({
+  tone = "neutral",
+  children,
+}: {
+  tone?: "primary" | "neutral";
+  children: ReactNode;
+}) {
   return (
     <span
       className={cx(
@@ -149,5 +183,39 @@ export function ExternalIcon({ className }: { className?: string }) {
       <path d="M9 2h5v5" />
       <path d="M14 2 7 9" />
     </svg>
+  );
+}
+
+export const ETH_LOGO_URL =
+  "https://coin-images.coingecko.com/coins/images/279/small/ethereum.png";
+
+/** DiceBear "glass" avatar seeded by symbol. Mirrors the API's fallback so both sides agree. */
+export function fallbackLogoUrl(symbol: string): string {
+  return `https://api.dicebear.com/9.x/glass/svg?seed=${encodeURIComponent(symbol.toUpperCase())}`;
+}
+
+export function TokenLogo({
+  src,
+  symbol,
+  size = 32,
+}: {
+  src?: string | null;
+  symbol: string;
+  size?: number;
+}) {
+  const [failed, setFailed] = useState(false);
+  const url = !failed && src ? src : fallbackLogoUrl(symbol);
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={url}
+      alt=""
+      width={size}
+      height={size}
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className="shrink-0 rounded-full bg-[#1d2a21] object-cover"
+      style={{ width: size, height: size }}
+    />
   );
 }
