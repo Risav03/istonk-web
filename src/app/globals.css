@@ -1,14 +1,45 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0b0f0c;
-  --foreground: #e8f0e9;
-  --muted: #8fa394;
-  --card: #141a15;
-  --border: #243028;
+  --background: #0a0d0b;
+  --foreground: #eef3ef;
+  --muted: #8a9a8e;
+  --faint: #56645a;
+  --card: #0f1310;
+  --card-inset: #0c100d;
+  --chip: #111512;
+  --border: #1f2621;
+  --hairline: #1a201c;
+  --border-strong: #243028;
   --primary: #3dcc6f;
+  --primary-hover: #52d67f;
+  --primary-dim: #17301f;
+  --primary-border: #2a4a34;
   --primary-foreground: #06140a;
+  --disabled: #1a221c;
   --danger: #f07167;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-card: var(--card);
+  --color-card-inset: var(--card-inset);
+  --color-chip: var(--chip);
+  --color-border: var(--border);
+  --color-hairline: var(--hairline);
+  --color-border-strong: var(--border-strong);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-dim: var(--primary-dim);
+  --color-primary-border: var(--primary-border);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-disabled: var(--disabled);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-geist-sans), "SF Pro Text", -apple-system, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), "SF Mono", ui-monospace, Menlo, monospace;
 }
 
 html,
@@ -18,10 +49,20 @@ body {
 }
 
 body {
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
+}
+
+input::placeholder {
+  color: var(--faint);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
 }
