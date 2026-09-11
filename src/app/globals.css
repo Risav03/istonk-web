@@ -66,3 +66,12 @@ input::placeholder {
 .tabular {
   font-variant-numeric: tabular-nums;
 }
+
+/* DexScreener-style leading-zero count: 0.0₄739 */
+.ds-sub {
+  font-size: 0.55em;
+  font-weight: 650;
+  line-height: 0;
+  vertical-align: -0.12em;
+  margin-inline: 0.04em;
+}

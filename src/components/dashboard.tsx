@@ -10,8 +10,9 @@ import {
   type LaunchRow,
   type WalletInfo,
 } from "@/lib/api";
-import { formatEth, formatTokenAmount, shortAddr, timeAgo } from "@/lib/format";
+import { formatTokenAmount, shortAddr, timeAgo, weiToEth } from "@/lib/format";
 
+import { CompactDecimal } from "./compact-decimal";
 import { SendCard, type SendAsset } from "./send-card";
 import {
   Bubble,
@@ -220,9 +221,11 @@ function BalanceHero({
           <span className="text-[13px] text-muted">iStonk wallet · Base</span>
           <div className="flex items-baseline gap-3">
             {wallet ? (
-              <span className="font-mono text-[44px] font-medium leading-none tracking-[-0.03em] tabular sm:text-[56px]">
-                {formatEth(wallet.ethWei)}
-              </span>
+              <CompactDecimal
+                as="eth"
+                value={weiToEth(wallet.ethWei)}
+                className="whitespace-nowrap font-mono text-[44px] font-medium leading-none tracking-[-0.03em] tabular sm:text-[56px]"
+              />
             ) : (
               <span className="flex h-[44px] items-center sm:h-[56px]">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -326,9 +329,15 @@ function Holdings({
           name="ETH"
           note="Pays gas for sends and claims"
         />
-        <span className="font-mono text-sm tabular">
-          {wallet ? formatEth(wallet.ethWei) : "…"}
-        </span>
+        {wallet ? (
+          <CompactDecimal
+            as="eth"
+            value={weiToEth(wallet.ethWei)}
+            className="font-mono text-sm tabular"
+          />
+        ) : (
+          <span className="font-mono text-sm tabular">…</span>
+        )}
       </Row>
       {held.map((row) => (
         <Row key={row.token}>
@@ -338,9 +347,10 @@ function Holdings({
             name={`$${row.symbol}`}
             note={pairFor(row.token)}
           />
-          <span className="font-mono text-sm tabular">
-            {formatTokenAmount(row.amount)}
-          </span>
+          <CompactDecimal
+            value={Number(row.amount)}
+            className="font-mono text-sm tabular"
+          />
         </Row>
       ))}
     </Card>
@@ -407,9 +417,11 @@ function CreatorFees({
               <TokenLogo src={row.logoUrl} symbol={row.symbol} size={24} />
               {row.symbol}
             </span>
-            <span className="font-mono text-sm text-primary tabular">
-              +{formatTokenAmount(row.amount)}
-            </span>
+            <CompactDecimal
+              prefix="+"
+              value={Number(row.amount)}
+              className="font-mono text-sm text-primary tabular"
+            />
           </Row>
         ))
       ) : (

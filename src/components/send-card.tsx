@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { formatTokenAmount, isAddress, normalizeAmount, shortAddr } from "@/lib/format";
 
+import { CompactDecimal } from "./compact-decimal";
 import { Button, Card, ExternalIcon, Field, inputClass, TokenLogo } from "./ui";
 
 export type SendAsset = {
@@ -200,10 +201,18 @@ export function SendCard({
             <div className="flex items-center justify-between pt-0.5">
               <span className="text-xs text-faint">
                 Available{" "}
-                <span className="font-mono text-muted">
-                  {asset
-                    ? `${formatTokenAmount(asset.available)} ${asset.symbol}`
-                    : "…"}
+                <span className="inline-flex items-baseline gap-1 font-mono text-muted">
+                  {asset ? (
+                    <>
+                      <CompactDecimal
+                        as={asset.id === "eth" ? "eth" : "token"}
+                        value={asset.available}
+                      />
+                      {asset.symbol}
+                    </>
+                  ) : (
+                    "…"
+                  )}
                 </span>
               </span>
               <Button onClick={() => setStep("review")} disabled={!canReview}>
@@ -301,8 +310,9 @@ function ReviewDialog({
           <ReviewRow label="Network">Base</ReviewRow>
           <ReviewRow label="Gas">paid from your ETH</ReviewRow>
           <ReviewRow label="Left after send" last>
-            <span className="font-mono tabular">
-              {formatTokenAmount(Math.max(0, remaining))} {symbol}
+            <span className="inline-flex items-baseline gap-1 font-mono tabular">
+              <CompactDecimal value={Math.max(0, remaining)} />
+              {symbol}
             </span>
           </ReviewRow>
         </dl>
