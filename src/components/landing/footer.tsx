@@ -92,9 +92,12 @@ export function Footer() {
           <span className="text-faint">· {site.domain}</span>
         </div>
         <nav className="flex flex-wrap items-center gap-x-5 gap-y-2">
-          <a href="#how" className="hover:text-foreground">
+          <a href="/#how" className="hover:text-foreground">
             How it works
           </a>
+          <Link href={site.links.dashboard} className="hover:text-foreground">
+            Dashboard
+          </Link>
           <Link href={site.links.app} className="hover:text-foreground">
             Wallet
           </Link>

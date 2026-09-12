@@ -9,9 +9,10 @@ import { site } from "@/lib/site";
 import { Mascot } from "./mascot";
 
 const links = [
-  { href: "#how", label: "How it works" },
-  { href: "#wallet", label: "Wallet" },
-  { href: "#next", label: "What's next" },
+  { href: "/#how", label: "How it works" },
+  { href: "/#wallet", label: "Wallet" },
+  { href: site.links.dashboard, label: "Dashboard" },
+  { href: "/#next", label: "What's next" },
 ];
 
 export function Nav() {
@@ -37,15 +38,25 @@ export function Nav() {
         </Link>
 
         <div className="hidden items-center gap-1 md:flex">
-          {links.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              className="rounded-full px-3.5 py-2 text-[13.5px] font-medium text-muted transition-colors hover:bg-white/60 hover:text-foreground"
-            >
-              {l.label}
-            </a>
-          ))}
+          {links.map((l) =>
+            l.href.startsWith("/") && !l.href.startsWith("/#") ? (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="rounded-full px-3.5 py-2 text-[13.5px] font-medium text-muted transition-colors hover:bg-white/60 hover:text-foreground"
+              >
+                {l.label}
+              </Link>
+            ) : (
+              <a
+                key={l.href}
+                href={l.href}
+                className="rounded-full px-3.5 py-2 text-[13.5px] font-medium text-muted transition-colors hover:bg-white/60 hover:text-foreground"
+              >
+                {l.label}
+              </a>
+            ),
+          )}
         </div>
 
         <div className="flex items-center gap-2">

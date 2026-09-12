@@ -24,6 +24,7 @@ export const site = {
   },
   links: {
     app: "/app",
+    dashboard: "/dashboard",
     stonks: "https://thestonks.exchange",
     x: process.env.NEXT_PUBLIC_SOCIAL_X ?? "https://x.com/iStonksbase",
     telegram: process.env.NEXT_PUBLIC_SOCIAL_TELEGRAM ?? "https://t.me/istonksxbasemate",
