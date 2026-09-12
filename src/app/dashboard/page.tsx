@@ -12,6 +12,7 @@ import {
 } from "@/lib/airdrops";
 import { DashboardLive } from "@/components/dashboard/live";
 import { TokenAvatar } from "@/components/token-avatar";
+import { fetchMarketStats } from "@/lib/dex-stats";
 import { fetchDexScreenerToken } from "@/lib/dex-token";
 import { fetchLaunches, fetchTokensLaunched } from "@/lib/launch-stats";
 import { shortAddr } from "@/lib/format";
@@ -44,9 +45,10 @@ export default async function DashboardPage() {
     fetchLaunches(),
     loadAirdropSnapshot(),
   ]);
-  const [burnMeta, sourceMeta] = await Promise.all([
+  const [burnMeta, sourceMeta, market] = await Promise.all([
     airdrops.burnTokenAddress ? fetchDexScreenerToken(airdrops.burnTokenAddress) : null,
     airdrops.sourceTokenAddress ? fetchDexScreenerToken(airdrops.sourceTokenAddress) : null,
+    fetchMarketStats(launches.map((l) => l.tokenAddress)),
   ]);
   const latestWhen = dropLabel(airdrops.latestFile);
   const latestShort = dropLabel(airdrops.latestFile, false);
@@ -73,12 +75,13 @@ export default async function DashboardPage() {
         <DashboardLive
           initialLaunches={launches}
           initialTokensLaunched={tokensLaunched}
+          initialMarket={market}
           drops={airdrops.drops}
           burnSymbol={burnSymbol}
           tokenBurns={airdrops.tokenBurns}
           tokenBurnSymbol={sourceSymbol}
           airdropStats={
-            <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 2xl:grid-cols-4">
               <StatCard
                 label="AAPL airdropped"
                 value={airdrops.totalAapl.toLocaleString("en-US", { maximumFractionDigits: 4 })}

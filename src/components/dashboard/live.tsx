@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check, Copy, ExternalLink, Flame, Rocket } from "lucide-react";
 
 import type { AirdropDrop, TokenBurnDrop } from "@/lib/airdrops";
+import type { MarketStats } from "@/lib/dex-stats";
 import { shortAddr, timeAgo } from "@/lib/format";
 import { stonksTokenUrl, type PublicLaunch } from "@/lib/launches";
 
@@ -13,12 +14,18 @@ import { BarChart, ChartCard, ColumnChart, useDailySeries, type ColumnDatum } fr
 const POLL_MS = 15_000;
 const PAGE = 25;
 
-type Feed = { items: PublicLaunch[]; tokensLaunched: number | null; fetchedAt: string };
+type Feed = {
+  items: PublicLaunch[];
+  tokensLaunched: number | null;
+  market?: MarketStats;
+  fetchedAt: string;
+};
 type Panel = "launches" | "airdrops";
 
 export function DashboardLive({
   initialLaunches,
   initialTokensLaunched,
+  initialMarket,
   drops,
   burnSymbol = "TOKEN",
   tokenBurns = [],
@@ -28,6 +35,7 @@ export function DashboardLive({
 }: {
   initialLaunches: PublicLaunch[];
   initialTokensLaunched: number | null;
+  initialMarket?: MarketStats | null;
   drops: AirdropDrop[];
   burnSymbol?: string;
   tokenBurns?: TokenBurnDrop[];
@@ -40,6 +48,7 @@ export function DashboardLive({
   const [panel, setPanel] = useState<Panel>("launches");
   const [launches, setLaunches] = useState<PublicLaunch[]>(initialLaunches);
   const [tokensLaunched, setTokensLaunched] = useState<number | null>(initialTokensLaunched);
+  const [market, setMarket] = useState<MarketStats | null>(initialMarket ?? null);
   const [fetchedAt, setFetchedAt] = useState<string | null>(null);
   const [fresh, setFresh] = useState<Set<number>>(() => new Set());
   const [status, setStatus] = useState<"live" | "stale">("live");
@@ -64,6 +73,7 @@ export function DashboardLive({
       }
       setLaunches(body.items);
       if (typeof body.tokensLaunched === "number") setTokensLaunched(body.tokensLaunched);
+      if (body.market) setMarket(body.market);
       setFetchedAt(body.fetchedAt);
       setStatus("live");
     } catch {
@@ -206,7 +216,7 @@ export function DashboardLive({
             }
           />
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3 2xl:grid-cols-4">
             <Stat
               label="Launched"
               value={tokensLaunched == null ? "—" : tokensLaunched.toLocaleString("en-US")}
@@ -222,9 +232,18 @@ export function DashboardLive({
               }
             />
             <Stat
-              label="Pairs used"
-              value={byPair.filter((p) => p.key !== "other").length.toLocaleString("en-US")}
-              note={byPair[0] ? `Top: ${byPair[0].label}` : "No launches yet"}
+              label="24h volume"
+              value={market ? formatUsdCompact(market.volume24hUsd) : "—"}
+              note={
+                market
+                  ? `${market.activeTokens} of ${market.coveredTokens} coin${market.coveredTokens === 1 ? "" : "s"} traded`
+                  : "Loading from DexScreener"
+              }
+            />
+            <Stat
+              label="24h trades"
+              value={market ? market.trades24h.toLocaleString("en-US") : "—"}
+              note="Buys + sells, all coins"
             />
           </div>
 
@@ -300,6 +319,11 @@ function LiveDot({ status, fetchedAt }: { status: "live" | "stale"; fetchedAt: s
         : "Couldn't reach the API · retrying"}
     </span>
   );
+}
+
+function formatUsdCompact(n: number): string {
+  if (n >= 10_000) return `$${n.toLocaleString("en-US", { notation: "compact", maximumFractionDigits: 1 })}`;
+  return `$${n.toLocaleString("en-US", { maximumFractionDigits: n >= 100 ? 0 : 2 })}`;
 }
 
 function Stat({ label, value, note }: { label: string; value: string; note: string }) {
