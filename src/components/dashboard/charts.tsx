@@ -37,6 +37,10 @@ function ticks(max: number, count = 4): number[] {
 }
 
 function fmt(n: number): string {
+  // Compact big values (116.3M) so axis labels and peak labels stay short.
+  if (Math.abs(n) >= 10_000) {
+    return n.toLocaleString("en-US", { notation: "compact", maximumFractionDigits: 1 });
+  }
   if (Number.isInteger(n)) return n.toLocaleString("en-US");
   return n.toLocaleString("en-US", { maximumFractionDigits: 2 });
 }
@@ -97,7 +101,7 @@ export function ColumnChart({
   const [hover, setHover] = useState<number | null>(null);
   const W = 640;
   const H = height;
-  const pad = { top: 12, right: 8, bottom: 26, left: 34 };
+  const pad = { top: 12, right: 8, bottom: 26, left: 40 };
   const iw = W - pad.left - pad.right;
   const ih = H - pad.top - pad.bottom;
   const max = niceMax(Math.max(0, ...data.map((d) => d.value)));

@@ -1,0 +1,12 @@
+{
+  "tokenAddress": "0x07E61D8a4e197dfC269e90D7ECe1dF0D26702bA3",
+  "aaplInRaw": "75000000",
+  "aaplInFormatted": "0.75",
+  "tokenOutRaw": "116278292911007606235476605",
+  "tokenOutFormatted": "116278292.911007606235476605",
+  "tokenDecimals": 18,
+  "swapTxHash": "0x6b260446f2cdc847f0e11b20bb9dd1f63e4b59f00339911d7ae6bf5586093cf8",
+  "burnTxHash": "0x1eddc3d2c1bdd4e43b003a09b984b7b0402726bf2e30270aeb436883f7df49ac",
+  "burnAddress": "0x000000000000000000000000000000000000dEaD",
+  "status": "sent"
+}
