@@ -22,6 +22,14 @@ export type BuyBurnDrop = {
   burnTxHash: string;
 };
 
+export type TokenBurnDrop = {
+  file: string;
+  tokenAddress: string;
+  amount: number;
+  tokenDecimals: number;
+  burnTxHash: string;
+};
+
 export type AirdropDrop = {
   file: string;
   totalAapl: number;
@@ -43,6 +51,10 @@ export type AirdropSnapshot = {
   totalBurned: number;
   burnTokenAddress: string | null;
   latestBuyBurn: BuyBurnDrop | null;
+  totalTokenBurned: number;
+  sourceTokenAddress: string | null;
+  latestTokenBurn: TokenBurnDrop | null;
+  tokenBurns: TokenBurnDrop[];
 };
 
 function splitCsvLine(line: string): string[] {
@@ -81,7 +93,10 @@ function parseAaplRaw(raw: string, formatted: string): bigint | null {
 }
 
 function stemName(name: string): string {
-  return name.replace(/\.buyburn\.json$/i, "").replace(/\.csv$/i, "");
+  return name
+    .replace(/\.tokenburn\.(json|csv)$/i, "")
+    .replace(/\.buyburn\.json$/i, "")
+    .replace(/\.csv$/i, "");
 }
 
 export function parseAirdropCsv(text: string, file: string): AirdropRow[] {
@@ -118,6 +133,44 @@ export function parseAirdropCsv(text: string, file: string): AirdropRow[] {
     });
   }
   return rows;
+}
+
+export function parseTokenBurnJson(text: string, file: string): TokenBurnDrop | null {
+  let parsed: {
+    tokenAddress?: string;
+    amountRaw?: string;
+    amountFormatted?: string;
+    tokenDecimals?: number;
+    burnTxHash?: string;
+    status?: string;
+  };
+  try {
+    parsed = JSON.parse(text) as typeof parsed;
+  } catch {
+    return null;
+  }
+  if ((parsed.status ?? "").trim().toLowerCase() !== "sent") return null;
+  const tokenAddress = (parsed.tokenAddress ?? "").trim();
+  if (!/^0x[a-fA-F0-9]{40}$/.test(tokenAddress)) return null;
+  const decimals = Number(parsed.tokenDecimals ?? 18);
+  if (!Number.isFinite(decimals) || decimals < 0 || decimals > 36) return null;
+  let raw: bigint | null = null;
+  if (parsed.amountRaw && /^\d+$/.test(parsed.amountRaw)) {
+    raw = BigInt(parsed.amountRaw);
+  } else {
+    const n = Number(parsed.amountFormatted ?? "");
+    if (Number.isFinite(n) && n > 0) raw = BigInt(Math.round(n * 10 ** decimals));
+  }
+  if (raw == null || raw <= BigInt(0)) return null;
+  const burnTxHash = (parsed.burnTxHash ?? "").trim();
+  if (!/^0x[a-fA-F0-9]{64}$/.test(burnTxHash)) return null;
+  return {
+    file,
+    tokenAddress: tokenAddress.toLowerCase(),
+    amount: Number(raw) / 10 ** decimals,
+    tokenDecimals: decimals,
+    burnTxHash: burnTxHash.toLowerCase(),
+  };
 }
 
 export function parseBuyBurnJson(text: string, file: string): BuyBurnDrop | null {
@@ -164,6 +217,7 @@ export function parseBuyBurnJson(text: string, file: string): BuyBurnDrop | null
 export function summarizeAirdrops(
   files: Array<{ name: string; text: string }>,
   buyburns: BuyBurnDrop[] = [],
+  tokenBurns: TokenBurnDrop[] = [],
 ): AirdropSnapshot {
   const byTx = new Map<string, AirdropRow>();
   const filesWithSent = new Set<string>();
@@ -215,6 +269,13 @@ export function summarizeAirdrops(
     uniqueBurns.sort((a, b) => a.file.localeCompare(b.file)).at(-1) ??
     null;
 
+  const tokenByTx = new Map<string, TokenBurnDrop>();
+  for (const burn of tokenBurns) {
+    if (!tokenByTx.has(burn.burnTxHash)) tokenByTx.set(burn.burnTxHash, burn);
+  }
+  const uniqueTokenBurns = [...tokenByTx.values()].sort((a, b) => a.file.localeCompare(b.file));
+  const latestTokenBurn = uniqueTokenBurns.at(-1) ?? null;
+
   return {
     totalAapl: Number(totalRaw) / 10 ** AAPL_DECIMALS,
     recipientCount: wallets.size,
@@ -225,6 +286,10 @@ export function summarizeAirdrops(
     totalBurned: uniqueBurns.reduce((sum, burn) => sum + burn.tokenOut, 0),
     burnTokenAddress: latestBuyBurn?.tokenAddress ?? uniqueBurns[0]?.tokenAddress ?? null,
     latestBuyBurn,
+    totalTokenBurned: uniqueTokenBurns.reduce((sum, burn) => sum + burn.amount, 0),
+    sourceTokenAddress: latestTokenBurn?.tokenAddress ?? uniqueTokenBurns[0]?.tokenAddress ?? null,
+    latestTokenBurn,
+    tokenBurns: uniqueTokenBurns,
   };
 }
 
@@ -253,7 +318,16 @@ export async function loadAirdropSnapshot(): Promise<AirdropSnapshot> {
     )
   ).filter((row): row is BuyBurnDrop => row != null);
 
-  return summarizeAirdrops(files, buyburns);
+  const tokenBurnNames = names.filter((name) => name.endsWith(".tokenburn.json"));
+  const tokenBurns = (
+    await Promise.all(
+      tokenBurnNames.map(async (name) =>
+        parseTokenBurnJson(await readFile(path.join(AIRDROP_DIR, name), "utf8"), name),
+      ),
+    )
+  ).filter((row): row is TokenBurnDrop => row != null);
+
+  return summarizeAirdrops(files, buyburns, tokenBurns);
 }
 
 export function formatAaplAmount(value: number): string {

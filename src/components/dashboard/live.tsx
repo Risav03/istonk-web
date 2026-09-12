@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Copy, ExternalLink, Flame, Rocket } from "lucide-react";
 
-import type { AirdropDrop } from "@/lib/airdrops";
+import type { AirdropDrop, TokenBurnDrop } from "@/lib/airdrops";
 import { shortAddr, timeAgo } from "@/lib/format";
 import { stonksTokenUrl, type PublicLaunch } from "@/lib/launches";
 
@@ -21,6 +21,8 @@ export function DashboardLive({
   initialTokensLaunched,
   drops,
   burnSymbol = "TOKEN",
+  tokenBurns = [],
+  tokenBurnSymbol = "TOKEN",
   airdropStats,
   airdropList,
 }: {
@@ -28,6 +30,8 @@ export function DashboardLive({
   initialTokensLaunched: number | null;
   drops: AirdropDrop[];
   burnSymbol?: string;
+  tokenBurns?: TokenBurnDrop[];
+  tokenBurnSymbol?: string;
   /** Server-rendered stat cards for the airdrop panel. */
   airdropStats?: ReactNode;
   /** Server-rendered latest-drop recipients + burn links. */
@@ -138,6 +142,26 @@ export function DashboardLive({
         }),
     [drops],
   );
+  const tokenBurnSeries = useMemo<ColumnDatum[]>(
+    () =>
+      tokenBurns.map((d) => {
+        const m = /^(\d{4}-\d{2}-\d{2})/.exec(d.file);
+        const label = m
+          ? new Date(`${m[1]}T00:00:00Z`).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              timeZone: "UTC",
+            })
+          : d.file.replace(/\.tokenburn\.json$/i, "");
+        return {
+          key: d.burnTxHash,
+          label,
+          hint: `${label} · burned`,
+          value: Number(d.amount.toFixed(4)),
+        };
+      }),
+    [tokenBurns],
+  );
 
   const last7 = daily.slice(-7).reduce((s, d) => s + d.value, 0);
   const prev7 = daily.slice(-14, -7).reduce((s, d) => s + d.value, 0);
@@ -221,8 +245,8 @@ export function DashboardLive({
         >
           <PanelHeader
             icon={<Flame className="h-4 w-4" />}
-            title="Airdrops & buy/burn"
-            sub={<span className="text-xs text-faint">AAPL to holders after each local drop, leftovers bought and burned</span>}
+            title="Airdrops & burns"
+            sub={<span className="text-xs text-faint">AAPL to holders, leftover AAPL buy/burn, and source-token burns</span>}
           />
 
           <div>{airdropStats}</div>
@@ -235,6 +259,11 @@ export function DashboardLive({
           {burnSeries.length > 0 ? (
             <ChartCard title={`${burnSymbol} burned per drop`} subtitle="Bought with leftover AAPL, then burned">
               <ColumnChart data={burnSeries} valueLabel={burnSymbol} height={150} />
+            </ChartCard>
+          ) : null}
+          {tokenBurnSeries.length > 0 ? (
+            <ChartCard title={`${tokenBurnSymbol} burned`} subtitle="TOKEN_ADDRESS sent to the dead address">
+              <ColumnChart data={tokenBurnSeries} valueLabel={tokenBurnSymbol} height={150} />
             </ChartCard>
           ) : null}
 

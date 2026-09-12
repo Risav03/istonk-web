@@ -1,0 +1,2 @@
+token_address,amount,amount_formatted,decimals,tx_hash,status
+0xCB2BAff7177C8966A8b059b3Df3e9323dc2Ee267,3000000000000000000000000,3000000,18,0x786f17e349e506e9f931b1f8d42f3e99be80a623f972f4d4940ce59df718deb8,sent

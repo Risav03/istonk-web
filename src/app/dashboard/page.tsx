@@ -8,6 +8,7 @@ import {
   formatBurnAmount,
   loadAirdropSnapshot,
   type AirdropRow,
+  type TokenBurnDrop,
 } from "@/lib/airdrops";
 import { DashboardLive } from "@/components/dashboard/live";
 import { TokenAvatar } from "@/components/token-avatar";
@@ -43,13 +44,15 @@ export default async function DashboardPage() {
     fetchLaunches(),
     loadAirdropSnapshot(),
   ]);
-  const burnMeta = airdrops.burnTokenAddress
-    ? await fetchDexScreenerToken(airdrops.burnTokenAddress)
-    : null;
+  const [burnMeta, sourceMeta] = await Promise.all([
+    airdrops.burnTokenAddress ? fetchDexScreenerToken(airdrops.burnTokenAddress) : null,
+    airdrops.sourceTokenAddress ? fetchDexScreenerToken(airdrops.sourceTokenAddress) : null,
+  ]);
   const latestWhen = dropLabel(airdrops.latestFile);
   const latestShort = dropLabel(airdrops.latestFile, false);
-  const burnName = burnMeta?.name ?? "Buy/burn token";
   const burnSymbol = burnMeta?.symbol ?? "TOKEN";
+  const sourceName = sourceMeta?.name ?? "Source token";
+  const sourceSymbol = sourceMeta?.symbol ?? "TOKEN";
 
   return (
     <>
@@ -72,6 +75,8 @@ export default async function DashboardPage() {
           initialTokensLaunched={tokensLaunched}
           drops={airdrops.drops}
           burnSymbol={burnSymbol}
+          tokenBurns={airdrops.tokenBurns}
+          tokenBurnSymbol={sourceSymbol}
           airdropStats={
             <div className="grid grid-cols-3 gap-3">
               <StatCard
@@ -160,6 +165,46 @@ export default async function DashboardPage() {
                   </a>
                 </div>
               ) : null}
+
+              <div className="flex flex-col gap-3 pt-2">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="inline-flex items-center gap-2 text-sm font-semibold">
+                    <TokenAvatar src={sourceMeta?.imageUrl} symbol={sourceSymbol} size={18} />
+                    ${sourceSymbol} burned
+                    {airdrops.tokenBurns.length > 0 ? (
+                      <span className="font-normal text-faint">· {airdrops.tokenBurns.length}</span>
+                    ) : null}
+                  </h3>
+                  <span className="text-xs text-faint">
+                    {airdrops.totalTokenBurned > 0
+                      ? `${formatBurnAmount(airdrops.totalTokenBurned)} total`
+                      : `${sourceName} from TOKEN_ADDRESS`}
+                  </span>
+                </div>
+                <div className="glass flex flex-col overflow-hidden rounded-[16px]">
+                  {airdrops.tokenBurns.length === 0 ? (
+                    <div className="px-4 py-6 text-[13px] text-muted">
+                      No source-token burns yet. After{" "}
+                      <span className="font-mono">npm run burn-token</span>, run{" "}
+                      <span className="font-mono">npm run publish-csv</span>.
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-[1fr_auto_auto] gap-3 px-4 py-2.5 text-[11px] uppercase tracking-[0.06em] text-faint">
+                        <span>When</span>
+                        <span className="text-right">Amount</span>
+                        <span className="text-right">Tx</span>
+                      </div>
+                      {airdrops.tokenBurns
+                        .slice()
+                        .reverse()
+                        .map((row) => (
+                          <TokenBurnRow key={row.burnTxHash} row={row} />
+                        ))}
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           }
         />
@@ -203,6 +248,38 @@ function StatCard({
         {value}
       </span>
       <span className="truncate text-[11px] text-faint">{note}</span>
+    </div>
+  );
+}
+
+function TokenBurnRow({ row }: { row: TokenBurnDrop }) {
+  const when = dropLabel(row.file) ?? row.file.replace(/\.tokenburn\.json$/i, "");
+  return (
+    <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-t border-hairline px-4 py-3">
+      <span className="text-[13px] text-foreground/80">{when}</span>
+      <span className="text-right font-mono text-[13px] tabular">{formatBurnAmount(row.amount)}</span>
+      <a
+        href={`https://basescan.org/tx/${row.burnTxHash}`}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex items-center justify-end gap-1 text-[13px] text-primary hover:text-primary-hover"
+      >
+        Tx
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <path d="M9 2h5v5" />
+          <path d="M14 2 7 9" />
+        </svg>
+      </a>
     </div>
   );
 }
