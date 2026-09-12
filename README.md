@@ -1,9 +1,12 @@
 # iStonk web
 
-Wallet connect + fees dashboard for the iStonk iMessage bot.
+Landing page + wallet dashboard for the iStonk iMessage bot.
 
-- `/wallet/connect?s=` — CDP email OTP, smart account, 90-day delegation
-- `/` — wallet balance, holdings, claimable Stonks creator fees, launches, and send-to-external-wallet (`POST /api/app/stonks/transfer` on the iStonk API)
+- `/` — landing: what iStonk does, the launch wizard, the wallet, what's coming from Basemate (onramp, tokenized stocks, send-to-phone), CTAs to iMessage and socials. Framer Motion for scroll/pointer parallax. Copy + links live in `src/lib/site.ts`; socials come from `NEXT_PUBLIC_SOCIAL_X` / `NEXT_PUBLIC_SOCIAL_TELEGRAM`.
+- `/app` — wallet balance, holdings, claimable Stonks creator fees, launches, and send-to-external-wallet (`POST /api/app/stonks/transfer` on the iStonk API)
+- `/wallet/connect?s=` — CDP email OTP, smart account, 90-day delegation (redirects to `/app` when done)
+
+Theme tokens (iridescent light palette) are in `src/app/globals.css`; `.glass`, `.iris-ring`, `.text-iris` and `.aurora-wash` are shared between the landing and the dashboard.
 
 Point `AGENT_API_HOST` at the iStonk service. Set iStonk `PAY_PAGE_ORIGIN` and `CORS_ALLOWED_ORIGINS` to this app's origin.
 

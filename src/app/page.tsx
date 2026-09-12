@@ -1,10 +1,19 @@
-import { getAppSession } from "@/lib/app-session";
+import type { Metadata } from "next";
 
-import { AppClient } from "./app-client";
+import { Landing } from "@/components/landing/landing";
+import { site } from "@/lib/site";
 
-export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: `${site.name} · ${site.tagline}`,
+  description: site.description,
+  openGraph: {
+    title: `${site.name} · ${site.tagline}`,
+    description: site.description,
+    url: "/",
+    siteName: site.name,
+  },
+};
 
-export default async function HomePage() {
-  const session = await getAppSession();
-  return <AppClient initialHasSession={Boolean(session)} />;
+export default function HomePage() {
+  return <Landing />;
 }

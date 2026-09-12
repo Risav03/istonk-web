@@ -135,7 +135,7 @@ function ConnectInner({ sessionToken }: { sessionToken: string }) {
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body?.error || body?.detail || "Could not finish setup.");
-      router.replace("/");
+      router.replace("/app");
     } catch (err) {
       finishingRef.current = false;
       setPhase("error");

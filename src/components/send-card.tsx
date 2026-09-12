@@ -271,7 +271,7 @@ function ReviewDialog({
       role="dialog"
       aria-modal
       aria-label="Review send"
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/40 backdrop-blur-sm p-4 sm:items-center"
       onClick={busy ? undefined : onCancel}
     >
       <Card

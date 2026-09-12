@@ -184,7 +184,7 @@ function TopBar({
             <span
               className={`h-2 w-2 rounded-full ${address ? "bg-primary" : "bg-faint"}`}
             />
-            <span className="font-mono text-[13px] text-[#c9d4cc]">
+            <span className="font-mono text-[13px] text-foreground/80">
               {address ? shortAddr(address) : "…"}
             </span>
             {copied ? (
@@ -523,7 +523,7 @@ function Launches({
                       </span>
                     </div>
                   </div>
-                  <span className="hidden font-mono text-[13px] text-[#c9d4cc] sm:block">
+                  <span className="hidden font-mono text-[13px] text-foreground/80 sm:block">
                     {row.pairSymbol ?? "·"}
                   </span>
                   <span className="hidden text-[13px] text-muted sm:block">

@@ -6,33 +6,14 @@ import {
 } from "react";
 import { Loader2 } from "lucide-react";
 
+import { Mascot } from "./landing/mascot";
+
 function cx(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(" ");
 }
 
 export function Logo({ size = 26 }: { size?: number }) {
-  const glyph = Math.round(size * 0.54);
-  return (
-    <span
-      className="inline-flex shrink-0 items-center justify-center rounded-[30%] bg-primary"
-      style={{ width: size, height: size }}
-      aria-hidden
-    >
-      <svg
-        width={glyph}
-        height={glyph}
-        viewBox="0 0 16 16"
-        fill="none"
-        stroke="var(--primary-foreground)"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M2 11 6.5 6.5 9.5 9.5 14 5" />
-        <path d="M10 5h4v4" />
-      </svg>
-    </span>
-  );
+  return <Mascot size={size} track={false} className="shrink-0" />;
 }
 
 type ButtonVariant = "primary" | "outline" | "ghost";
@@ -78,8 +59,8 @@ export function Card({
   return (
     <div
       className={cx(
-        "flex flex-col overflow-hidden rounded-[14px] border bg-card",
-        accent ? "border-primary-border" : "border-border",
+        "glass flex flex-col overflow-hidden rounded-[16px]",
+        accent && "iris-ring",
         className,
       )}
       {...rest}
@@ -214,7 +195,7 @@ export function TokenLogo({
       height={size}
       loading="lazy"
       onError={() => setFailed(true)}
-      className="shrink-0 rounded-full bg-[#1d2a21] object-cover"
+      className="shrink-0 rounded-full bg-chip object-cover"
       style={{ width: size, height: size }}
     />
   );

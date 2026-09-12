@@ -14,17 +14,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://istonks.meme"),
   title: {
     default: "iStonk",
     template: "%s · iStonk",
   },
-  description: "Launch stock-paired coins and claim creator fees from your iStonk wallet.",
+  description: "Launch a coin from iMessage. Paired to live stocks on Base, creator fees to your wallet.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full bg-background text-foreground">{children}</body>
+      <body className="aurora-wash min-h-full text-foreground">{children}</body>
     </html>
   );
 }

@@ -1,23 +1,44 @@
 @import "tailwindcss";
 
+/*
+ * iStonks palette — holographic glass on a soft pastel wash.
+ * Derived from the brand mark: electric blue chrome, magenta / peach / cyan
+ * refractions, near-white centre fading to lavender + sky at the edges.
+ */
 :root {
-  --background: #0a0d0b;
-  --foreground: #eef3ef;
-  --muted: #8a9a8e;
-  --faint: #56645a;
-  --card: #0f1310;
-  --card-inset: #0c100d;
-  --chip: #111512;
-  --border: #1f2621;
-  --hairline: #1a201c;
-  --border-strong: #243028;
-  --primary: #3dcc6f;
-  --primary-hover: #52d67f;
-  --primary-dim: #17301f;
-  --primary-border: #2a4a34;
-  --primary-foreground: #06140a;
-  --disabled: #1a221c;
-  --danger: #f07167;
+  --background: #f7f6fc;
+  --foreground: #0f1436;
+  --muted: #5a6087;
+  --faint: #979cba;
+  --card: rgba(255, 255, 255, 0.72);
+  --card-inset: rgba(255, 255, 255, 0.5);
+  --chip: rgba(255, 255, 255, 0.55);
+  --border: rgba(20, 26, 70, 0.08);
+  --hairline: rgba(20, 26, 70, 0.06);
+  --border-strong: rgba(20, 26, 70, 0.14);
+  --primary: #2f5bff;
+  --primary-hover: #1d49f0;
+  --primary-dim: #e8edff;
+  --primary-border: #c5d1ff;
+  --primary-foreground: #ffffff;
+  --disabled: #e3e5f0;
+  --danger: #e5484d;
+
+  /* iridescent accents */
+  --iris-blue: #2f5bff;
+  --iris-violet: #7a5cff;
+  --iris-magenta: #ff4fd8;
+  --iris-peach: #ff9a3c;
+  --iris-yellow: #ffd66b;
+  --iris-cyan: #38d1ff;
+  --iris: linear-gradient(
+    100deg,
+    var(--iris-blue) 0%,
+    var(--iris-violet) 22%,
+    var(--iris-magenta) 48%,
+    var(--iris-peach) 72%,
+    var(--iris-cyan) 100%
+  );
 }
 
 @theme inline {
@@ -38,6 +59,12 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-disabled: var(--disabled);
   --color-danger: var(--danger);
+  --color-iris-blue: var(--iris-blue);
+  --color-iris-violet: var(--iris-violet);
+  --color-iris-magenta: var(--iris-magenta);
+  --color-iris-peach: var(--iris-peach);
+  --color-iris-yellow: var(--iris-yellow);
+  --color-iris-cyan: var(--iris-cyan);
   --font-sans: var(--font-geist-sans), "SF Pro Text", -apple-system, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), "SF Mono", ui-monospace, Menlo, monospace;
 }
@@ -46,6 +73,10 @@ html,
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
@@ -63,6 +94,10 @@ input::placeholder {
   color: var(--faint);
 }
 
+::selection {
+  background: rgba(47, 91, 255, 0.18);
+}
+
 .tabular {
   font-variant-numeric: tabular-nums;
 }
@@ -74,4 +109,63 @@ input::placeholder {
   line-height: 0;
   vertical-align: -0.12em;
   margin-inline: 0.04em;
+}
+
+/* ---- shared iridescent utilities ---- */
+
+/* Text filled with the brand gradient */
+.text-iris {
+  background: var(--iris);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Frosted glass surface used across landing + dashboard cards */
+.glass {
+  background: var(--card);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 10px 40px -12px rgba(30, 40, 120, 0.18),
+    0 0 0 1px rgba(20, 26, 70, 0.04);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+/* 1px iridescent ring via mask, sits on top of .glass */
+.iris-ring {
+  position: relative;
+}
+.iris-ring::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--iris);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* Soft pastel wash behind the whole site */
+.aurora-wash {
+  background:
+    radial-gradient(60% 50% at 8% 0%, rgba(255, 173, 224, 0.55), transparent 70%),
+    radial-gradient(50% 45% at 100% 0%, rgba(255, 196, 120, 0.5), transparent 70%),
+    radial-gradient(60% 55% at 0% 100%, rgba(150, 200, 255, 0.55), transparent 70%),
+    radial-gradient(55% 50% at 100% 100%, rgba(180, 160, 255, 0.55), transparent 70%),
+    var(--background);
+  background-attachment: fixed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
