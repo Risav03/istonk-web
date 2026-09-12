@@ -1,11 +1,13 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/metadata";
 
 import { ConnectClient } from "./connect-client";
 
-export const metadata: Metadata = {
-  title: "Set up your iStonk wallet",
+export const metadata = pageMetadata({
+  title: "Set up your wallet",
   description: "Sign in with email to create your iStonk wallet — no seed phrases.",
-};
+  path: "/wallet/connect",
+  index: false,
+});
 
 type PageProps = {
   searchParams: Promise<{ s?: string | string[] }>;

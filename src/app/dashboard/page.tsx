@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Aurora } from "@/components/landing/aurora";
@@ -8,14 +7,16 @@ import { formatAaplAmount, loadAirdropSnapshot, type AirdropRow } from "@/lib/ai
 import { DashboardLive } from "@/components/dashboard/live";
 import { fetchLaunches, fetchTokensLaunched } from "@/lib/launch-stats";
 import { shortAddr } from "@/lib/format";
+import { pageMetadata } from "@/lib/metadata";
 import { site } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Dashboard",
   description: "Tokens launched by iStonk and AAPL fees airdropped to holders.",
-};
+  path: "/dashboard",
+});
 
 function dropLabel(file: string | null): string | null {
   if (!file) return null;
