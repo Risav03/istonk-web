@@ -78,7 +78,7 @@ export default async function DashboardPage() {
           tokenBurns={airdrops.tokenBurns}
           tokenBurnSymbol={sourceSymbol}
           airdropStats={
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
               <StatCard
                 label="AAPL airdropped"
                 value={airdrops.totalAapl.toLocaleString("en-US", { maximumFractionDigits: 4 })}
@@ -93,6 +93,16 @@ export default async function DashboardPage() {
                 value={airdrops.totalBurned > 0 ? formatBurnAmount(airdrops.totalBurned) : "—"}
                 note={airdrops.latestBuyBurn ? "From leftover AAPL" : "After the next 50/50 send"}
                 token={{ src: burnMeta?.imageUrl, symbol: burnSymbol }}
+              />
+              <StatCard
+                label={`${sourceSymbol} burned`}
+                value={airdrops.totalTokenBurned > 0 ? formatBurnAmount(airdrops.totalTokenBurned) : "—"}
+                note={
+                  airdrops.tokenBurns.length > 0
+                    ? `${sourceName} · ${airdrops.tokenBurns.length} burn${airdrops.tokenBurns.length === 1 ? "" : "s"}`
+                    : "Sent to the dead address"
+                }
+                token={{ src: sourceMeta?.imageUrl, symbol: sourceSymbol }}
               />
               <StatCard
                 label="Latest drop"
@@ -178,7 +188,7 @@ export default async function DashboardPage() {
                   <span className="text-xs text-faint">
                     {airdrops.totalTokenBurned > 0
                       ? `${formatBurnAmount(airdrops.totalTokenBurned)} total`
-                      : `${sourceName} from TOKEN_ADDRESS`}
+                      : `${sourceName} sent to the dead address`}
                   </span>
                 </div>
                 <div className="glass flex flex-col overflow-hidden rounded-[16px]">

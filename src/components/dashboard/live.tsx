@@ -262,7 +262,7 @@ export function DashboardLive({
             </ChartCard>
           ) : null}
           {tokenBurnSeries.length > 0 ? (
-            <ChartCard title={`${tokenBurnSymbol} burned`} subtitle="TOKEN_ADDRESS sent to the dead address">
+            <ChartCard title={`${tokenBurnSymbol} burned`} subtitle="Sent to the dead address per drop">
               <ColumnChart data={tokenBurnSeries} valueLabel={tokenBurnSymbol} height={150} />
             </ChartCard>
           ) : null}
