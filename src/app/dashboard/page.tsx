@@ -3,8 +3,15 @@ import Link from "next/link";
 import { Aurora } from "@/components/landing/aurora";
 import { Footer } from "@/components/landing/footer";
 import { Nav } from "@/components/landing/nav";
-import { formatAaplAmount, loadAirdropSnapshot, type AirdropRow } from "@/lib/airdrops";
+import {
+  formatAaplAmount,
+  formatBurnAmount,
+  loadAirdropSnapshot,
+  type AirdropRow,
+} from "@/lib/airdrops";
 import { DashboardLive } from "@/components/dashboard/live";
+import { TokenAvatar } from "@/components/token-avatar";
+import { fetchDexScreenerToken } from "@/lib/dex-token";
 import { fetchLaunches, fetchTokensLaunched } from "@/lib/launch-stats";
 import { shortAddr } from "@/lib/format";
 import { pageMetadata } from "@/lib/metadata";
@@ -14,7 +21,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata = pageMetadata({
   title: "Dashboard",
-  description: "Tokens launched by iStonk and AAPL fees airdropped to holders.",
+  description: "Tokens launched by iStonk, AAPL airdropped to holders, and leftover AAPL bought and burned.",
   path: "/dashboard",
 });
 
@@ -36,7 +43,12 @@ export default async function DashboardPage() {
     fetchLaunches(),
     loadAirdropSnapshot(),
   ]);
+  const burnMeta = airdrops.burnTokenAddress
+    ? await fetchDexScreenerToken(airdrops.burnTokenAddress)
+    : null;
   const latestWhen = dropLabel(airdrops.latestFile);
+  const burnName = burnMeta?.name ?? "Buy/burn token";
+  const burnSymbol = burnMeta?.symbol ?? "TOKEN";
 
   return (
     <>
@@ -49,8 +61,8 @@ export default async function DashboardPage() {
             Dashboard
           </h1>
           <p className="max-w-[520px] text-[15px] leading-relaxed text-muted">
-            Every coin launched from iMessage, live, plus tokenized AAPL sent to holders after each
-            local drop.
+            Every coin launched from iMessage, live, plus tokenized AAPL sent to holders and the
+            matching buy/burn after each local drop.
           </p>
         </header>
 
@@ -58,9 +70,10 @@ export default async function DashboardPage() {
           initialLaunches={launches}
           initialTokensLaunched={tokensLaunched}
           drops={airdrops.drops}
+          burnSymbol={burnSymbol}
         />
 
-        <section className="grid gap-6 md:grid-cols-2">
+        <section className="grid gap-6 md:grid-cols-3">
           <StatCard
             label="AAPL airdropped"
             value={airdrops.totalAapl.toLocaleString("en-US", { maximumFractionDigits: 4 })}
@@ -69,6 +82,16 @@ export default async function DashboardPage() {
                 ? `AAPL · ${airdrops.recipientCount} recipient${airdrops.recipientCount === 1 ? "" : "s"} · ${airdrops.dropCount} drop${airdrops.dropCount === 1 ? "" : "s"}`
                 : "Copy a leaderboard CSV after the next send"
             }
+          />
+          <StatCard
+            label={`${burnName} burned`}
+            value={airdrops.totalBurned > 0 ? formatBurnAmount(airdrops.totalBurned) : "—"}
+            note={
+              airdrops.latestBuyBurn
+                ? `$${burnSymbol} · buy/burn from leftover AAPL`
+                : "Published after the next 50/50 send"
+            }
+            token={{ src: burnMeta?.imageUrl, symbol: burnSymbol }}
           />
           <StatCard
             label="Latest drop"
@@ -107,6 +130,32 @@ export default async function DashboardPage() {
               </>
             )}
           </div>
+          {airdrops.latestBuyBurn ? (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-muted">
+              <span className="inline-flex items-center gap-2">
+                <TokenAvatar src={burnMeta?.imageUrl} symbol={burnSymbol} size={18} />
+                {formatBurnAmount(airdrops.latestBuyBurn.tokenOut)} ${burnSymbol} burned
+              </span>
+              {airdrops.latestBuyBurn.swapTxHash ? (
+                <a
+                  href={`https://basescan.org/tx/${airdrops.latestBuyBurn.swapTxHash}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium text-primary hover:text-primary-hover"
+                >
+                  Swap
+                </a>
+              ) : null}
+              <a
+                href={`https://basescan.org/tx/${airdrops.latestBuyBurn.burnTxHash}`}
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-primary hover:text-primary-hover"
+              >
+                Burn
+              </a>
+            </div>
+          ) : null}
         </section>
 
         <p className="text-[13px] text-muted">
@@ -131,14 +180,19 @@ function StatCard({
   label,
   value,
   note,
+  token,
 }: {
   label: string;
   value: string;
   note: string;
+  token?: { src?: string | null; symbol: string };
 }) {
   return (
     <div className="glass flex flex-col gap-2 rounded-[16px] px-5 py-6">
-      <span className="text-[13px] text-muted">{label}</span>
+      <span className="inline-flex items-center gap-2 text-[13px] text-muted">
+        {token ? <TokenAvatar src={token.src} symbol={token.symbol} size={20} /> : null}
+        {label}
+      </span>
       <span className="text-[32px] font-semibold leading-none tracking-[-0.03em] sm:text-[40px]">{value}</span>
       <span className="text-xs text-faint">{note}</span>
     </div>

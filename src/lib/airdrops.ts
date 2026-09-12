@@ -13,10 +13,23 @@ export type AirdropRow = {
   txHash: string;
 };
 
+export type BuyBurnDrop = {
+  file: string;
+  tokenAddress: string;
+  tokenOut: number;
+  tokenDecimals: number;
+  swapTxHash: string;
+  burnTxHash: string;
+};
+
 export type AirdropDrop = {
   file: string;
   totalAapl: number;
   recipientCount: number;
+  totalBurned: number;
+  burnTokenAddress: string | null;
+  swapTxHash: string | null;
+  burnTxHash: string | null;
 };
 
 export type AirdropSnapshot = {
@@ -27,6 +40,9 @@ export type AirdropSnapshot = {
   latest: AirdropRow[];
   /** One entry per CSV with at least one sent row, oldest first. */
   drops: AirdropDrop[];
+  totalBurned: number;
+  burnTokenAddress: string | null;
+  latestBuyBurn: BuyBurnDrop | null;
 };
 
 function splitCsvLine(line: string): string[] {
@@ -62,6 +78,10 @@ function parseAaplRaw(raw: string, formatted: string): bigint | null {
   const n = Number(formatted);
   if (!Number.isFinite(n) || n < 0) return null;
   return BigInt(Math.round(n * 10 ** AAPL_DECIMALS));
+}
+
+function stemName(name: string): string {
+  return name.replace(/\.buyburn\.json$/i, "").replace(/\.csv$/i, "");
 }
 
 export function parseAirdropCsv(text: string, file: string): AirdropRow[] {
@@ -100,7 +120,51 @@ export function parseAirdropCsv(text: string, file: string): AirdropRow[] {
   return rows;
 }
 
-export function summarizeAirdrops(files: Array<{ name: string; text: string }>): AirdropSnapshot {
+export function parseBuyBurnJson(text: string, file: string): BuyBurnDrop | null {
+  let parsed: {
+    tokenAddress?: string;
+    tokenOutRaw?: string;
+    tokenOutFormatted?: string;
+    tokenDecimals?: number;
+    swapTxHash?: string;
+    burnTxHash?: string;
+    status?: string;
+  };
+  try {
+    parsed = JSON.parse(text) as typeof parsed;
+  } catch {
+    return null;
+  }
+  if ((parsed.status ?? "").trim().toLowerCase() !== "sent") return null;
+  const tokenAddress = (parsed.tokenAddress ?? "").trim();
+  if (!/^0x[a-fA-F0-9]{40}$/.test(tokenAddress)) return null;
+  const decimals = Number(parsed.tokenDecimals ?? 18);
+  if (!Number.isFinite(decimals) || decimals < 0 || decimals > 36) return null;
+  let raw: bigint | null = null;
+  if (parsed.tokenOutRaw && /^\d+$/.test(parsed.tokenOutRaw)) {
+    raw = BigInt(parsed.tokenOutRaw);
+  } else {
+    const n = Number(parsed.tokenOutFormatted ?? "");
+    if (Number.isFinite(n) && n > 0) raw = BigInt(Math.round(n * 10 ** decimals));
+  }
+  if (raw == null || raw <= BigInt(0)) return null;
+  const swapTxHash = (parsed.swapTxHash ?? "").trim();
+  const burnTxHash = (parsed.burnTxHash ?? "").trim();
+  if (!/^0x[a-fA-F0-9]{64}$/.test(burnTxHash)) return null;
+  return {
+    file,
+    tokenAddress: tokenAddress.toLowerCase(),
+    tokenOut: Number(raw) / 10 ** decimals,
+    tokenDecimals: decimals,
+    swapTxHash: /^0x[a-fA-F0-9]{64}$/.test(swapTxHash) ? swapTxHash.toLowerCase() : "",
+    burnTxHash: burnTxHash.toLowerCase(),
+  };
+}
+
+export function summarizeAirdrops(
+  files: Array<{ name: string; text: string }>,
+  buyburns: BuyBurnDrop[] = [],
+): AirdropSnapshot {
   const byTx = new Map<string, AirdropRow>();
   const filesWithSent = new Set<string>();
   for (const file of files) {
@@ -109,6 +173,17 @@ export function summarizeAirdrops(files: Array<{ name: string; text: string }>):
       byTx.set(row.txHash, row);
       filesWithSent.add(file.name);
     }
+  }
+
+  const burnsBySidecar = new Map<string, BuyBurnDrop>();
+  for (const burn of buyburns) {
+    if (burnsBySidecar.has(burn.burnTxHash)) continue;
+    burnsBySidecar.set(burn.burnTxHash, burn);
+  }
+  const uniqueBurns = [...burnsBySidecar.values()];
+  const burnByStem = new Map<string, BuyBurnDrop>();
+  for (const burn of uniqueBurns) {
+    burnByStem.set(stemName(burn.file), burn);
   }
 
   const all = [...byTx.values()];
@@ -123,12 +198,22 @@ export function summarizeAirdrops(files: Array<{ name: string; text: string }>):
   const drops: AirdropDrop[] = [...filesWithSent].sort().map((file) => {
     const rows = all.filter((row) => row.file === file);
     const raw = rows.reduce((sum, row) => sum + row.aaplRaw, BigInt(0));
+    const burn = burnByStem.get(stemName(file)) ?? null;
     return {
       file,
       totalAapl: Number(raw) / 10 ** AAPL_DECIMALS,
       recipientCount: new Set(rows.map((row) => row.wallet.toLowerCase())).size,
+      totalBurned: burn?.tokenOut ?? 0,
+      burnTokenAddress: burn?.tokenAddress ?? null,
+      swapTxHash: burn?.swapTxHash || null,
+      burnTxHash: burn?.burnTxHash ?? null,
     };
   });
+
+  const latestBuyBurn =
+    (latestFile ? burnByStem.get(stemName(latestFile)) : null) ??
+    uniqueBurns.sort((a, b) => a.file.localeCompare(b.file)).at(-1) ??
+    null;
 
   return {
     totalAapl: Number(totalRaw) / 10 ** AAPL_DECIMALS,
@@ -137,23 +222,38 @@ export function summarizeAirdrops(files: Array<{ name: string; text: string }>):
     latestFile,
     latest,
     drops,
+    totalBurned: uniqueBurns.reduce((sum, burn) => sum + burn.tokenOut, 0),
+    burnTokenAddress: latestBuyBurn?.tokenAddress ?? uniqueBurns[0]?.tokenAddress ?? null,
+    latestBuyBurn,
   };
 }
 
 export async function loadAirdropSnapshot(): Promise<AirdropSnapshot> {
   let names: string[] = [];
   try {
-    names = (await readdir(AIRDROP_DIR)).filter((name) => name.endsWith(".csv")).sort();
+    names = (await readdir(AIRDROP_DIR)).sort();
   } catch {
     return summarizeAirdrops([]);
   }
+
+  const csvNames = names.filter((name) => name.endsWith(".csv"));
   const files = await Promise.all(
-    names.map(async (name) => ({
+    csvNames.map(async (name) => ({
       name,
       text: await readFile(path.join(AIRDROP_DIR, name), "utf8"),
     })),
   );
-  return summarizeAirdrops(files);
+
+  const sidecarNames = names.filter((name) => name.endsWith(".buyburn.json"));
+  const buyburns = (
+    await Promise.all(
+      sidecarNames.map(async (name) =>
+        parseBuyBurnJson(await readFile(path.join(AIRDROP_DIR, name), "utf8"), name),
+      ),
+    )
+  ).filter((row): row is BuyBurnDrop => row != null);
+
+  return summarizeAirdrops(files, buyburns);
 }
 
 export function formatAaplAmount(value: number): string {
@@ -161,5 +261,19 @@ export function formatAaplAmount(value: number): string {
   return value.toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 8,
+  });
+}
+
+export function formatBurnAmount(value: number): string {
+  if (!Number.isFinite(value) || value === 0) return "0";
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) {
+    return value.toLocaleString("en-US", {
+      notation: "compact",
+      maximumFractionDigits: 2,
+    });
+  }
+  return value.toLocaleString("en-US", {
+    maximumFractionDigits: abs >= 1 ? 2 : 6,
   });
 }

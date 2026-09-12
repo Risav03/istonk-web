@@ -19,10 +19,12 @@ export function DashboardLive({
   initialLaunches,
   initialTokensLaunched,
   drops,
+  burnSymbol = "TOKEN",
 }: {
   initialLaunches: PublicLaunch[];
   initialTokensLaunched: number | null;
   drops: AirdropDrop[];
+  burnSymbol?: string;
 }) {
   const [launches, setLaunches] = useState<PublicLaunch[]>(initialLaunches);
   const [tokensLaunched, setTokensLaunched] = useState<number | null>(initialTokensLaunched);
@@ -106,6 +108,28 @@ export function DashboardLive({
       }),
     [drops],
   );
+  const burnSeries = useMemo<ColumnDatum[]>(
+    () =>
+      drops
+        .filter((d) => d.totalBurned > 0)
+        .map((d) => {
+          const m = /^(\d{4}-\d{2}-\d{2})/.exec(d.file);
+          const label = m
+            ? new Date(`${m[1]}T00:00:00Z`).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                timeZone: "UTC",
+              })
+            : d.file.replace(/\.csv$/, "");
+          return {
+            key: `${d.file}-burn`,
+            label,
+            hint: `${label} · burned`,
+            value: Number(d.totalBurned.toFixed(4)),
+          };
+        }),
+    [drops],
+  );
 
   const last7 = daily.slice(-7).reduce((s, d) => s + d.value, 0);
   const prev7 = daily.slice(-14, -7).reduce((s, d) => s + d.value, 0);
@@ -144,10 +168,18 @@ export function DashboardLive({
       </section>
 
       {dropSeries.length > 0 ? (
-        <section>
+        <section className={burnSeries.length > 0 ? "grid gap-6 lg:grid-cols-2" : undefined}>
           <ChartCard title="AAPL airdropped per drop" subtitle="Sent to holders after each local drop">
             <ColumnChart data={dropSeries} valueLabel="AAPL" height={150} />
           </ChartCard>
+          {burnSeries.length > 0 ? (
+            <ChartCard
+              title={`${burnSymbol} burned per drop`}
+              subtitle="Bought with leftover AAPL, then burned"
+            >
+              <ColumnChart data={burnSeries} valueLabel={burnSymbol} height={150} />
+            </ChartCard>
+          ) : null}
         </section>
       ) : null}
 
