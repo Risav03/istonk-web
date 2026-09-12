@@ -10,9 +10,10 @@ import {
   type LaunchRow,
   type WalletInfo,
 } from "@/lib/api";
-import { formatTokenAmount, shortAddr, timeAgo, weiToEth } from "@/lib/format";
+import { amountUsd, formatTokenAmount, formatUsd, shortAddr, timeAgo, weiToEth } from "@/lib/format";
+import { useUsdPrices } from "@/lib/use-usd-prices";
 
-import { CompactDecimal } from "./compact-decimal";
+import { AmountWithUsd, CompactDecimal } from "./compact-decimal";
 import { SendCard, type SendAsset } from "./send-card";
 import {
   Bubble,
@@ -110,15 +111,24 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
     ];
   }, [wallet, held, launches]);
 
+  const priceIds = useMemo(() => {
+    const ids = ["eth"];
+    for (const row of held) ids.push(row.token);
+    for (const row of pending) ids.push(row.token);
+    return ids;
+  }, [held, pending]);
+  const prices = useUsdPrices(priceIds);
+  const ethUsd = wallet ? amountUsd(weiToEth(wallet.ethWei), prices.eth) : null;
+
   return (
     <div className="flex min-h-[100dvh] flex-col">
       <TopBar address={wallet?.address ?? null} onLogout={onLogout} />
 
       <main className="mx-auto flex w-full max-w-[1040px] flex-col gap-10 px-5 pb-20 pt-10 sm:pt-12">
-        <BalanceHero wallet={wallet} coinCount={held.length} />
+        <BalanceHero wallet={wallet} coinCount={held.length} ethUsd={ethUsd} />
 
         <div className="grid gap-6 md:grid-cols-2">
-          <Holdings wallet={wallet} held={held} launches={launches} />
+          <Holdings wallet={wallet} held={held} launches={launches} prices={prices} />
           <CreatorFees
             pending={pending}
             canCollect={canCollect}
@@ -126,6 +136,7 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
             claimedTx={claimedTx}
             onClaim={claim}
             heldCount={held.length}
+            prices={prices}
           />
         </div>
 
@@ -133,6 +144,7 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
 
         <SendCard
           assets={sendAssets}
+          prices={prices}
           onSent={load}
           onReauth={() => setReauth(true)}
         />
@@ -209,11 +221,14 @@ function TopBar({
 function BalanceHero({
   wallet,
   coinCount,
+  ethUsd,
 }: {
   wallet: WalletInfo | null;
   coinCount: number;
+  ethUsd: number | null;
 }) {
   const [showDeposit, setShowDeposit] = useState(false);
+  const usdLabel = formatUsd(ethUsd);
   return (
     <section className="flex flex-col gap-5">
       <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
@@ -233,6 +248,9 @@ function BalanceHero({
             )}
             <span className="text-xl text-muted">ETH</span>
           </div>
+          {usdLabel ? (
+            <span className="font-mono text-[15px] text-muted tabular">{usdLabel}</span>
+          ) : null}
           <span className="text-sm text-muted">
             {coinCount > 0
               ? `plus ${coinCount} coin${coinCount === 1 ? "" : "s"} you launched, held in this wallet`
@@ -297,10 +315,12 @@ function Holdings({
   wallet,
   held,
   launches,
+  prices,
 }: {
   wallet: WalletInfo | null;
   held: FeeRow[];
   launches: LaunchRow[];
+  prices: Record<string, number>;
 }) {
   const pairFor = (token: string) => {
     const launch = launches.find(
@@ -330,9 +350,10 @@ function Holdings({
           note="Pays gas for sends and claims"
         />
         {wallet ? (
-          <CompactDecimal
+          <AmountWithUsd
             as="eth"
             value={weiToEth(wallet.ethWei)}
+            usd={amountUsd(weiToEth(wallet.ethWei), prices.eth)}
             className="font-mono text-sm tabular"
           />
         ) : (
@@ -347,8 +368,9 @@ function Holdings({
             name={`$${row.symbol}`}
             note={pairFor(row.token)}
           />
-          <CompactDecimal
+          <AmountWithUsd
             value={Number(row.amount)}
+            usd={amountUsd(Number(row.amount), prices[row.token.toLowerCase()])}
             className="font-mono text-sm tabular"
           />
         </Row>
@@ -386,6 +408,7 @@ function CreatorFees({
   claimedTx,
   heldCount,
   onClaim,
+  prices,
 }: {
   pending: FeeRow[];
   canCollect: boolean;
@@ -393,6 +416,7 @@ function CreatorFees({
   claimedTx: string | null;
   heldCount: number;
   onClaim: () => void;
+  prices: Record<string, number>;
 }) {
   return (
     <Card accent={canCollect}>
@@ -417,9 +441,10 @@ function CreatorFees({
               <TokenLogo src={row.logoUrl} symbol={row.symbol} size={24} />
               {row.symbol}
             </span>
-            <CompactDecimal
+            <AmountWithUsd
               prefix="+"
               value={Number(row.amount)}
+              usd={amountUsd(Number(row.amount), prices[row.token.toLowerCase()])}
               className="font-mono text-sm text-primary tabular"
             />
           </Row>

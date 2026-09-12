@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { X } from "lucide-react";
 
 import { api, ApiError } from "@/lib/api";
-import { formatTokenAmount, isAddress, normalizeAmount, shortAddr } from "@/lib/format";
+import { amountUsd, formatTokenAmount, formatUsd, isAddress, normalizeAmount, shortAddr } from "@/lib/format";
 
 import { CompactDecimal } from "./compact-decimal";
 import { Button, Card, ExternalIcon, Field, inputClass, TokenLogo } from "./ui";
@@ -26,10 +26,12 @@ type Step = "form" | "review" | "sent";
 
 export function SendCard({
   assets,
+  prices = {},
   onSent,
   onReauth,
 }: {
   assets: SendAsset[];
+  prices?: Record<string, number>;
   onSent: () => Promise<void>;
   onReauth: () => void;
 }) {
@@ -60,6 +62,11 @@ export function SendCard({
     trimmedTo.length >= 42 && !addressOk
       ? "That doesn't look like a Base address."
       : null;
+  const assetPrice = asset
+    ? prices[asset.id === "eth" ? "eth" : asset.id.toLowerCase()]
+    : undefined;
+  const availableUsdLabel = formatUsd(asset ? amountUsd(asset.available, assetPrice) : null);
+  const sendUsd = amountOk && asset ? amountUsd(parsed, assetPrice) : null;
   const amountHint =
     amount !== "" && !amountOk && sendAmount !== "0."
       ? asset && Number.isFinite(parsed) && parsed > asset.available
@@ -209,6 +216,9 @@ export function SendCard({
                         value={asset.available}
                       />
                       {asset.symbol}
+                      {availableUsdLabel ? (
+                        <span className="text-faint">({availableUsdLabel})</span>
+                      ) : null}
                     </>
                   ) : (
                     "…"
@@ -233,6 +243,7 @@ export function SendCard({
           to={to.trim()}
           amount={sendAmount}
           symbol={asset.symbol}
+          sendUsd={sendUsd}
           remaining={asset.available - parsed}
           busy={busy}
           error={error}
@@ -251,6 +262,7 @@ function ReviewDialog({
   to,
   amount,
   symbol,
+  sendUsd,
   remaining,
   busy,
   error,
@@ -260,12 +272,14 @@ function ReviewDialog({
   to: string;
   amount: string;
   symbol: string;
+  sendUsd: number | null;
   remaining: number;
   busy: boolean;
   error: string | null;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
+  const sendUsdLabel = formatUsd(sendUsd);
   return (
     <div
       role="dialog"
@@ -297,6 +311,9 @@ function ReviewDialog({
             </span>
             <span className="text-base text-muted">{symbol}</span>
           </div>
+          {sendUsdLabel ? (
+            <span className="font-mono text-[13px] text-muted tabular">{sendUsdLabel}</span>
+          ) : null}
           <span className="text-[13px] text-muted">
             from your iStonk wallet
           </span>

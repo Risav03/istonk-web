@@ -72,6 +72,26 @@ export function formatTokenAmount(amount: string | number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
 }
 
+export function amountUsd(amount: number, priceUsd: number | undefined): number | null {
+  if (priceUsd == null || !Number.isFinite(priceUsd) || !Number.isFinite(amount)) return null;
+  return amount * priceUsd;
+}
+
+export function formatUsd(value: number | null | undefined): string | null {
+  if (value == null || !Number.isFinite(value)) return null;
+  const sign = value < 0 ? "-" : "";
+  const abs = Math.abs(value);
+  if (abs === 0) return "$0.00";
+  if (abs < 0.01) {
+    const tiny = formatTinyDecimal(abs);
+    return `${sign}$${tiny ?? abs.toPrecision(2)}`;
+  }
+  return `${sign}$${abs.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
 export function shortAddr(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }

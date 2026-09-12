@@ -75,4 +75,10 @@ export const api = {
   transfer: (payload: TransferRequest) => post<TransferResult>("/api/app/stonks/transfer", payload),
   linkSession: (accessToken: string) => post<{ ok: true; address: string }>("/api/app/session", { accessToken }),
   endSession: () => fetch("/api/app/session", { method: "DELETE" }).catch(() => {}),
+  prices: (ids: string[]) => {
+    const query = ids.map((id) => id.trim()).filter(Boolean).join(",");
+    return request<{ prices?: Record<string, number> }>(
+      `/api/prices?ids=${encodeURIComponent(query)}`,
+    ).then((body) => body.prices ?? {});
+  },
 };
