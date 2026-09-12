@@ -117,7 +117,10 @@ export function Hero() {
           className="text-[13px] text-faint"
         >
           Say <span className="font-mono text-muted">launch</span> to start, or{" "}
-          <span className="font-mono text-muted">connect</span> if you already have a wallet.
+          <span className="font-mono text-muted">connect</span> if you already have a wallet.{" "}
+          <Link href={site.links.dashboard} className="font-medium text-primary hover:text-primary-hover">
+            See every coin launched so far →
+          </Link>
         </motion.p>
       </motion.div>
 

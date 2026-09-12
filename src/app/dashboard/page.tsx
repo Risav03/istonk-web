@@ -5,7 +5,8 @@ import { Aurora } from "@/components/landing/aurora";
 import { Footer } from "@/components/landing/footer";
 import { Nav } from "@/components/landing/nav";
 import { formatAaplAmount, loadAirdropSnapshot, type AirdropRow } from "@/lib/airdrops";
-import { fetchTokensLaunched } from "@/lib/launch-stats";
+import { DashboardLive } from "@/components/dashboard/live";
+import { fetchLaunches, fetchTokensLaunched } from "@/lib/launch-stats";
 import { shortAddr } from "@/lib/format";
 import { site } from "@/lib/site";
 
@@ -28,14 +29,10 @@ function dropLabel(file: string | null): string | null {
   });
 }
 
-function formatCount(value: number | null): string {
-  if (value == null) return "—";
-  return value.toLocaleString("en-US");
-}
-
 export default async function DashboardPage() {
-  const [tokensLaunched, airdrops] = await Promise.all([
+  const [tokensLaunched, launches, airdrops] = await Promise.all([
     fetchTokensLaunched(),
+    fetchLaunches(),
     loadAirdropSnapshot(),
   ]);
   const latestWhen = dropLabel(airdrops.latestFile);
@@ -51,30 +48,41 @@ export default async function DashboardPage() {
             Dashboard
           </h1>
           <p className="max-w-[520px] text-[15px] leading-relaxed text-muted">
-            Coins launched from iMessage, and tokenized AAPL sent to holders after each local drop.
+            Every coin launched from iMessage, live, plus tokenized AAPL sent to holders after each
+            local drop.
           </p>
         </header>
 
+        <DashboardLive
+          initialLaunches={launches}
+          initialTokensLaunched={tokensLaunched}
+          drops={airdrops.drops}
+        />
+
         <section className="grid gap-6 md:grid-cols-2">
           <StatCard
-            label="Tokens launched"
-            value={formatCount(tokensLaunched)}
-            note="Successful launches on Stonks Exchange"
-          />
-          <StatCard
-            label="Fees airdropped"
-            value={`${formatAaplAmount(airdrops.totalAapl)} AAPL`}
+            label="AAPL airdropped"
+            value={airdrops.totalAapl.toLocaleString("en-US", { maximumFractionDigits: 4 })}
             note={
               airdrops.dropCount > 0
-                ? `${airdrops.recipientCount} recipient${airdrops.recipientCount === 1 ? "" : "s"} · ${airdrops.dropCount} drop${airdrops.dropCount === 1 ? "" : "s"}`
+                ? `AAPL · ${airdrops.recipientCount} recipient${airdrops.recipientCount === 1 ? "" : "s"} · ${airdrops.dropCount} drop${airdrops.dropCount === 1 ? "" : "s"}`
                 : "Copy a leaderboard CSV after the next send"
+            }
+          />
+          <StatCard
+            label="Latest drop"
+            value={latestWhen ?? "—"}
+            note={
+              airdrops.latest.length > 0
+                ? `${airdrops.latest.length} wallet${airdrops.latest.length === 1 ? "" : "s"} paid`
+                : "No sent airdrops yet"
             }
           />
         </section>
 
         <section className="flex flex-col gap-3.5">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-            <h2 className="text-sm font-semibold">Latest drop</h2>
+            <h2 className="text-sm font-semibold">Latest drop · recipients</h2>
             {latestWhen ? <span className="text-xs text-faint">{latestWhen}</span> : null}
           </div>
           <div className="glass flex flex-col overflow-hidden rounded-[16px]">
@@ -130,9 +138,7 @@ function StatCard({
   return (
     <div className="glass flex flex-col gap-2 rounded-[16px] px-5 py-6">
       <span className="text-[13px] text-muted">{label}</span>
-      <span className="font-mono text-[32px] font-medium leading-none tracking-[-0.03em] tabular sm:text-[40px]">
-        {value}
-      </span>
+      <span className="text-[32px] font-semibold leading-none tracking-[-0.03em] sm:text-[40px]">{value}</span>
       <span className="text-xs text-faint">{note}</span>
     </div>
   );

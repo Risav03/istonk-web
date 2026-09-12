@@ -37,13 +37,13 @@ export function Nav() {
           <span className="text-iris text-[19px] font-extrabold tracking-tight">iStonks</span>
         </Link>
 
-        <div className="hidden items-center gap-1 md:flex">
+        <div className="hidden items-center gap-1 lg:flex">
           {links.map((l) =>
             l.href.startsWith("/") && !l.href.startsWith("/#") ? (
               <Link
                 key={l.href}
                 href={l.href}
-                className="rounded-full px-3.5 py-2 text-[13.5px] font-medium text-muted transition-colors hover:bg-white/60 hover:text-foreground"
+                className="whitespace-nowrap rounded-full px-3.5 py-2 text-[13.5px] font-medium text-muted transition-colors hover:bg-white/60 hover:text-foreground"
               >
                 {l.label}
               </Link>
@@ -51,7 +51,7 @@ export function Nav() {
               <a
                 key={l.href}
                 href={l.href}
-                className="rounded-full px-3.5 py-2 text-[13.5px] font-medium text-muted transition-colors hover:bg-white/60 hover:text-foreground"
+                className="whitespace-nowrap rounded-full px-3.5 py-2 text-[13.5px] font-medium text-muted transition-colors hover:bg-white/60 hover:text-foreground"
               >
                 {l.label}
               </a>
@@ -62,13 +62,13 @@ export function Nav() {
         <div className="flex items-center gap-2">
           <Link
             href={site.links.app}
-            className="hidden h-9 items-center rounded-full px-4 text-[13px] font-semibold text-foreground/80 transition-colors hover:bg-white/60 sm:inline-flex"
+            className="hidden h-9 items-center whitespace-nowrap rounded-full px-4 text-[13px] font-semibold text-foreground/80 transition-colors hover:bg-white/60 sm:inline-flex"
           >
             Open wallet
           </Link>
           <a
             href={site.bot.smsHref}
-            className="inline-flex h-9 items-center gap-2 rounded-full bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-[0_8px_24px_-8px_rgba(47,91,255,0.7)] transition-colors hover:bg-primary-hover"
+            className="inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-full bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-[0_8px_24px_-8px_rgba(47,91,255,0.7)] transition-colors hover:bg-primary-hover"
           >
             <MessageCircle className="h-4 w-4" />
             Text iStonk

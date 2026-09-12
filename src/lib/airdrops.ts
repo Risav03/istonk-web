@@ -13,12 +13,20 @@ export type AirdropRow = {
   txHash: string;
 };
 
+export type AirdropDrop = {
+  file: string;
+  totalAapl: number;
+  recipientCount: number;
+};
+
 export type AirdropSnapshot = {
   totalAapl: number;
   recipientCount: number;
   dropCount: number;
   latestFile: string | null;
   latest: AirdropRow[];
+  /** One entry per CSV with at least one sent row, oldest first. */
+  drops: AirdropDrop[];
 };
 
 function splitCsvLine(line: string): string[] {
@@ -112,12 +120,23 @@ export function summarizeAirdrops(files: Array<{ name: string; text: string }>):
   const totalRaw = all.reduce((sum, row) => sum + row.aaplRaw, BigInt(0));
   const wallets = new Set(all.map((row) => row.wallet.toLowerCase()));
 
+  const drops: AirdropDrop[] = [...filesWithSent].sort().map((file) => {
+    const rows = all.filter((row) => row.file === file);
+    const raw = rows.reduce((sum, row) => sum + row.aaplRaw, BigInt(0));
+    return {
+      file,
+      totalAapl: Number(raw) / 10 ** AAPL_DECIMALS,
+      recipientCount: new Set(rows.map((row) => row.wallet.toLowerCase())).size,
+    };
+  });
+
   return {
     totalAapl: Number(totalRaw) / 10 ** AAPL_DECIMALS,
     recipientCount: wallets.size,
     dropCount: filesWithSent.size,
     latestFile,
     latest,
+    drops,
   };
 }
 
