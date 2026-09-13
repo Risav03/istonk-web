@@ -1,4 +1,9 @@
-export type WalletInfo = { address: string; ethWei: string };
+export type WalletInfo = {
+  address: string;
+  ethWei: string;
+  /** False when the wallet is only known by CDP user id — no phone linked via iMessage `connect`. */
+  linked?: boolean;
+};
 
 export type LaunchRow = {
   tokenAddress: string | null;
@@ -73,7 +78,8 @@ export const api = {
   fees: () => request<FeesSnapshot>("/api/app/stonks/fees"),
   claim: () => post<{ txHash: string }>("/api/app/stonks/fees/claim", {}),
   transfer: (payload: TransferRequest) => post<TransferResult>("/api/app/stonks/transfer", payload),
-  linkSession: (accessToken: string) => post<{ ok: true; address: string }>("/api/app/session", { accessToken }),
+  linkSession: (accessToken: string) =>
+    post<{ ok: true; address: string; linked?: boolean }>("/api/app/session", { accessToken }),
   endSession: () => fetch("/api/app/session", { method: "DELETE" }).catch(() => {}),
   prices: (ids: string[]) => {
     const query = ids.map((id) => id.trim()).filter(Boolean).join(",");

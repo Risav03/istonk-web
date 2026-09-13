@@ -11,6 +11,7 @@ import {
   type WalletInfo,
 } from "@/lib/api";
 import { amountUsd, formatTokenAmount, formatUsd, shortAddr, timeAgo, weiToEth } from "@/lib/format";
+import { site } from "@/lib/site";
 import { useUsdPrices } from "@/lib/use-usd-prices";
 
 import { AmountWithUsd, CompactDecimal } from "./compact-decimal";
@@ -125,6 +126,8 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
       <TopBar address={wallet?.address ?? null} onLogout={onLogout} />
 
       <main className="mx-auto flex w-full max-w-[1040px] flex-col gap-10 px-5 pb-20 pt-10 sm:pt-12">
+        {wallet?.linked === false ? <LinkPhoneBanner /> : null}
+
         <BalanceHero wallet={wallet} coinCount={held.length} ethUsd={ethUsd} />
 
         <div className="grid gap-6 md:grid-cols-2">
@@ -159,6 +162,34 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
         {error ? <p className="text-[13px] text-danger">{error}</p> : null}
       </main>
     </div>
+  );
+}
+
+/**
+ * Web sign-in creates the wallet under a CDP user id only. Gifts sent by phone
+ * number look the recipient up by phone, so until this wallet is linked to one
+ * they land in escrow and never release here. `connect` from iMessage links it.
+ */
+function LinkPhoneBanner() {
+  return (
+    <Card accent className="gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-1">
+        <p className="text-[14px] font-semibold text-foreground">
+          Link your phone number to this wallet
+        </p>
+        <p className="text-[13px] leading-relaxed text-muted">
+          Stock sent to your number can&apos;t reach this wallet yet — it waits in
+          escrow instead. Text iStonk <span className="font-mono">connect</span> and
+          sign in with the same email to link it.
+        </p>
+      </div>
+      <a
+        href={site.bot.connectSmsHref}
+        className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-primary px-4 text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
+      >
+        Text connect
+      </a>
+    </Card>
   );
 }
 

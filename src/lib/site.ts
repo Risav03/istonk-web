@@ -41,6 +41,8 @@ export const site = {
     phonePretty: prettyPhone(BOT_PHONE_E164),
     /** Opens Messages with the bot prefilled. Body is a suggested first message. */
     smsHref: `sms:${BOT_PHONE_E164}&body=${encodeURIComponent("launch")}`,
+    /** Opens Messages prefilled with `connect` — links this phone to the wallet. */
+    connectSmsHref: `sms:${BOT_PHONE_E164}&body=${encodeURIComponent("connect")}`,
   },
   links: {
     app: "/app",

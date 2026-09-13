@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: data?.error ?? "Sign-in failed." }, { status: agentRes.status });
     }
     const session = { user: data.user, token: data.token, address: data.address };
-    const res = NextResponse.json({ ok: true, address: data.address });
+    const res = NextResponse.json({ ok: true, address: data.address, linked: data.linked !== false });
     applyAppSessionCookie(res, session);
     return res;
   } catch (err) {
