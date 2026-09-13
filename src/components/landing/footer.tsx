@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowUpRight, MessageCircle } from "lucide-react";
 
 import { site } from "@/lib/site";
 
 import { Mascot } from "./mascot";
-import { Reveal } from "./motion";
+import { Reveal, useLiteMotion } from "./motion";
 
 function XIcon({ className }: { className?: string }) {
   return (
@@ -31,7 +31,7 @@ const socials = [
 ];
 
 export function Footer() {
-  const reduce = useReducedMotion();
+  const lite = useLiteMotion();
   return (
     <>
       {/* closing CTA */}
@@ -41,7 +41,7 @@ export function Footer() {
           <div className="absolute inset-0 -z-10 rounded-[36px] border border-white/80" />
 
           <motion.div
-            animate={reduce ? undefined : { y: [0, -12, 0] }}
+            animate={lite ? undefined : { y: [0, -10, 0] }}
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
           >
             <Mascot size={140} />

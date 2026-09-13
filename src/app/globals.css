@@ -161,11 +161,62 @@ input::placeholder {
     radial-gradient(60% 55% at 0% 100%, rgba(150, 200, 255, 0.55), transparent 70%),
     radial-gradient(55% 50% at 100% 100%, rgba(180, 160, 255, 0.55), transparent 70%),
     var(--background);
-  background-attachment: fixed;
+}
+
+/* Desktop ticker: pure CSS, runs on the compositor */
+@keyframes marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+.marquee {
+  animation: marquee 38s linear infinite;
+  will-change: transform;
+}
+
+/* iMessage typing indicator */
+@keyframes typing-dot {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+.typing-dot {
+  animation: typing-dot 0.9s ease-in-out infinite;
+}
+
+/*
+ * Touch devices / small screens: backdrop-filter is the single most expensive
+ * thing on the page (every glass element re-blurs the wash on every scroll
+ * frame, and dozens of them will crash a low-end GPU). Swap it for a slightly
+ * more opaque card — same look, near-zero cost.
+ */
+@media (hover: none), (pointer: coarse), (max-width: 1023px) {
+  .glass {
+    background: rgba(255, 255, 255, 0.84);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.9) inset,
+      0 8px 24px -12px rgba(30, 40, 120, 0.16),
+      0 0 0 1px rgba(20, 26, 70, 0.04);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+  .marquee,
+  .typing-dot {
+    animation: none;
   }
 }

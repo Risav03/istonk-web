@@ -7,7 +7,7 @@ import { ArrowRight, Coins, Mail, Send, ShieldCheck } from "lucide-react";
 
 import { site } from "@/lib/site";
 
-import { Reveal, Stagger, fadeUp } from "./motion";
+import { Reveal, Stagger, fadeUp, useLiteMotion } from "./motion";
 
 const points = [
   {
@@ -33,11 +33,12 @@ const points = [
 ];
 
 export function Wallet() {
+  const lite = useLiteMotion();
   const ref = useRef<HTMLDivElement>(null);
+  // Card parallax is desktop-only; phones get a static stack.
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const back = useTransform(scrollYProgress, [0, 1], [80, -80]);
-  const mid = useTransform(scrollYProgress, [0, 1], [40, -40]);
-  const front = useTransform(scrollYProgress, [0, 1], [0, -10]);
+  const back = useTransform(scrollYProgress, [0, 1], [60, -60]);
+  const mid = useTransform(scrollYProgress, [0, 1], [30, -30]);
 
   return (
     <section id="wallet" className="relative mx-auto w-full max-w-6xl scroll-mt-24 px-6 py-24 lg:py-32">
@@ -45,7 +46,7 @@ export function Wallet() {
         {/* stacked parallax cards */}
         <div ref={ref} className="relative mx-auto h-[440px] w-full max-w-[460px] lg:order-first">
           <motion.div
-            style={{ y: back }}
+            style={{ y: lite ? 0 : back }}
             className="glass absolute left-6 top-4 h-[240px] w-[80%] rotate-[-4deg] rounded-[26px] p-5 opacity-80"
           >
             <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-faint">Holdings</span>
@@ -67,7 +68,7 @@ export function Wallet() {
           </motion.div>
 
           <motion.div
-            style={{ y: mid }}
+            style={{ y: lite ? 0 : mid }}
             className="glass iris-ring absolute right-0 top-[120px] w-[78%] rotate-[3deg] rounded-[26px] p-5"
           >
             <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-faint">Creator fees</span>
@@ -86,10 +87,7 @@ export function Wallet() {
             </button>
           </motion.div>
 
-          <motion.div
-            style={{ y: front }}
-            className="glass absolute bottom-0 left-1/2 w-[70%] -translate-x-1/2 rounded-[26px] p-5"
-          >
+          <div className="glass absolute bottom-0 left-1/2 w-[70%] -translate-x-1/2 rounded-[26px] p-5">
             <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-faint">Send</span>
             <div className="mt-3 flex items-center gap-2 rounded-xl bg-white/70 px-3 py-2.5 font-mono text-[12.5px] text-muted">
               0x
@@ -99,7 +97,7 @@ export function Wallet() {
               <span>Base · gas from ETH</span>
               <ArrowRight className="h-4 w-4 text-primary" />
             </div>
-          </motion.div>
+          </div>
         </div>
 
         <div>

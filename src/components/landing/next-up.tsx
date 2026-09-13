@@ -1,10 +1,9 @@
 "use client";
 
-import { useRef } from "react";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import { CreditCard, LineChart, Smartphone } from "lucide-react";
 
-import { Reveal, Stagger, fadeUp } from "./motion";
+import { Reveal, Stagger, fadeUp, useLiteMotion } from "./motion";
 
 const items = [
   {
@@ -28,32 +27,19 @@ const items = [
 ];
 
 export function NextUp() {
-  const reduce = useReducedMotion();
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const glowX = useTransform(scrollYProgress, [0, 1], ["-20%", "120%"]);
+  const lite = useLiteMotion();
 
   return (
     <section id="next" className="relative mx-auto w-full max-w-6xl scroll-mt-24 px-6 py-24 lg:py-32">
-      <div
-        ref={ref}
-        className="glass iris-ring relative overflow-hidden rounded-[32px] px-6 py-12 sm:px-10 sm:py-16 lg:px-16"
-      >
-        {/* sweeping iridescent glow tied to scroll */}
-        <motion.div
-          style={{ left: glowX }}
-          className="pointer-events-none absolute top-[-40%] h-[180%] w-[40%] -translate-x-1/2 rotate-12 bg-[linear-gradient(90deg,transparent,rgba(122,92,255,0.18),rgba(255,79,216,0.18),rgba(255,154,60,0.14),transparent)] blur-2xl"
-        />
+      <div className="glass iris-ring relative overflow-hidden rounded-[32px] px-6 py-12 sm:px-10 sm:py-16 lg:px-16">
+        {/* static iridescent glow (was scroll-linked + blurred, painted every frame) */}
+        <div className="pointer-events-none absolute left-[55%] top-[-40%] h-[180%] w-[45%] -translate-x-1/2 rotate-12 bg-[linear-gradient(90deg,transparent,rgba(122,92,255,0.16),rgba(255,79,216,0.16),rgba(255,154,60,0.12),transparent)]" />
 
         <div className="relative grid grid-cols-1 gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
           <div>
             <Reveal>
               <span className="inline-flex items-center gap-2 rounded-full bg-foreground px-3 py-1.5 text-[12px] font-semibold text-white">
-                <motion.span
-                  className="h-1.5 w-1.5 rounded-full bg-iris-cyan"
-                  animate={reduce ? undefined : { opacity: [1, 0.3, 1] }}
-                  transition={{ duration: 1.6, repeat: Infinity }}
-                />
+                <span className={`h-1.5 w-1.5 rounded-full bg-iris-cyan ${lite ? "" : "animate-pulse"}`} />
                 Coming to iStonk
               </span>
             </Reveal>
@@ -83,7 +69,7 @@ export function NextUp() {
               <motion.li
                 key={it.title}
                 variants={fadeUp}
-                className="group relative flex flex-col gap-4 rounded-[22px] border border-white/80 bg-white/55 p-5 transition-transform duration-300 hover:-translate-y-1 sm:flex-row sm:items-center sm:justify-between"
+                className="group relative flex flex-col gap-4 rounded-[22px] border border-white/80 bg-white/55 p-5 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex items-start gap-4">
                   <span className="glass flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl">

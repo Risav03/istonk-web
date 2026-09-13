@@ -3,8 +3,10 @@
 import { useEffect, useId } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 
+import { useLiteMotion } from "./motion";
+
 /**
- * Glass speech-bubble mark. Pupils drift toward the cursor.
+ * Glass speech-bubble mark. Pupils drift toward the cursor (desktop pointer devices only).
  * Drop the real render at /public/brand/mascot.png and swap `<Mascot>` for an <img>
  * if you'd rather use the 3D asset; this SVG keeps the page dependency-free.
  */
@@ -18,20 +20,22 @@ export function Mascot({
   className?: string;
 }) {
   const uid = useId().replace(/:/g, "");
+  const lite = useLiteMotion();
+  const follow = track && !lite;
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
   const px = useSpring(useTransform(mx, [-1, 1], [-9, 9]), { stiffness: 120, damping: 14 });
   const py = useSpring(useTransform(my, [-1, 1], [-7, 7]), { stiffness: 120, damping: 14 });
 
   useEffect(() => {
-    if (!track) return;
+    if (!follow) return;
     const onMove = (e: PointerEvent) => {
       mx.set((e.clientX / window.innerWidth) * 2 - 1);
       my.set((e.clientY / window.innerHeight) * 2 - 1);
     };
     window.addEventListener("pointermove", onMove, { passive: true });
     return () => window.removeEventListener("pointermove", onMove);
-  }, [track, mx, my]);
+  }, [follow, mx, my]);
 
   const g = (n: string) => `url(#${uid}-${n})`;
 

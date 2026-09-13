@@ -5,7 +5,7 @@ import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 
 import { site } from "@/lib/site";
 
-import { Reveal, Stagger, fadeUp } from "./motion";
+import { Reveal, Stagger, fadeUp, useLiteMotion } from "./motion";
 
 const steps = [
   {
@@ -41,7 +41,9 @@ const steps = [
 ];
 
 export function HowItWorks() {
+  const lite = useLiteMotion();
   const ref = useRef<HTMLDivElement>(null);
+  // Rail is hidden below `sm`; on lite it just renders full so nothing ticks on scroll.
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start 80%", "end 60%"] });
   const line = useSpring(scrollYProgress, { stiffness: 90, damping: 24 });
   const lineScale = useTransform(line, [0, 1], [0, 1]);
@@ -82,7 +84,7 @@ export function HowItWorks() {
           {/* progress rail */}
           <div className="absolute left-[27px] top-2 bottom-2 hidden w-px bg-border-strong sm:block">
             <motion.div
-              style={{ scaleY: lineScale }}
+              style={{ scaleY: lite ? 1 : lineScale }}
               className="h-full w-full origin-top bg-[linear-gradient(180deg,var(--iris-blue),var(--iris-magenta),var(--iris-peach))]"
             />
           </div>
@@ -93,7 +95,7 @@ export function HowItWorks() {
                 <span className="glass iris-ring absolute left-0 top-5 hidden h-14 w-14 items-center justify-center rounded-full font-mono text-[13px] font-bold text-foreground sm:flex">
                   {s.n}
                 </span>
-                <div className="glass group flex flex-col gap-4 rounded-[22px] p-6 transition-transform duration-300 hover:-translate-y-1 sm:flex-row sm:items-start sm:justify-between">
+                <div className="glass group flex flex-col gap-4 rounded-[22px] p-6 sm:flex-row sm:items-start sm:justify-between">
                   <div className="max-w-[380px]">
                     <div className="flex items-center gap-3">
                       <span className="font-mono text-[12px] font-bold text-faint sm:hidden">{s.n}</span>

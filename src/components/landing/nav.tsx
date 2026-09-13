@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import { MessageCircle } from "lucide-react";
 
 import { site } from "@/lib/site";
@@ -16,21 +17,26 @@ const links = [
 ];
 
 export function Nav() {
-  const { scrollY } = useScroll();
-  const bg = useTransform(scrollY, [0, 80], ["rgba(255,255,255,0)", "rgba(255,255,255,0.7)"]);
-  const border = useTransform(scrollY, [0, 80], ["rgba(255,255,255,0)", "rgba(255,255,255,0.9)"]);
-  const blur = useTransform(scrollY, [0, 80], ["blur(0px)", "blur(16px)"]);
+  // A single class toggle instead of interpolating backdrop-filter on every scroll frame.
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <motion.header
-      initial={{ y: -24, opacity: 0 }}
+      initial={{ y: -16, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       className="fixed inset-x-0 top-0 z-40 flex justify-center px-4 pt-4"
     >
-      <motion.nav
-        style={{ backgroundColor: bg, borderColor: border, backdropFilter: blur }}
-        className="flex h-14 w-full max-w-6xl items-center justify-between rounded-full border px-3 pl-4 transition-shadow"
+      <nav
+        className={`flex h-14 w-full max-w-6xl items-center justify-between rounded-full border px-3 pl-4 transition-colors duration-300 ${
+          scrolled ? "glass" : "border-transparent bg-transparent"
+        }`}
       >
         <Link href="/" className="flex items-center gap-2.5">
           <Mascot size={34} track={false} />
@@ -74,7 +80,7 @@ export function Nav() {
             Text iStonk
           </a>
         </div>
-      </motion.nav>
+      </nav>
     </motion.header>
   );
 }

@@ -1,18 +1,41 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useSyncExternalStore, type ReactNode } from "react";
 import { motion, type Variants } from "framer-motion";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
+/**
+ * "Lite" motion: touch devices, small screens, or reduced-motion users.
+ * Decorative loops, parallax and pointer tracking are skipped here; one-off
+ * entrance fades still run since they're cheap and only fire once.
+ * Server-renders as lite so phones never mount the heavy path.
+ */
+const LITE_QUERY =
+  "(prefers-reduced-motion: reduce), (hover: none), (pointer: coarse), (max-width: 1023px)";
+
+function subscribe(cb: () => void) {
+  const mql = window.matchMedia(LITE_QUERY);
+  mql.addEventListener("change", cb);
+  return () => mql.removeEventListener("change", cb);
+}
+
+export function useLiteMotion(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia(LITE_QUERY).matches,
+    () => true,
+  );
+}
+
 export const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 28 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.7, ease } },
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease } },
 };
 
 export const stagger: Variants = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.09, delayChildren: 0.05 } },
+  show: { transition: { staggerChildren: 0.06 } },
 };
 
 /** Fades + lifts children into view once as they scroll on. */
@@ -38,7 +61,7 @@ export function Reveal({
         hidden: fadeUp.hidden,
         show: {
           ...(fadeUp.show as object),
-          transition: { duration: 0.7, ease, delay },
+          transition: { duration: 0.5, ease, delay },
         },
       }}
     >
@@ -79,7 +102,7 @@ export function SplitWords({ text, className }: { text: string; className?: stri
       className={className}
       initial="hidden"
       animate="show"
-      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06, delayChildren: 0.15 } } }}
+      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05, delayChildren: 0.1 } } }}
       aria-label={text}
     >
       {words.map((w, i) => (
@@ -88,7 +111,7 @@ export function SplitWords({ text, className }: { text: string; className?: stri
             className="inline-block"
             variants={{
               hidden: { y: "110%", opacity: 0 },
-              show: { y: 0, opacity: 1, transition: { duration: 0.8, ease } },
+              show: { y: 0, opacity: 1, transition: { duration: 0.6, ease } },
             }}
           >
             {w}
