@@ -13,12 +13,6 @@ export const SEND_CHANNELS: {
     href: "/app?send=imessage",
   },
   {
-    id: "text",
-    title: "Text",
-    body: "Pay with Apple Pay. We'll text their number from the web.",
-    href: "/app?send=text",
-  },
-  {
     id: "email",
     title: "Email",
     body: "Pay with Apple Pay. We'll email them with AgentMail.",
@@ -27,6 +21,7 @@ export const SEND_CHANNELS: {
 ];
 
 export function parseSendChannel(value: string | null | undefined): GiftChannel | null {
-  if (value === "imessage" || value === "text" || value === "email") return value;
+  if (value === "email") return "email";
+  if (value === "imessage" || value === "text") return "imessage";
   return null;
 }

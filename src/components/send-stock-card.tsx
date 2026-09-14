@@ -30,7 +30,7 @@ export function SendStockCard({
   onSent: () => Promise<void>;
   onReauth: () => void;
 }) {
-  const [channelId, setChannelId] = useState<GiftChannel>(channel ?? "text");
+  const [channelId, setChannelId] = useState<GiftChannel>(channel ?? "imessage");
   const [stocks, setStocks] = useState<StockOffer[]>([]);
   const [contactId, setContactId] = useState<string>("");
   const [name, setName] = useState("");
@@ -118,7 +118,7 @@ export function SendStockCard({
         subtitle={CHANNEL_HINT[channelId]}
       />
       <div className="flex flex-col gap-4 px-5 pb-5">
-        <div className="grid grid-cols-3 gap-1.5 rounded-[12px] bg-chip p-1">
+        <div className="grid grid-cols-2 gap-1.5 rounded-[12px] bg-chip p-1">
           {SEND_CHANNELS.map((item) => (
             <button
               key={item.id}

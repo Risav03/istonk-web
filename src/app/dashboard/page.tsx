@@ -223,7 +223,7 @@ export default async function DashboardPage() {
 
         <p className="text-[13px] text-muted">
           Want to send a stock?{" "}
-          <Link href="/app?send=text" className="font-medium text-primary hover:text-primary-hover">
+          <Link href="/app?send=imessage" className="font-medium text-primary hover:text-primary-hover">
             Send from your account
           </Link>
         </p>
