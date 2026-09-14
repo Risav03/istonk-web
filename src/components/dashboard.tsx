@@ -120,6 +120,18 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
   }, [held, pending]);
   const prices = useUsdPrices(priceIds);
   const ethUsd = wallet ? amountUsd(weiToEth(wallet.ethWei), prices.eth) : null;
+  // Sum of the $ figures shown in Holdings. Unpriced coins (mostly fresh
+  // launches) show no $ there, so they add nothing here either.
+  const totalUsd = useMemo(() => {
+    // No price response yet (or it failed): fall back to the ETH figure rather
+    // than flashing "$0.00" for a wallet that clearly holds something.
+    if (!wallet || prices.eth == null) return null;
+    let sum = ethUsd ?? 0;
+    for (const row of held) {
+      sum += amountUsd(Number(row.amount), prices[row.token.toLowerCase()]) ?? 0;
+    }
+    return sum;
+  }, [wallet, ethUsd, held, prices]);
 
   return (
     <div className="flex min-h-[100dvh] flex-col">
@@ -128,7 +140,7 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
       <main className="mx-auto flex w-full max-w-[1040px] flex-col gap-10 px-5 pb-20 pt-10 sm:pt-12">
         {wallet?.linked === false ? <LinkPhoneBanner /> : null}
 
-        <BalanceHero wallet={wallet} coinCount={held.length} ethUsd={ethUsd} />
+        <BalanceHero wallet={wallet} coinCount={held.length} totalUsd={totalUsd} />
 
         <div className="grid gap-6 md:grid-cols-2">
           <Holdings wallet={wallet} held={held} launches={launches} prices={prices} />
@@ -249,42 +261,49 @@ function TopBar({
   );
 }
 
+const HERO_FIGURE =
+  "whitespace-nowrap font-mono text-[44px] font-medium leading-none tracking-[-0.03em] tabular sm:text-[56px]";
+
 function BalanceHero({
   wallet,
   coinCount,
-  ethUsd,
+  totalUsd,
 }: {
   wallet: WalletInfo | null;
   coinCount: number;
-  ethUsd: number | null;
+  /** Sum of the $ values shown in Holdings; null until wallet + prices load. */
+  totalUsd: number | null;
 }) {
   const [showDeposit, setShowDeposit] = useState(false);
-  const usdLabel = formatUsd(ethUsd);
+  const totalLabel = formatUsd(totalUsd);
   return (
     <section className="flex flex-col gap-5">
       <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
         <div className="flex flex-col gap-2.5">
           <span className="text-[13px] text-muted">iStonk wallet · Base</span>
           <div className="flex items-baseline gap-3">
-            {wallet ? (
-              <CompactDecimal
-                as="eth"
-                value={weiToEth(wallet.ethWei)}
-                className="whitespace-nowrap font-mono text-[44px] font-medium leading-none tracking-[-0.03em] tabular sm:text-[56px]"
-              />
-            ) : (
+            {!wallet ? (
               <span className="flex h-[44px] items-center sm:h-[56px]">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </span>
+            ) : totalLabel ? (
+              <span className={HERO_FIGURE}>{totalLabel}</span>
+            ) : (
+              <>
+                <CompactDecimal as="eth" value={weiToEth(wallet.ethWei)} className={HERO_FIGURE} />
+                <span className="text-xl text-muted">ETH</span>
+              </>
             )}
-            <span className="text-xl text-muted">ETH</span>
           </div>
-          {usdLabel ? (
-            <span className="font-mono text-[15px] text-muted tabular">{usdLabel}</span>
+          {wallet && totalLabel ? (
+            <span className="flex items-baseline gap-1.5 font-mono text-[15px] text-muted tabular">
+              <CompactDecimal as="eth" value={weiToEth(wallet.ethWei)} />
+              <span>ETH for gas</span>
+            </span>
           ) : null}
           <span className="text-sm text-muted">
             {coinCount > 0
-              ? `plus ${coinCount} coin${coinCount === 1 ? "" : "s"} you launched, held in this wallet`
+              ? `${coinCount} coin${coinCount === 1 ? "" : "s"} held in this wallet, plus ETH`
               : "Coins you launch and fees you collect land here"}
           </span>
         </div>
