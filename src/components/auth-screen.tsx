@@ -35,11 +35,11 @@ export function AuthScreen(props: Props) {
             }
           />
         ) : phase === "linking" || phase === "checking" ? (
-          <Heading title="Opening your wallet" body="One sec." />
+          <Heading title="Opening your account" body="One sec." />
         ) : (
           <Heading
-            title="Open your iStonk wallet"
-            body="Use the email you signed up with when iStonk texted you a wallet. We will send a one-time code."
+            title="Open your iStonk account"
+            body="Use the email you signed up with when iStonk texted you an account. We will send a one-time code."
           />
         )}
       </div>
@@ -56,7 +56,7 @@ export function AuthScreen(props: Props) {
 
       {phase === "email" || phase === "error" ? (
         <p className="text-xs leading-relaxed text-faint">
-          No wallet yet? Text iStonk on iMessage and say <span className="font-mono text-muted">connect</span>. It
+          No account yet? Text iStonk on iMessage and say <span className="font-mono text-muted">connect</span>. It
           will send you here.
         </p>
       ) : null}

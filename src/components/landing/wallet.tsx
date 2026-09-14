@@ -12,7 +12,7 @@ import { Reveal, Stagger, fadeUp, useLiteMotion } from "./motion";
 const points = [
   {
     icon: Mail,
-    title: "Email in, wallet out",
+    title: "Email in, account out",
     body: "A Coinbase embedded smart account on Base. Sign in with a one-time code. No extension, no seed phrase.",
   },
   {
@@ -23,12 +23,12 @@ const points = [
   {
     icon: Coins,
     title: "Creator fees, yours",
-    body: "Every coin you launch routes trading fees to your wallet. See what's claimable and collect it all in one tap.",
+    body: "Every coin you launch routes trading fees to your account. See what's claimable and collect it all in one tap.",
   },
   {
     icon: Send,
     title: "Hold it, send it",
-    body: "Balances, holdings and launch history in one place. Send ETH or any coin to another wallet on Base.",
+    body: "Balances, holdings and launch history in one place. Send ETH or any coin to another account on Base.",
   },
 ];
 
@@ -102,18 +102,18 @@ export function Wallet() {
 
         <div>
           <Reveal>
-            <span className="text-[12px] font-semibold uppercase tracking-[0.18em] text-primary">The wallet</span>
+            <span className="text-[12px] font-semibold uppercase tracking-[0.18em] text-primary">The account</span>
           </Reveal>
           <Reveal delay={0.05}>
             <h2 className="mt-3 text-[36px] font-extrabold leading-[1.02] tracking-[-0.03em] sm:text-[48px]">
-              Your wallet.
+              Your account.
               <br />
               <span className="text-iris">Your fees.</span>
             </h2>
           </Reveal>
           <Reveal delay={0.1}>
             <p className="mt-5 max-w-[460px] text-[16px] leading-relaxed text-muted">
-              iStonk never holds your coins. The bot launches from a wallet only you control, and this
+              iStonk never holds your coins. The bot launches from an account only you control, and this
               site is where you see it, claim from it and send from it.
             </p>
           </Reveal>
@@ -133,7 +133,7 @@ export function Wallet() {
               href={site.links.app}
               className="mt-8 inline-flex h-11 items-center gap-2 rounded-full bg-foreground px-5 text-[14px] font-semibold text-white transition-transform hover:-translate-y-0.5"
             >
-              Open your wallet
+              Open your account
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Reveal>

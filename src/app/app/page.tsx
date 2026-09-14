@@ -6,8 +6,8 @@ import { AppClient } from "./app-client";
 export const dynamic = "force-dynamic";
 
 export const metadata = pageMetadata({
-  title: "Wallet",
-  description: "Balances, holdings, claimable creator fees and launches for your iStonk wallet.",
+  title: "Account",
+  description: "Balances, holdings, claimable creator fees and launches for your iStonk account.",
   path: "/app",
   index: false,
 });

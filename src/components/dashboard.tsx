@@ -175,7 +175,7 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
 
         {reauth ? (
           <p className="text-[13px] text-muted">
-            Your wallet authorization expired. Text iStonk{" "}
+            Your account authorization expired. Text iStonk{" "}
             <span className="font-mono">connect</span> to renew it, then try
             again.
           </p>
@@ -196,10 +196,10 @@ function LinkPhoneBanner() {
     <Card accent className="gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-col gap-1">
         <p className="text-[14px] font-semibold text-foreground">
-          Link your phone number to this wallet
+          Link your phone number to this account
         </p>
         <p className="text-[13px] leading-relaxed text-muted">
-          Stock sent to your number can&apos;t reach this wallet yet — it waits in
+          Stock sent to your number can&apos;t reach this account yet — it waits in
           escrow instead. Text iStonk <span className="font-mono">connect</span> and
           sign in with the same email to link it.
         </p>
@@ -289,7 +289,7 @@ function BalanceHero({
     <section className="flex flex-col gap-5">
       <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
         <div className="flex flex-col gap-2.5">
-          <span className="text-[13px] text-muted">iStonk wallet · Base</span>
+          <span className="text-[13px] text-muted">iStonk account · Base</span>
           <div className="flex items-baseline gap-3">
             {!wallet ? (
               <span className="flex h-[44px] items-center sm:h-[56px]">
@@ -312,7 +312,7 @@ function BalanceHero({
           ) : null}
           <span className="text-sm text-muted">
             {coinCount > 0
-              ? `${coinCount} coin${coinCount === 1 ? "" : "s"} held in this wallet, plus ETH`
+              ? `${coinCount} coin${coinCount === 1 ? "" : "s"} held in this account, plus ETH`
               : "Coins you launch and fees you collect land here"}
           </span>
         </div>

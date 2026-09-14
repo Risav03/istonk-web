@@ -12,7 +12,7 @@ const thread: Msg[] = [
   { from: "you", text: "pizza.png", media: true },
   { from: "bot", text: "got it. say confirm to launch" },
   { from: "you", text: "confirm" },
-  { from: "bot", text: "$PIZZA is live on stonks exchange. creator fees go to your wallet.\nthestonks.exchange/token/0x…" },
+  { from: "bot", text: "$PIZZA is live on stonks exchange. creator fees go to your account.\nthestonks.exchange/token/0x…" },
 ];
 
 const BEAT = 1400;

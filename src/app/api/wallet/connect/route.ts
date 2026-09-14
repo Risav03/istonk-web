@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("s")?.trim() ?? "";
   const host = agentHost();
   if (!host) {
-    return NextResponse.json({ error: "Wallet setup is not configured (set AGENT_API_HOST)." }, { status: 500 });
+    return NextResponse.json({ error: "Account setup is not configured (set AGENT_API_HOST)." }, { status: 500 });
   }
   try {
     const endpoint = new URL("/api/app/wallet/connect", host.replace(/\/$/, ""));
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     const data = await res.json().catch(() => ({}));
     return NextResponse.json(data, { status: res.status, headers: { "cache-control": "no-store" } });
   } catch (err) {
-    return NextResponse.json(agentUnreachableError(err, "Couldn't reach wallet setup."), { status: 503 });
+    return NextResponse.json(agentUnreachableError(err, "Couldn't reach account setup."), { status: 503 });
   }
 }
 
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const host = agentHost();
   if (!host) {
-    return NextResponse.json({ error: "Wallet setup is not configured (set AGENT_API_HOST)." }, { status: 500 });
+    return NextResponse.json({ error: "Account setup is not configured (set AGENT_API_HOST)." }, { status: 500 });
   }
   try {
     const res = await fetch(new URL("/api/app/wallet/connect/complete", host.replace(/\/$/, "")), {
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(data, { status: res.status });
   } catch (err) {
     return NextResponse.json(
-      { error: "Couldn't finish wallet setup.", detail: err instanceof Error ? err.message : String(err) },
+      { error: "Couldn't finish account setup.", detail: err instanceof Error ? err.message : String(err) },
       { status: 503 },
     );
   }

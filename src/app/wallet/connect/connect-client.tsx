@@ -30,7 +30,7 @@ export function ConnectClient({ sessionToken }: { sessionToken: string }) {
   if (!PROJECT_ID) {
     return (
       <Shell>
-        <StatusBlock icon="error" message="Wallet setup is not configured (missing project id)." />
+        <StatusBlock icon="error" message="Account setup is not configured (missing project id)." />
       </Shell>
     );
   }
@@ -158,7 +158,7 @@ function ConnectInner({ sessionToken }: { sessionToken: string }) {
     const t = setTimeout(() => {
       if (!finishingRef.current) {
         setPhase("error");
-        setMessage("Your wallet is taking longer than expected. Tap the link again to retry.");
+        setMessage("Your account is taking longer than expected. Tap the link again to retry.");
       }
     }, 45_000);
     return () => clearTimeout(t);
@@ -200,7 +200,7 @@ function ConnectInner({ sessionToken }: { sessionToken: string }) {
       ) : phase === "error" ? (
         <StatusBlock icon="error" message={message} />
       ) : phase === "finishing" ? (
-        <StatusBlock icon="spin" message="Setting up your iStonk wallet…" />
+        <StatusBlock icon="spin" message="Setting up your iStonk account…" />
       ) : phase === "otp" ? (
         <div className="w-full max-w-sm">
           <p className="mb-3 text-sm text-[var(--muted)]">Enter the 6-digit code we emailed you.</p>
@@ -225,7 +225,7 @@ function ConnectInner({ sessionToken }: { sessionToken: string }) {
       ) : (
         <div className="w-full max-w-sm">
           <p className="mb-3 text-sm text-[var(--muted)]">
-            Sign in with your email — no wallet apps, no seed phrases.
+            Sign in with your email — no account apps, no seed phrases.
           </p>
           <input
             type="email"
@@ -256,7 +256,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-[var(--primary)]/30 bg-[var(--primary)]/10 text-[var(--primary)]">
         <Wallet className="h-7 w-7" />
       </div>
-      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Set up your iStonk wallet</h1>
+      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Set up your iStonk account</h1>
       {children}
     </section>
   );

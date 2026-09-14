@@ -35,7 +35,7 @@ const steps = [
   {
     n: "05",
     title: "Confirm",
-    body: "Your wallet signs the launch. Fees route to you, on-chain, from block one.",
+    body: "Your account signs the launch. Fees route to you, on-chain, from block one.",
     you: "confirm",
   },
 ];

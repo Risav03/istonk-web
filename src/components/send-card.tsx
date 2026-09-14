@@ -107,9 +107,9 @@ export function SendCard({
   return (
     <section className="grid items-start gap-6 md:grid-cols-2">
       <div className="flex flex-col gap-2 pt-1">
-        <h2 className="text-sm font-semibold">Send to another wallet</h2>
+        <h2 className="text-sm font-semibold">Send to another account</h2>
         <p className="max-w-[380px] text-[13px] leading-relaxed text-muted">
-          Move ETH or any coin you hold out of your iStonk wallet to an address
+          Move ETH or any coin you hold out of your iStonk account to an address
           you control. Sends go on Base and gas comes out of your ETH.
         </p>
       </div>
@@ -315,7 +315,7 @@ function ReviewDialog({
             <span className="font-mono text-[13px] text-muted tabular">{sendUsdLabel}</span>
           ) : null}
           <span className="text-[13px] text-muted">
-            from your iStonk wallet
+            from your iStonk account
           </span>
         </div>
         <dl className="flex flex-col border-t border-hairline">

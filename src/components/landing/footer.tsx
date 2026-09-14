@@ -99,7 +99,7 @@ export function Footer() {
             Dashboard
           </Link>
           <Link href={site.links.app} className="hover:text-foreground">
-            Wallet
+            Account
           </Link>
           <a
             href={site.links.stonks}

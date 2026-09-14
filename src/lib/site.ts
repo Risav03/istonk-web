@@ -24,7 +24,7 @@ export const site = {
   url: siteUrl,
   tagline: "Launch a coin from iMessage.",
   description:
-    "Text iStonk a name, a ticker, a photo and a stock to pair it with. It goes live on Stonks Exchange on Base, and creator fees land in your wallet.",
+    "Text iStonk a name, a ticker, a photo and a stock to pair it with. It goes live on Stonks Exchange on Base, and creator fees land in your account.",
   keywords: [
     "iStonks",
     "iStonk",

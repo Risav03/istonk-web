@@ -9,19 +9,19 @@ const items = [
   {
     icon: CreditCard,
     title: "Fund with Apple Pay",
-    body: "Top up your iStonk wallet with Apple Pay or a card through Coinbase Onramp. Or send USDC to your address, same as today.",
+    body: "Top up your iStonk account with Apple Pay or a card through Coinbase Onramp. Or send USDC to your address, same as today.",
     you: "add $50",
   },
   {
     icon: LineChart,
     title: "Buy tokenized stocks",
-    body: "Coinbase tokenized equities on Base: AAPL, NVDA, META, GOOGL and more. Quote, confirm, hold it in the same wallet as your coins.",
+    body: "Coinbase tokenized equities on Base: AAPL, NVDA, META, GOOGL and more. Quote, confirm, hold it in the same account as your coins.",
     you: "buy $25 of NVDA",
   },
   {
     icon: Smartphone,
     title: "Send stock to a phone number",
-    body: "Gift a share to anyone in your contacts. They get a text, tap once, and claim it. No wallet needed to receive.",
+    body: "Gift a share to anyone in your contacts. They get a text, tap once, and claim it. No account needed to receive.",
     you: "send mom 1 Apple stock",
   },
 ];
@@ -53,13 +53,13 @@ export function NextUp() {
             <Reveal delay={0.1}>
               <p className="mt-5 max-w-[440px] text-[16px] leading-relaxed text-muted">
                 The next leg brings real onramps and real equities into the same iMessage thread. Fund
-                your wallet, buy a tokenized stock, and send it to a phone number, all in the voice you
+                your account, buy a tokenized stock, and send it to a phone number, all in the voice you
                 already use with iStonk.
               </p>
             </Reveal>
             <Reveal delay={0.15}>
               <p className="mt-4 text-[13px] text-faint">
-                Shipping on Basemate first, then landing here. Same wallet, same number.
+                Shipping on Basemate first, then landing here. Same account, same number.
               </p>
             </Reveal>
           </div>

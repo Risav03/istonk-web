@@ -1,0 +1,27 @@
+---
+description: User-facing product language uses Account, never wallet
+alwaysApply: true
+---
+
+# Account, not wallet
+
+In all **user-facing** copy (iMessage, web UI, API error messages shown to users, soul/prompts, landing pages), call the user's iStonk smart account an **Account**. Never say "wallet" to the user.
+
+## Prefer
+
+- "your iStonk account"
+- "set up your account" / "connect your account"
+- "from your account" / "in your account"
+- "Open your account" / "Account" in nav
+- Matchers should accept both `account` and legacy `wallet` phrasing from users
+
+## Keep as code / infra (do not rename for this rule)
+
+- Identifiers: `WalletAdapter`, `EmbeddedWallet`, `walletAddress`, `kind: "wallet"`, `WalletInfo`, `api.wallet()`, component names like `Wallet()`
+- Routes and APIs: `/wallet/connect`, `/api/app/stonks/wallet`, `/#wallet` anchors
+- DB columns, CDP Portal product names ("Embedded Wallet" in Coinbase docs)
+- On-chain slang in internal comments when referring to EOAs generally is fine; product copy is not
+
+## When writing new copy
+
+If you catch yourself typing "wallet" for something the user sees, rewrite to **account** before shipping.

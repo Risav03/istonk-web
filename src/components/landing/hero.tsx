@@ -47,7 +47,7 @@ export function Hero() {
         >
           Text iStonk a name, a ticker, a photo and a stock to pair it with. It goes live on{" "}
           <span className="font-semibold text-foreground">Stonks Exchange</span>, and creator fees land
-          in <span className="font-semibold text-foreground">your</span> wallet. No app, no seed phrase.
+          in <span className="font-semibold text-foreground">your</span> account. No app, no seed phrase.
         </motion.p>
 
         <motion.div
@@ -68,7 +68,7 @@ export function Hero() {
             href={site.links.app}
             className="glass inline-flex h-12 items-center gap-2 rounded-full px-5 text-[15px] font-semibold text-foreground transition-transform hover:-translate-y-0.5"
           >
-            Open your wallet
+            Open your account
             <ArrowRight className="h-4 w-4 text-muted transition-transform group-hover:translate-x-0.5" />
           </Link>
         </motion.div>
@@ -80,7 +80,7 @@ export function Hero() {
           className="text-[13px] text-faint"
         >
           Say <span className="font-mono text-muted">launch</span> to start, or{" "}
-          <span className="font-mono text-muted">connect</span> if you already have a wallet.{" "}
+          <span className="font-mono text-muted">connect</span> if you already have an account.{" "}
           <Link href={site.links.dashboard} className="font-medium text-primary hover:text-primary-hover">
             See every coin launched so far →
           </Link>

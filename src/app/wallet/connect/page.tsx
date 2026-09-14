@@ -3,8 +3,8 @@ import { pageMetadata } from "@/lib/metadata";
 import { ConnectClient } from "./connect-client";
 
 export const metadata = pageMetadata({
-  title: "Set up your wallet",
-  description: "Sign in with email to create your iStonk wallet — no seed phrases.",
+  title: "Set up your account",
+  description: "Sign in with email to create your iStonk account — no seed phrases.",
   path: "/wallet/connect",
   index: false,
 });

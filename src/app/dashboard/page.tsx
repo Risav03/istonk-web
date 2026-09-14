@@ -112,7 +112,7 @@ export default async function DashboardPage() {
                 value={latestShort ?? "—"}
                 note={
                   airdrops.latest.length > 0
-                    ? `${airdrops.latest.length} wallet${airdrops.latest.length === 1 ? "" : "s"} paid`
+                    ? `${airdrops.latest.length} account${airdrops.latest.length === 1 ? "" : "s"} paid`
                     : "No sent airdrops yet"
                 }
               />
@@ -139,7 +139,7 @@ export default async function DashboardPage() {
                   <>
                     <div className="grid grid-cols-[auto_1fr_auto_auto] gap-3 px-4 py-2.5 text-[11px] uppercase tracking-[0.06em] text-faint">
                       <span className="w-8">#</span>
-                      <span>Wallet</span>
+                      <span>Account</span>
                       <span className="text-right">AAPL</span>
                       <span className="text-right">Tx</span>
                     </div>
@@ -229,7 +229,7 @@ export default async function DashboardPage() {
           </a>
           {" · "}
           <Link href={site.links.app} className="font-medium text-primary hover:text-primary-hover">
-            Open wallet
+            Open account
           </Link>
         </p>
       </main>
