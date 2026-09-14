@@ -6,6 +6,7 @@ import { Check, Copy, Loader2 } from "lucide-react";
 import {
   api,
   ApiError,
+  type ActivityItem,
   type FeeRow,
   type LaunchRow,
   type WalletInfo,
@@ -37,6 +38,7 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [launches, setLaunches] = useState<LaunchRow[]>([]);
   const [held, setHeld] = useState<FeeRow[]>([]);
   const [pending, setPending] = useState<FeeRow[]>([]);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [claimedTx, setClaimedTx] = useState<string | null>(null);
@@ -44,7 +46,11 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
 
   const load = useCallback(async () => {
     setError(null);
-    const [walletBody, feeBody] = await Promise.all([api.wallet(), api.fees()]);
+    const [walletBody, feeBody, activityBody] = await Promise.all([
+      api.wallet(),
+      api.fees(),
+      api.activity().catch(() => ({ items: [] as ActivityItem[] })),
+    ]);
     setWallet(walletBody);
     setLaunches(Array.isArray(feeBody.launches) ? feeBody.launches : []);
     setHeld(
@@ -57,6 +63,7 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
         (row) => row.claimable && Number(row.amount) > 0,
       ),
     );
+    setActivity(Array.isArray(activityBody.items) ? activityBody.items : []);
   }, []);
 
   useEffect(() => {
@@ -156,6 +163,8 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
         </div>
 
         <Launches launches={launches} pending={pending} />
+
+        <ActivityFeed items={activity} />
 
         <SendCard
           assets={sendAssets}
@@ -633,6 +642,56 @@ function Launches({
               );
             })}
           </>
+        )}
+      </Card>
+    </section>
+  );
+}
+
+function ActivityFeed({ items }: { items: ActivityItem[] }) {
+  return (
+    <section className="flex flex-col gap-3.5">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-sm font-semibold">Activity</h2>
+        <p className="text-xs text-muted">Stock sends from iMessage and Apple Pay</p>
+      </div>
+      <Card>
+        {items.length === 0 ? (
+          <div className="px-5 py-6 text-[13px] text-muted">
+            No stock sends yet. Text iStonk and say send $2 of Apple to a friend.
+          </div>
+        ) : (
+          items.map((row) => {
+            const when = timeAgo(row.createdAt);
+            const directionLabel = row.direction === "sent" ? "Sent" : "Received";
+            const statusTone = row.status === "sent" ? "primary" : undefined;
+            return (
+              <Row key={row.id}>
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="truncate text-sm font-medium">
+                    {directionLabel} {row.amountLabel}
+                  </span>
+                  <span className="truncate text-xs text-muted">
+                    {row.direction === "sent" ? "to" : "from"} {row.counterparty}
+                    {when ? ` · ${when}` : ""}
+                  </span>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Pill tone={statusTone}>{row.status}</Pill>
+                  {row.txHash ? (
+                    <a
+                      href={`https://basescan.org/tx/${row.txHash}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary-hover"
+                    >
+                      tx <ExternalIcon />
+                    </a>
+                  ) : null}
+                </div>
+              </Row>
+            );
+          })
         )}
       </Card>
     </section>

@@ -46,6 +46,21 @@ export type TransferRequest = {
 
 export type TransferResult = { txHash: string };
 
+export type ActivityItem = {
+  id: string;
+  direction: "sent" | "received";
+  amountLabel: string;
+  symbol: string;
+  counterparty: string;
+  txHash: string | null;
+  status: "sent" | "pending" | "failed";
+  createdAt: string;
+};
+
+export type ActivitySnapshot = {
+  items: ActivityItem[];
+};
+
 export class ApiError extends Error {
   status: number;
   needsReauth: boolean;
@@ -76,6 +91,7 @@ function post<T>(path: string, payload: unknown): Promise<T> {
 export const api = {
   wallet: () => request<WalletInfo>("/api/app/stonks/wallet"),
   fees: () => request<FeesSnapshot>("/api/app/stonks/fees"),
+  activity: () => request<ActivitySnapshot>("/api/app/stonks/activity"),
   claim: () => post<{ txHash: string }>("/api/app/stonks/fees/claim", {}),
   transfer: (payload: TransferRequest) => post<TransferResult>("/api/app/stonks/transfer", payload),
   linkSession: (accessToken: string) =>
