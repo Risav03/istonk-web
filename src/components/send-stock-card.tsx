@@ -195,7 +195,7 @@ export function SendStockCard({
           </Field>
         )}
 
-        {needsEmail || email || channelId === "email" ? (
+        {needsEmail || Boolean(email) ? (
           <Field label={needsEmail ? "Email" : "Email (optional)"}>
             <input
               className={inputClass}

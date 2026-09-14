@@ -3,27 +3,40 @@
 import { useRef } from "react";
 import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 
+import { site } from "@/lib/site";
+
 import { Reveal, Stagger, fadeUp, useLiteMotion } from "./motion";
-import { SendStocksButton } from "./send-stocks-button";
 
 const steps = [
   {
     n: "01",
-    title: "Pick who",
-    body: "A contact, their number, or their email. iMessage, text, or AgentMail.",
-    you: "Mom · +1… or email",
+    title: "Name it",
+    body: "Two to fifty characters. Give a ticker alone and that becomes the name.",
+    you: "pizza coin",
   },
   {
     n: "02",
-    title: "Pay with Apple Pay",
-    body: "Checkout on the web. Apple Pay. That's it.",
-    you: "Apple Pay",
+    title: "Ticker",
+    body: "Two to eleven letters or numbers. Skip it and iStonk guesses one from the name.",
+    you: "$PIZZA",
   },
   {
     n: "03",
-    title: "They claim it",
-    body: "They get a text or an email, tap once, and the stock is theirs.",
-    you: "claimed",
+    title: "Picture",
+    body: "Send a photo or a link, up to 5 MB. Or say skip and the Stonks logo fills in.",
+    you: "pizza.png",
+  },
+  {
+    n: "04",
+    title: "Pair it",
+    body: "Any live asset in the registry: AAPL, NVDA, TSLA, ETH, STONKEX. Written any way you like.",
+    you: "vs AAPL",
+  },
+  {
+    n: "05",
+    title: "Confirm",
+    body: "Your account signs the launch. Fees route to you, on-chain, from block one.",
+    you: "confirm",
   },
 ];
 
@@ -35,7 +48,7 @@ export function HowItWorks() {
   const lineScale = useTransform(line, [0, 1], [0, 1]);
 
   return (
-    <section id="how" className="relative mx-auto w-full max-w-6xl scroll-mt-24 px-6 py-24 lg:py-32">
+    <section id="how" className="relative mx-auto w-full max-w-6xl scroll-mt-24 overflow-x-hidden px-6 py-24 lg:py-32">
       <div className="grid grid-cols-1 gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
         <div className="lg:sticky lg:top-32 lg:self-start">
           <Reveal>
@@ -45,38 +58,43 @@ export function HowItWorks() {
           </Reveal>
           <Reveal delay={0.05}>
             <h2 className="mt-3 text-[36px] font-extrabold leading-[1.02] tracking-[-0.03em] sm:text-[48px]">
-              Three steps.
+              Five texts.
               <br />
-              <span className="text-iris">They get the stock.</span>
+              <span className="text-iris">One live coin.</span>
             </h2>
           </Reveal>
           <Reveal delay={0.1}>
             <p className="mt-5 max-w-[420px] text-[16px] leading-relaxed text-muted">
-              Pick a channel, pay on the web, and iStonk delivers it.
+              The whole wizard runs in plain text. Say everything in one message and iStonk skips
+              straight to confirm. Change your mind mid-way? Say cancel.
             </p>
           </Reveal>
           <Reveal delay={0.15}>
-            <div className="mt-8">
-              <SendStocksButton variant="dark" />
-            </div>
+            <a
+              href={site.bot.launchSmsHref}
+              className="mt-8 inline-flex h-11 items-center rounded-full bg-foreground px-5 text-[14px] font-semibold text-white transition-transform hover:-translate-y-0.5"
+            >
+              Launch It
+            </a>
           </Reveal>
         </div>
 
         <div ref={ref} className="relative">
-          <div className="absolute left-[27px] top-2 bottom-2 hidden w-px bg-border-strong sm:block">
+          <div className="absolute left-8 top-8 bottom-8 z-0 hidden w-px bg-border-strong sm:block">
             <motion.div
               style={{ scaleY: lite ? 1 : lineScale }}
               className="h-full w-full origin-top bg-[linear-gradient(180deg,var(--iris-blue),var(--iris-magenta),var(--iris-peach))]"
             />
           </div>
 
-          <Stagger as="ol" className="flex flex-col gap-4">
+          <Stagger as="ol" className="relative z-10 flex flex-col gap-4">
             {steps.map((s) => (
-              <motion.li key={s.n} variants={fadeUp} className="relative sm:pl-20">
-                <span className="glass iris-ring absolute left-0 top-5 hidden h-14 w-14 items-center justify-center rounded-full font-mono text-[13px] font-bold text-foreground sm:flex">
-                  {s.n}
+              <motion.li key={s.n} variants={fadeUp} className="relative">
+                <span className="pointer-events-none absolute left-1 top-5 z-0 hidden h-14 w-14 items-center justify-center rounded-full font-mono text-[13px] font-bold text-foreground sm:flex">
+                  <span className="glass iris-ring absolute inset-0 rounded-full" />
+                  <span className="relative">{s.n}</span>
                 </span>
-                <div className="glass group flex flex-col gap-4 rounded-[22px] p-6 sm:flex-row sm:items-start sm:justify-between">
+                <div className="group relative z-10 ml-0 flex flex-col gap-4 rounded-[22px] p-6 glass sm:ml-8 sm:flex-row sm:items-start sm:justify-between">
                   <div className="max-w-[380px]">
                     <div className="flex items-center gap-3">
                       <span className="font-mono text-[12px] font-bold text-faint sm:hidden">{s.n}</span>

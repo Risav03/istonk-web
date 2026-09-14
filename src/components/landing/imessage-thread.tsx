@@ -50,17 +50,19 @@ export function IMessageThread({ className }: { className?: string }) {
 
   return (
     <div ref={ref} className={className}>
-      <div className="glass iris-ring flex w-[300px] flex-col gap-2 rounded-[28px] p-4 sm:w-[340px]">
-        <div className="mb-1 flex items-center justify-center gap-2 text-[11px] font-medium text-faint">
+      <div className="glass iris-ring flex h-[420px] w-[300px] shrink-0 flex-col overflow-hidden rounded-[28px] p-4 sm:h-[440px] sm:w-[340px]">
+        <div className="mb-2 flex shrink-0 items-center justify-center gap-2 text-[11px] font-medium text-faint">
           <span className="h-1.5 w-1.5 rounded-full bg-primary" />
           iMessage · iStonk
         </div>
-        <AnimatePresence initial={false}>
-          {thread.slice(0, shown).map((m, i) => (
-            <Bubble key={`${i}-${m.text}`} msg={m} />
-          ))}
-          {typing ? <Typing key="typing" /> : null}
-        </AnimatePresence>
+        <div className="flex min-h-0 flex-1 flex-col justify-end gap-2 overflow-hidden">
+          <AnimatePresence initial={false}>
+            {thread.slice(0, shown).map((m, i) => (
+              <Bubble key={`${i}-${m.text}`} msg={m} />
+            ))}
+            {typing ? <Typing key="typing" /> : null}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
@@ -70,11 +72,10 @@ function Bubble({ msg }: { msg: Msg }) {
   const you = msg.from === "you";
   return (
     <motion.div
-      layout="position"
-      initial={{ opacity: 0, y: 10, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, transition: { duration: 0.15 } }}
-      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, transition: { duration: 0.12 } }}
+      transition={{ duration: 0.2 }}
       className={`flex ${you ? "justify-end" : "justify-start"}`}
     >
       {msg.media ? (
@@ -100,10 +101,9 @@ function Bubble({ msg }: { msg: Msg }) {
 function Typing() {
   return (
     <motion.div
-      layout="position"
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, transition: { duration: 0.12 } }}
+      exit={{ opacity: 0, transition: { duration: 0.1 } }}
       className="flex justify-start"
     >
       <div className="flex items-center gap-1 rounded-2xl rounded-bl-md bg-white/85 px-3.5 py-3">
