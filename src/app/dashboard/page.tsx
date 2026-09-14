@@ -17,7 +17,6 @@ import { fetchDexScreenerToken } from "@/lib/dex-token";
 import { fetchLaunches, fetchTokensLaunched } from "@/lib/launch-stats";
 import { shortAddr } from "@/lib/format";
 import { pageMetadata } from "@/lib/metadata";
-import { site } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -223,13 +222,9 @@ export default async function DashboardPage() {
         />
 
         <p className="text-[13px] text-muted">
-          Want to launch the next one?{" "}
-          <a href={site.bot.smsHref} className="font-medium text-primary hover:text-primary-hover">
-            Text iStonk
-          </a>
-          {" · "}
-          <Link href={site.links.app} className="font-medium text-primary hover:text-primary-hover">
-            Open account
+          Want to send a stock?{" "}
+          <Link href="/app?send=text" className="font-medium text-primary hover:text-primary-hover">
+            Send from your account
           </Link>
         </p>
       </main>

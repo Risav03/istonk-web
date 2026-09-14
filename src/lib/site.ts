@@ -22,26 +22,29 @@ export const site = {
   name: "iStonks",
   domain: "istonks.meme",
   url: siteUrl,
-  tagline: "Launch a coin from iMessage.",
+  tagline: "Send Stocks to Anyone, Anywhere in the World",
   description:
-    "Text iStonk a name, a ticker, a photo and a stock to pair it with. It goes live on Stonks Exchange on Base, and creator fees land in your account.",
+    "Send a stock by iMessage, text, or email. Pay with Apple Pay on the web. They claim it.",
   keywords: [
     "iStonks",
     "iStonk",
     "iMessage",
-    "Base",
-    "Stonks Exchange",
-    "token launch",
-    "creator fees",
-    "tokenized stocks",
+    "Apple Pay",
+    "send stock",
+    "text a stock",
+    "email a stock",
+    "AAPL",
+    "TSLA",
   ],
   twitter: twitterHandleFromUrl(X_URL),
   bot: {
     phoneE164: BOT_PHONE_E164,
     phonePretty: prettyPhone(BOT_PHONE_E164),
-    /** Opens Messages with the bot prefilled. Body is a suggested first message. */
-    smsHref: `sms:${BOT_PHONE_E164}&body=${encodeURIComponent("launch")}`,
-    /** Opens Messages prefilled with `connect` — links this phone to the wallet. */
+    /** Opens Messages with a send started. */
+    smsHref: `sms:${BOT_PHONE_E164}&body=${encodeURIComponent("send $25 of AAPL")}`,
+    /** Opens Messages with a launch started. */
+    launchSmsHref: `sms:${BOT_PHONE_E164}&body=${encodeURIComponent("launch pizza coin vs AAPL")}`,
+    /** Opens Messages prefilled with `connect` — links this phone to the account. */
     connectSmsHref: `sms:${BOT_PHONE_E164}&body=${encodeURIComponent("connect")}`,
   },
   links: {

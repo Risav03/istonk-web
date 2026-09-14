@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowUpRight, MessageCircle } from "lucide-react";
 
 import { site } from "@/lib/site";
 
 import { Mascot } from "./mascot";
 import { Reveal, useLiteMotion } from "./motion";
+import { SendStocksButton } from "./send-stocks-button";
 
 function XIcon({ className }: { className?: string }) {
   return (
@@ -34,7 +34,6 @@ export function Footer() {
   const lite = useLiteMotion();
   return (
     <>
-      {/* closing CTA */}
       <section className="relative mx-auto w-full max-w-6xl px-6 pb-16 pt-8 lg:pb-24">
         <div className="relative flex flex-col items-center gap-8 overflow-hidden rounded-[36px] px-6 py-16 text-center sm:px-12 lg:py-24">
           <div className="absolute inset-0 -z-10 aurora-wash rounded-[36px] opacity-90" />
@@ -48,27 +47,26 @@ export function Footer() {
           </motion.div>
 
           <Reveal>
-            <h2 className="text-[34px] font-extrabold leading-[1] tracking-[-0.035em] sm:text-[60px]">
-              Your next coin is
+            <h2 className="text-[34px] font-extrabold leading-[1] tracking-[-0.035em] sm:text-[52px]">
+              Send stocks
               <br />
-              <span className="text-iris">one text away.</span>
+              <span className="text-iris">anywhere.</span>
             </h2>
           </Reveal>
           <Reveal delay={0.08}>
             <p className="max-w-[460px] text-[16px] leading-relaxed text-muted">
-              Save the number, say hi, and iStonk walks you through it. Follow along for launches,
-              pairs and what ships next.
+              iMessage, text, or email. Pay with Apple Pay. They claim it.
             </p>
           </Reveal>
 
           <Reveal delay={0.14} className="flex flex-wrap items-center justify-center gap-3">
-            <a
-              href={site.bot.smsHref}
-              className="inline-flex h-12 items-center gap-2.5 rounded-full bg-primary px-6 text-[15px] font-semibold text-white shadow-[0_14px_40px_-12px_rgba(47,91,255,0.75)] transition-transform hover:-translate-y-0.5"
+            <SendStocksButton />
+            <Link
+              href={site.links.app}
+              className="glass inline-flex h-12 items-center rounded-full px-5 text-[15px] font-semibold text-foreground transition-transform hover:-translate-y-0.5"
             >
-              <MessageCircle className="h-[18px] w-[18px]" />
-              Text {site.bot.phonePretty}
-            </a>
+              Your account
+            </Link>
             {socials.map((s) => (
               <a
                 key={s.label}
@@ -95,20 +93,9 @@ export function Footer() {
           <a href="/#how" className="hover:text-foreground">
             How it works
           </a>
-          <Link href={site.links.dashboard} className="hover:text-foreground">
-            Dashboard
-          </Link>
           <Link href={site.links.app} className="hover:text-foreground">
-            Account
+            Your account
           </Link>
-          <a
-            href={site.links.stonks}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 hover:text-foreground"
-          >
-            Stonks Exchange <ArrowUpRight className="h-3.5 w-3.5" />
-          </a>
           <a href={site.links.x} target="_blank" rel="noreferrer" className="hover:text-foreground">
             X
           </a>
@@ -116,7 +103,7 @@ export function Footer() {
             Telegram
           </a>
         </nav>
-        <p className="text-faint">Built on Base. Not financial advice.</p>
+        <p className="text-faint">Not financial advice.</p>
       </footer>
     </>
   );

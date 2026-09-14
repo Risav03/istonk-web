@@ -5,14 +5,17 @@ import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-mot
 
 type Msg = { from: "you" | "bot"; text: string; media?: boolean };
 
-/** Mirrors the real launch wizard: name, ticker, image, pair, confirm. */
 const thread: Msg[] = [
-  { from: "you", text: "launch pizza coin vs AAPL" },
-  { from: "bot", text: "pizza coin, $PIZZA, paired with AAPL. send a photo or say skip" },
-  { from: "you", text: "pizza.png", media: true },
-  { from: "bot", text: "got it. say confirm to launch" },
-  { from: "you", text: "confirm" },
-  { from: "bot", text: "$PIZZA is live on stonks exchange. creator fees go to your account.\nthestonks.exchange/token/0x…" },
+  { from: "you", text: "send $2 of Tesla to Mom" },
+  { from: "bot", text: "I'm going to send $2 of Tesla stock to Mom.\n\nWant to add a note? type anything, or say skip." },
+  { from: "you", text: "skip" },
+  {
+    from: "bot",
+    text: "Send $2 of Tesla stock to Mom\n\n  Total     $2.08\n  Pay with  Apple Pay",
+  },
+  { from: "you", text: "Apple Pay" },
+  { from: "bot", text: "Tap this link and pay $2.08 with Apple Pay.\n\nAfter it clears I'll send $2 of Tesla stock to Mom." },
+  { from: "bot", text: "Sent. Mom can claim it from the text." },
 ];
 
 const BEAT = 1400;
@@ -21,9 +24,8 @@ const PAUSE = 4200;
 export function IMessageThread({ className }: { className?: string }) {
   const reduce = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
-  // Only tick the conversation while it's actually on screen.
   const inView = useInView(ref, { amount: 0.3 });
-  const [shown, setShown] = useState(reduce ? thread.length : 0);
+  const [shown, setShown] = useState(reduce ? thread.length : 2);
   const [typing, setTyping] = useState(false);
 
   useEffect(() => {

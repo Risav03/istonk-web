@@ -1,24 +1,29 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Check, Copy, Loader2 } from "lucide-react";
 
 import {
   api,
   ApiError,
   type ActivityItem,
+  type ContactRow,
   type FeeRow,
   type LaunchRow,
   type WalletInfo,
 } from "@/lib/api";
 import { amountUsd, formatTokenAmount, formatUsd, shortAddr, timeAgo, weiToEth } from "@/lib/format";
+import { parseSendChannel } from "@/lib/send-channels";
 import { site } from "@/lib/site";
 import { useUsdPrices } from "@/lib/use-usd-prices";
 
 import { AmountWithUsd, CompactDecimal } from "./compact-decimal";
+import { ContactsCard } from "./contacts-card";
+import { LaunchCoinButton } from "./launch-coin-button";
 import { SendCard, type SendAsset } from "./send-card";
+import { SendStockCard } from "./send-stock-card";
 import {
-  Bubble,
   Button,
   Card,
   CardHeader,
@@ -34,11 +39,14 @@ import {
 const POST_CLAIM_REFRESH_MS = 6_000;
 
 export function Dashboard({ onLogout }: { onLogout: () => void }) {
+  const searchParams = useSearchParams();
+  const sendChannel = parseSendChannel(searchParams.get("send"));
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [launches, setLaunches] = useState<LaunchRow[]>([]);
   const [held, setHeld] = useState<FeeRow[]>([]);
   const [pending, setPending] = useState<FeeRow[]>([]);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [contacts, setContacts] = useState<ContactRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [claimedTx, setClaimedTx] = useState<string | null>(null);
@@ -46,10 +54,11 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
 
   const load = useCallback(async () => {
     setError(null);
-    const [walletBody, feeBody, activityBody] = await Promise.all([
+    const [walletBody, feeBody, activityBody, contactItems] = await Promise.all([
       api.wallet(),
       api.fees(),
       api.activity().catch(() => ({ items: [] as ActivityItem[] })),
+      api.contacts().catch(() => [] as ContactRow[]),
     ]);
     setWallet(walletBody);
     setLaunches(Array.isArray(feeBody.launches) ? feeBody.launches : []);
@@ -64,6 +73,7 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
       ),
     );
     setActivity(Array.isArray(activityBody.items) ? activityBody.items : []);
+    setContacts(Array.isArray(contactItems) ? contactItems : []);
   }, []);
 
   useEffect(() => {
@@ -149,6 +159,16 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
 
         <BalanceHero wallet={wallet} coinCount={held.length} totalUsd={totalUsd} />
 
+        <div className="grid gap-6 lg:grid-cols-2">
+          <SendStockCard
+            channel={sendChannel}
+            contacts={contacts}
+            onSent={load}
+            onReauth={() => setReauth(true)}
+          />
+          <ContactsCard contacts={contacts} onChanged={load} />
+        </div>
+
         <div className="grid gap-6 md:grid-cols-2">
           <Holdings wallet={wallet} held={held} launches={launches} prices={prices} />
           <CreatorFees
@@ -162,7 +182,12 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
           />
         </div>
 
-        <Launches launches={launches} pending={pending} />
+        <Launches
+          launches={launches}
+          pending={pending}
+          onLaunched={load}
+          onReauth={() => setReauth(true)}
+        />
 
         <ActivityFeed items={activity} />
 
@@ -541,9 +566,13 @@ function CreatorFees({
 function Launches({
   launches,
   pending,
+  onLaunched,
+  onReauth,
 }: {
   launches: LaunchRow[];
   pending: FeeRow[];
+  onLaunched: () => Promise<void>;
+  onReauth: () => void;
 }) {
   const readyFor = (row: LaunchRow) =>
     pending.filter(
@@ -555,17 +584,12 @@ function Launches({
     <section className="flex flex-col gap-3.5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-sm font-semibold">Your launches</h2>
-        <div className="flex items-center gap-2.5">
-          <span className="text-xs text-faint">
-            To launch another, text iStonk
-          </span>
-          <Bubble>launch pizza coin vs AAPL</Bubble>
-        </div>
+        <LaunchCoinButton onLaunched={onLaunched} onReauth={onReauth} />
       </div>
       <Card>
         {launches.length === 0 ? (
           <div className="px-5 py-6 text-[13px] text-muted">
-            No coins yet. Text iStonk and say launch pizza coin.
+            No coins yet. Launch one from here or in iMessage.
           </div>
         ) : (
           <>

@@ -3,21 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { MessageCircle } from "lucide-react";
 
 import { site } from "@/lib/site";
 
 import { Mascot } from "./mascot";
-
-const links = [
-  { href: "/#how", label: "How it works" },
-  { href: "/#wallet", label: "Account" },
-  { href: site.links.dashboard, label: "Dashboard" },
-  { href: "/#next", label: "What's next" },
-];
+import { SendStocksButton } from "./send-stocks-button";
 
 export function Nav() {
-  // A single class toggle instead of interpolating backdrop-filter on every scroll frame.
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -44,41 +36,22 @@ export function Nav() {
         </Link>
 
         <div className="hidden items-center gap-1 lg:flex">
-          {links.map((l) =>
-            l.href.startsWith("/") && !l.href.startsWith("/#") ? (
-              <Link
-                key={l.href}
-                href={l.href}
-                className="whitespace-nowrap rounded-full px-3.5 py-2 text-[13.5px] font-medium text-muted transition-colors hover:bg-white/60 hover:text-foreground"
-              >
-                {l.label}
-              </Link>
-            ) : (
-              <a
-                key={l.href}
-                href={l.href}
-                className="whitespace-nowrap rounded-full px-3.5 py-2 text-[13.5px] font-medium text-muted transition-colors hover:bg-white/60 hover:text-foreground"
-              >
-                {l.label}
-              </a>
-            ),
-          )}
+          <a
+            href="/#how"
+            className="whitespace-nowrap rounded-full px-3.5 py-2 text-[13.5px] font-medium text-muted transition-colors hover:bg-white/60 hover:text-foreground"
+          >
+            How it works
+          </a>
         </div>
 
         <div className="flex items-center gap-2">
           <Link
             href={site.links.app}
-            className="hidden h-9 items-center whitespace-nowrap rounded-full px-4 text-[13px] font-semibold text-foreground/80 transition-colors hover:bg-white/60 sm:inline-flex"
+            className="inline-flex h-9 items-center whitespace-nowrap rounded-full px-3 text-[13px] font-semibold text-foreground/80 transition-colors hover:bg-white/60 sm:px-4"
           >
-            Open account
+            Your account
           </Link>
-          <a
-            href={site.bot.smsHref}
-            className="inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-full bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-[0_8px_24px_-8px_rgba(47,91,255,0.7)] transition-colors hover:bg-primary-hover"
-          >
-            <MessageCircle className="h-4 w-4" />
-            Text iStonk
-          </a>
+          <SendStocksButton variant="nav" />
         </div>
       </nav>
     </motion.header>

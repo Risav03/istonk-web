@@ -6,11 +6,13 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const runtime = "nodejs";
 
+type ForwardMethod = "GET" | "POST" | "PATCH" | "DELETE";
+
 function corePath(segments: string[]): string {
   return `/api/app/${segments.join("/")}`;
 }
 
-async function forward(req: NextRequest, segments: string[], method: "GET" | "POST") {
+async function forward(req: NextRequest, segments: string[], method: ForwardMethod) {
   const session = await getAppSession();
   if (!session) {
     return NextResponse.json({ error: "Not signed in." }, { status: 401 });
@@ -34,7 +36,7 @@ async function forward(req: NextRequest, segments: string[], method: "GET" | "PO
       cache: "no-store",
       headers: { accept: "application/json" },
     };
-    if (method === "POST") {
+    if (method === "POST" || method === "PATCH") {
       const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
       init.headers = { ...init.headers, "content-type": "application/json" };
       // Session auth is already on the query string. Never overwrite `token` —
@@ -64,4 +66,14 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ path: strin
 export async function POST(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
   const { path } = await ctx.params;
   return forward(req, path, "POST");
+}
+
+export async function PATCH(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
+  const { path } = await ctx.params;
+  return forward(req, path, "PATCH");
+}
+
+export async function DELETE(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
+  const { path } = await ctx.params;
+  return forward(req, path, "DELETE");
 }

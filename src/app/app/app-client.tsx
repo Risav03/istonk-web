@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { CDPReactProvider } from "@coinbase/cdp-react";
 import {
   useCurrentUser,
@@ -139,7 +139,13 @@ function AuthGate({ initialHasSession }: { initialHasSession: boolean }) {
     restart();
   }
 
-  if (phase === "ready") return <Dashboard onLogout={logout} />;
+  if (phase === "ready") {
+    return (
+      <Suspense fallback={null}>
+        <Dashboard onLogout={logout} />
+      </Suspense>
+    );
+  }
 
   return (
     <AuthScreen

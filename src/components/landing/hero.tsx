@@ -1,14 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, MessageCircle } from "lucide-react";
-
-import { site } from "@/lib/site";
 
 import { IMessageThread } from "./imessage-thread";
 import { Mascot } from "./mascot";
 import { SplitWords, useLiteMotion } from "./motion";
+import { SendStocksButton } from "./send-stocks-button";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -16,8 +13,8 @@ export function Hero() {
   const lite = useLiteMotion();
 
   return (
-    <section className="relative mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-12 px-6 pb-20 pt-36 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8 lg:pb-28 lg:pt-44">
-      <div className="relative z-10 flex flex-col items-start gap-7">
+    <section className="relative mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-8 px-6 pb-12 pt-28 lg:grid-cols-[1.05fr_0.95fr] lg:gap-6 lg:pb-16 lg:pt-32">
+      <div className="relative z-10 flex flex-col items-start gap-5">
         <motion.span
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -30,13 +27,13 @@ export function Hero() {
             )}
             <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
           </span>
-          Live on Base · powered by Stonks Exchange
+          Apple Pay · iMessage · text · email
         </motion.span>
 
-        <h1 className="text-[44px] font-extrabold leading-[0.98] tracking-[-0.035em] text-foreground sm:text-[64px] lg:text-[76px]">
-          <SplitWords text="Launch a coin" />
+        <h1 className="text-[40px] font-extrabold leading-[0.98] tracking-[-0.035em] text-foreground sm:text-[58px] lg:text-[68px]">
+          <SplitWords text="Send Stocks to Anyone," />
           <br />
-          <SplitWords text="from iMessage." className="text-iris" />
+          <SplitWords text="Anywhere in the World" className="text-iris" />
         </h1>
 
         <motion.p
@@ -45,91 +42,40 @@ export function Hero() {
           transition={{ duration: 0.5, ease, delay: 0.35 }}
           className="max-w-[520px] text-[17px] leading-relaxed text-muted sm:text-[19px]"
         >
-          Text iStonk a name, a ticker, a photo and a stock to pair it with. It goes live on{" "}
-          <span className="font-semibold text-foreground">Stonks Exchange</span>, and creator fees land
-          in <span className="font-semibold text-foreground">your</span> account. No app, no seed phrase.
+          Pick iMessage, a text, or email. Pay with Apple Pay. They claim the stock.
         </motion.p>
 
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease, delay: 0.45 }}
-          className="flex flex-wrap items-center gap-3"
+          className="flex w-full max-w-[420px] flex-col items-stretch gap-3 sm:max-w-none sm:items-start"
         >
-          <a
-            href={site.bot.smsHref}
-            className="group relative inline-flex h-12 items-center gap-2.5 overflow-hidden rounded-full bg-primary px-6 text-[15px] font-semibold text-primary-foreground shadow-[0_14px_40px_-12px_rgba(47,91,255,0.75)] transition-transform hover:-translate-y-0.5 active:translate-y-0"
-          >
-            <span className="absolute inset-0 -translate-x-full bg-[linear-gradient(100deg,transparent,rgba(255,255,255,0.35),transparent)] transition-transform duration-700 group-hover:translate-x-full" />
-            <MessageCircle className="h-[18px] w-[18px]" />
-            Text {site.bot.phonePretty}
-          </a>
-          <Link
-            href={site.links.app}
-            className="glass inline-flex h-12 items-center gap-2 rounded-full px-5 text-[15px] font-semibold text-foreground transition-transform hover:-translate-y-0.5"
-          >
-            Open your account
-            <ArrowRight className="h-4 w-4 text-muted transition-transform group-hover:translate-x-0.5" />
-          </Link>
+          <SendStocksButton />
         </motion.div>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-          className="text-[13px] text-faint"
-        >
-          Say <span className="font-mono text-muted">launch</span> to start, or{" "}
-          <span className="font-mono text-muted">connect</span> if you already have an account.{" "}
-          <Link href={site.links.dashboard} className="font-medium text-primary hover:text-primary-hover">
-            See every coin launched so far →
-          </Link>
-        </motion.p>
       </div>
 
-      {/* Art stack: mascot floating behind the chat */}
-      <div className="relative mx-auto flex h-[660px] w-full max-w-[520px] items-center justify-center lg:h-[600px]">
-        <div className="absolute left-1/2 top-0 -translate-x-1/2 lg:top-[6%] lg:left-[44%]">
+      <div className="relative mx-auto flex w-full max-w-[420px] flex-col items-center gap-3 lg:max-w-none">
+        <motion.div
+          animate={lite ? undefined : { y: [0, -6, 0] }}
+          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+        >
           <motion.div
-            animate={lite ? undefined : { y: [0, -14, 0] }}
-            transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+            initial={{ opacity: 0, scale: 0.85, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.7, ease, delay: 0.15 }}
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.85, y: 24 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.7, ease, delay: 0.15 }}
-            >
-              <Mascot size={360} className="h-[280px] w-[280px] sm:h-[360px] sm:w-[360px]" />
-            </motion.div>
+            <Mascot size={160} className="h-[140px] w-[140px] sm:h-[160px] sm:w-[160px]" />
           </motion.div>
-        </div>
+        </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease, delay: 0.4 }}
-          className="absolute bottom-0 left-1/2 -translate-x-1/2 lg:left-[8%] lg:translate-x-0"
+          transition={{ duration: 0.7, ease, delay: 0.35 }}
         >
           <IMessageThread />
         </motion.div>
-
-        {/* floating pair chips (desktop only) */}
-        {[
-          { label: "vs AAPL", x: "2%", y: "10%", d: 0 },
-          { label: "vs ETH", x: "82%", y: "26%", d: 1.2 },
-          { label: "vs NVDA", x: "76%", y: "78%", d: 2.1 },
-        ].map((c) => (
-          <motion.span
-            key={c.label}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, ease, delay: 0.8 + c.d * 0.15 }}
-            style={{ left: c.x, top: c.y }}
-            className="glass iris-ring absolute hidden rounded-full px-3 py-1.5 font-mono text-[12px] font-semibold text-foreground lg:inline-flex"
-          >
-            {c.label}
-          </motion.span>
-        ))}
       </div>
     </section>
   );
