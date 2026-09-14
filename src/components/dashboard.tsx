@@ -23,6 +23,7 @@ import {
   Card,
   CardHeader,
   ETH_LOGO_URL,
+  USDC_LOGO_URL,
   ExternalIcon,
   Logo,
   Pill,
@@ -113,8 +114,13 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
         symbol: row.symbol,
         available: Number(row.amount),
         availableExact: row.amount,
-        note: pairFor(row.token),
-        logoUrl: row.logoUrl,
+        note:
+          pairFor(row.token) ??
+          (row.symbol.toUpperCase() === "USDC" ? "USD Coin on Base" : null),
+        logoUrl:
+          row.symbol.toUpperCase() === "USDC"
+            ? (row.logoUrl || USDC_LOGO_URL)
+            : row.logoUrl,
       })),
     ];
   }, [wallet, held, launches]);
@@ -312,8 +318,8 @@ function BalanceHero({
           ) : null}
           <span className="text-sm text-muted">
             {coinCount > 0
-              ? `${coinCount} coin${coinCount === 1 ? "" : "s"} held in this account, plus ETH`
-              : "Coins you launch and fees you collect land here"}
+              ? `${coinCount} asset${coinCount === 1 ? "" : "s"} held in this account, plus ETH`
+              : "USDC, coins you launch, and fees you collect land here"}
           </span>
         </div>
         <div className="flex w-full gap-2 sm:w-auto">
@@ -422,10 +428,17 @@ function Holdings({
       {held.map((row) => (
         <Row key={row.token}>
           <AssetLabel
-            logo={row.logoUrl}
+            logo={
+              row.symbol.toUpperCase() === "USDC"
+                ? row.logoUrl || USDC_LOGO_URL
+                : row.logoUrl
+            }
             symbol={row.symbol}
-            name={`$${row.symbol}`}
-            note={pairFor(row.token)}
+            name={row.symbol.toUpperCase() === "USDC" ? "USDC" : `$${row.symbol}`}
+            note={
+              pairFor(row.token) ??
+              (row.symbol.toUpperCase() === "USDC" ? "USD Coin on Base" : null)
+            }
           />
           <AmountWithUsd
             value={Number(row.amount)}

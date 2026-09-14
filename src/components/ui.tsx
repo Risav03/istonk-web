@@ -170,6 +170,9 @@ export function ExternalIcon({ className }: { className?: string }) {
 export const ETH_LOGO_URL =
   "https://coin-images.coingecko.com/coins/images/279/small/ethereum.png";
 
+export const USDC_LOGO_URL =
+  "https://coin-images.coingecko.com/coins/images/6319/small/usdc.png";
+
 /** DiceBear "glass" avatar seeded by symbol. Mirrors the API's fallback so both sides agree. */
 export function fallbackLogoUrl(symbol: string): string {
   return `https://api.dicebear.com/9.x/glass/svg?seed=${encodeURIComponent(symbol.toUpperCase())}`;
