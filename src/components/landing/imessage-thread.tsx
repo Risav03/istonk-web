@@ -6,16 +6,15 @@ import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-mot
 type Msg = { from: "you" | "bot"; text: string; media?: boolean };
 
 const thread: Msg[] = [
-  { from: "you", text: "send $2 of Tesla to Mom" },
-  { from: "bot", text: "I'm going to send $2 of Tesla stock to Mom.\n\nWant to add a note? type anything, or say skip." },
-  { from: "you", text: "skip" },
+  { from: "you", text: "launch fruit vs Apple stock" },
+  { from: "bot", text: "fruit, $FRUIT, paired with Apple stock. send a photo or say skip" },
+  { from: "you", text: "fruit.png", media: true },
+  { from: "bot", text: "got it. say confirm to launch" },
+  { from: "you", text: "confirm" },
   {
     from: "bot",
-    text: "Send $2 of Tesla stock to Mom\n\n  Total     $2.08\n  Pay with  Apple Pay",
+    text: "$FRUIT is live on stonks exchange. creator fees go to your account.\nthestonks.exchange/token/0x…",
   },
-  { from: "you", text: "Apple Pay" },
-  { from: "bot", text: "Tap this link and pay $2.08 with Apple Pay.\n\nAfter it clears I'll send $2 of Tesla stock to Mom." },
-  { from: "bot", text: "Sent. Mom can claim it from the text." },
 ];
 
 const BEAT = 1400;
@@ -25,7 +24,7 @@ export function IMessageThread({ className }: { className?: string }) {
   const reduce = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { amount: 0.3 });
-  const [shown, setShown] = useState(reduce ? thread.length : 2);
+  const [shown, setShown] = useState(reduce ? thread.length : 0);
   const [typing, setTyping] = useState(false);
 
   useEffect(() => {
@@ -50,7 +49,7 @@ export function IMessageThread({ className }: { className?: string }) {
 
   return (
     <div ref={ref} className={className}>
-      <div className="glass iris-ring flex h-[420px] w-[300px] shrink-0 flex-col overflow-hidden rounded-[28px] p-4 sm:h-[440px] sm:w-[340px]">
+      <div className="glass iris-ring flex h-[400px] w-[300px] shrink-0 flex-col overflow-hidden rounded-[28px] p-4 sm:h-[420px] sm:w-[340px]">
         <div className="mb-2 flex shrink-0 items-center justify-center gap-2 text-[11px] font-medium text-faint">
           <span className="h-1.5 w-1.5 rounded-full bg-primary" />
           iMessage · iStonk
@@ -72,10 +71,11 @@ function Bubble({ msg }: { msg: Msg }) {
   const you = msg.from === "you";
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, transition: { duration: 0.12 } }}
-      transition={{ duration: 0.2 }}
+      layout="position"
+      initial={{ opacity: 0, y: 10, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.15 } }}
+      transition={{ type: "spring", stiffness: 380, damping: 30 }}
       className={`flex ${you ? "justify-end" : "justify-start"}`}
     >
       {msg.media ? (
@@ -101,9 +101,10 @@ function Bubble({ msg }: { msg: Msg }) {
 function Typing() {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
+      layout="position"
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, transition: { duration: 0.1 } }}
+      exit={{ opacity: 0, transition: { duration: 0.12 } }}
       className="flex justify-start"
     >
       <div className="flex items-center gap-1 rounded-2xl rounded-bl-md bg-white/85 px-3.5 py-3">

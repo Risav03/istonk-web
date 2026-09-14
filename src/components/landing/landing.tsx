@@ -5,6 +5,7 @@ import { Footer } from "./footer";
 import { Hero } from "./hero";
 import { HowItWorks } from "./how-it-works";
 import { Nav } from "./nav";
+import { NextUp } from "./next-up";
 import { Ticker } from "./ticker";
 import { Wallet } from "./wallet";
 
@@ -18,6 +19,7 @@ export function Landing() {
         <Ticker />
         <HowItWorks />
         <Wallet />
+        <NextUp />
         <Footer />
       </main>
     </>

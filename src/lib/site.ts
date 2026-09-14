@@ -43,7 +43,7 @@ export const site = {
     /** Opens Messages with a send started. */
     smsHref: `sms:${BOT_PHONE_E164}&body=${encodeURIComponent("send $25 of AAPL")}`,
     /** Opens Messages with a launch started. */
-    launchSmsHref: `sms:${BOT_PHONE_E164}&body=${encodeURIComponent("launch pizza coin vs AAPL")}`,
+    launchSmsHref: `sms:${BOT_PHONE_E164}&body=${encodeURIComponent("launch fruit vs Apple stock")}`,
     /** Opens Messages prefilled with `connect` — links this phone to the account. */
     connectSmsHref: `sms:${BOT_PHONE_E164}&body=${encodeURIComponent("connect")}`,
   },
