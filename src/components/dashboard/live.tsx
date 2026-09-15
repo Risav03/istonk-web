@@ -357,8 +357,6 @@ export function DashboardLive({
   );
 }
 
-}
-
 function dropWhen(file: string): string {
   const match = /^(\d{4}-\d{2}-\d{2})/.exec(file);
   if (!match) return file.replace(/\.(csv|buyburn\.json|tokenburn\.json)$/i, "");
