@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Check, Copy, Loader2 } from "lucide-react";
+import { Check, Copy, Loader2, Rocket, Send, Wallet, History } from "lucide-react";
 
 import {
   api,
@@ -39,9 +39,19 @@ import {
 /** Balances read from RPC can lag the claim receipt by a block or two. */
 const POST_CLAIM_REFRESH_MS = 6_000;
 
+type AppPanel = "send" | "wallet" | "launches" | "activity";
+
+const APP_TABS = [
+  { id: "send", label: "Send", Icon: Send },
+  { id: "wallet", label: "Wallet", Icon: Wallet },
+  { id: "launches", label: "Launches", Icon: Rocket },
+  { id: "activity", label: "Activity", Icon: History },
+] as const;
+
 export function Dashboard({ onLogout }: { onLogout: () => void }) {
   const searchParams = useSearchParams();
   const sendChannel = parseSendChannel(searchParams.get("send"));
+  const [panel, setPanel] = useState<AppPanel>(sendChannel ? "send" : "wallet");
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [launches, setLaunches] = useState<LaunchRow[]>([]);
   const [held, setHeld] = useState<FeeRow[]>([]);
@@ -160,49 +170,82 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
     <div className="flex min-h-[100dvh] flex-col">
       <TopBar address={wallet?.address ?? null} onLogout={onLogout} />
 
-      <main className="mx-auto flex w-full max-w-[1040px] flex-col gap-10 px-5 pb-20 pt-10 sm:pt-12">
+      <main className="mx-auto flex w-full max-w-[1040px] flex-col gap-6 px-5 pb-20 pt-10 sm:pt-12">
         {wallet?.linked === false ? <LinkPhoneBanner /> : null}
 
         <BalanceHero wallet={wallet} coinCount={held.length} totalUsd={totalUsd} />
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <SendStockCard
-            channel={sendChannel}
-            contacts={contacts}
-            onSent={load}
+        <div className="sticky top-0 z-20 -mx-5 bg-background/80 px-5 py-2 backdrop-blur-md">
+          <div className="flex justify-center">
+            <div
+              role="tablist"
+              aria-label="Account sections"
+              className="glass inline-flex max-w-full overflow-x-auto rounded-full p-1"
+            >
+              {APP_TABS.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={panel === t.id}
+                  onClick={() => setPanel(t.id)}
+                  className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold transition-colors sm:px-4 ${
+                    panel === t.id ? "bg-primary text-white" : "text-muted hover:text-foreground"
+                  }`}
+                >
+                  <t.Icon className="h-3.5 w-3.5" />
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {panel === "send" ? (
+          <div className="grid gap-6 lg:grid-cols-2">
+            <SendStockCard
+              channel={sendChannel}
+              contacts={contacts}
+              onSent={load}
+              onReauth={() => setReauth(true)}
+            />
+            <ContactsCard contacts={contacts} onChanged={load} />
+          </div>
+        ) : null}
+
+        {panel === "wallet" ? (
+          <div className="flex flex-col gap-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <Holdings wallet={wallet} held={held} launches={launches} prices={prices} />
+              <CreatorFees
+                pending={pending}
+                canCollect={canCollect}
+                claiming={claiming}
+                claimedTx={claimedTx}
+                onClaim={claim}
+                heldCount={held.length}
+                prices={prices}
+              />
+            </div>
+            <SendCard
+              assets={sendAssets}
+              prices={prices}
+              onSent={load}
+              onReauth={() => setReauth(true)}
+            />
+          </div>
+        ) : null}
+
+        {panel === "launches" ? (
+          <Launches
+            launches={launches}
+            pending={pending}
+            onLaunched={load}
             onReauth={() => setReauth(true)}
           />
-          <ContactsCard contacts={contacts} onChanged={load} />
-        </div>
+        ) : null}
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <Holdings wallet={wallet} held={held} launches={launches} prices={prices} />
-          <CreatorFees
-            pending={pending}
-            canCollect={canCollect}
-            claiming={claiming}
-            claimedTx={claimedTx}
-            onClaim={claim}
-            heldCount={held.length}
-            prices={prices}
-          />
-        </div>
-
-        <Launches
-          launches={launches}
-          pending={pending}
-          onLaunched={load}
-          onReauth={() => setReauth(true)}
-        />
-
-        <ActivityFeed items={activity} />
-
-        <SendCard
-          assets={sendAssets}
-          prices={prices}
-          onSent={load}
-          onReauth={() => setReauth(true)}
-        />
+        {panel === "activity" ? <ActivityFeed items={activity} /> : null}
 
         {reauth ? (
           <p className="text-[13px] text-muted">
