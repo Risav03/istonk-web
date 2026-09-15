@@ -175,7 +175,7 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
 
         <BalanceHero wallet={wallet} coinCount={held.length} totalUsd={totalUsd} />
 
-        <div className="sticky top-0 z-20 -mx-5 bg-background/80 px-5 py-2 backdrop-blur-md">
+        <div className="sticky top-0 z-20 -mx-5 bg-background/10 px-5 py-2 rounded-full backdrop-blur-md">
           <div className="flex justify-center">
             <div
               role="tablist"
