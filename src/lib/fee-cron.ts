@@ -177,7 +177,7 @@ async function fetchFromBase(base: string): Promise<Omit<FeeCronBurns, "source">
   const jsonRes = await fetch(`${base}/burns`, {
     cache: "no-store",
     headers: { accept: "application/json" },
-    signal: AbortSignal.timeout(4_000),
+    signal: AbortSignal.timeout(12_000),
   });
   if (jsonRes.ok) {
     const body = (await jsonRes.json()) as { burns?: FeeCronBurn[] };
@@ -186,7 +186,7 @@ async function fetchFromBase(base: string): Promise<Omit<FeeCronBurns, "source">
   const csvRes = await fetch(`${base}/burns.csv`, {
     cache: "no-store",
     headers: { accept: "text/csv" },
-    signal: AbortSignal.timeout(4_000),
+    signal: AbortSignal.timeout(12_000),
   });
   if (!csvRes.ok) return null;
   return splitRows(rowsFromCsv(await csvRes.text()));
