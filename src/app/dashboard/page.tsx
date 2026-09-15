@@ -9,6 +9,7 @@ import {
   loadAirdropSnapshot,
   type AirdropRow,
   type TokenBurnDrop,
+  type BuyBurnDrop,
 } from "@/lib/airdrops";
 import { DashboardLive } from "@/components/dashboard/live";
 import { TokenAvatar } from "@/components/token-avatar";
@@ -79,6 +80,7 @@ export default async function DashboardPage() {
           burnSymbol={burnSymbol}
           tokenBurns={airdrops.tokenBurns}
           tokenBurnSymbol={sourceSymbol}
+          feeBurns={airdrops.feeBurns}
           airdropStats={
             <div className="grid grid-cols-2 gap-3 2xl:grid-cols-4">
               <StatCard
@@ -178,6 +180,32 @@ export default async function DashboardPage() {
                 </div>
               ) : null}
 
+              {airdrops.feeBurns.length > 0 ? (
+                <div className="flex flex-col gap-3 pt-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="inline-flex items-center gap-2 text-sm font-semibold">
+                      <TokenAvatar src={burnMeta?.imageUrl} symbol={burnSymbol} size={18} />
+                      ${burnSymbol} fee buy/burns
+                      <span className="font-normal text-faint">· {airdrops.feeBurns.length}</span>
+                    </h3>
+                    <span className="text-xs text-faint">From claimed AAPL</span>
+                  </div>
+                  <div className="glass flex flex-col overflow-hidden rounded-[16px]">
+                    <div className="grid grid-cols-[1fr_auto_auto] gap-3 px-4 py-2.5 text-[11px] uppercase tracking-[0.06em] text-faint">
+                      <span>When</span>
+                      <span className="text-right">Amount</span>
+                      <span className="text-right">Tx</span>
+                    </div>
+                    {airdrops.feeBurns
+                      .slice()
+                      .reverse()
+                      .map((row) => (
+                        <FeeBurnRow key={row.burnTxHash} row={row} />
+                      ))}
+                  </div>
+                </div>
+              ) : null}
+
               <div className="flex flex-col gap-3 pt-2">
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="inline-flex items-center gap-2 text-sm font-semibold">
@@ -256,6 +284,36 @@ function StatCard({
         {value}
       </span>
       <span className="truncate text-[11px] text-faint">{note}</span>
+    </div>
+  );
+}
+
+function FeeBurnRow({ row }: { row: BuyBurnDrop }) {
+  const when = dropLabel(row.file) ?? row.file.replace(/\.buyburn\.json$/i, "");
+  return (
+    <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-t border-hairline px-4 py-3">
+      <span className="text-[13px] text-foreground/80">{when}</span>
+      <span className="text-right font-mono text-[13px] tabular">{formatBurnAmount(row.tokenOut)}</span>
+      <span className="inline-flex items-center justify-end gap-2">
+        {row.swapTxHash ? (
+          <a
+            href={`https://basescan.org/tx/${row.swapTxHash}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-[13px] text-primary hover:text-primary-hover"
+          >
+            Swap
+          </a>
+        ) : null}
+        <a
+          href={`https://basescan.org/tx/${row.burnTxHash}`}
+          target="_blank"
+          rel="noreferrer"
+          className="text-[13px] text-primary hover:text-primary-hover"
+        >
+          Burn
+        </a>
+      </span>
     </div>
   );
 }

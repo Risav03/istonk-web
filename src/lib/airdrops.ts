@@ -55,6 +55,8 @@ export type AirdropSnapshot = {
   sourceTokenAddress: string | null;
   latestTokenBurn: TokenBurnDrop | null;
   tokenBurns: TokenBurnDrop[];
+  /** Buy/burns that are not paired with an airdrop CSV (fee-cron sweeps). */
+  feeBurns: BuyBurnDrop[];
 };
 
 function splitCsvLine(line: string): string[] {
@@ -275,6 +277,10 @@ export function summarizeAirdrops(
   }
   const uniqueTokenBurns = [...tokenByTx.values()].sort((a, b) => a.file.localeCompare(b.file));
   const latestTokenBurn = uniqueTokenBurns.at(-1) ?? null;
+  const dropStems = new Set([...filesWithSent].map((file) => stemName(file)));
+  const feeBurns = uniqueBurns
+    .filter((burn) => !dropStems.has(stemName(burn.file)))
+    .sort((a, b) => a.file.localeCompare(b.file));
 
   return {
     totalAapl: Number(totalRaw) / 10 ** AAPL_DECIMALS,
@@ -290,6 +296,7 @@ export function summarizeAirdrops(
     sourceTokenAddress: latestTokenBurn?.tokenAddress ?? uniqueTokenBurns[0]?.tokenAddress ?? null,
     latestTokenBurn,
     tokenBurns: uniqueTokenBurns,
+    feeBurns,
   };
 }
 
@@ -298,10 +305,10 @@ export async function loadAirdropSnapshot(): Promise<AirdropSnapshot> {
   try {
     names = (await readdir(AIRDROP_DIR)).sort();
   } catch {
-    return summarizeAirdrops([]);
+    names = [];
   }
 
-  const csvNames = names.filter((name) => name.endsWith(".csv"));
+  const csvNames = names.filter((name) => name.endsWith(".csv") && !name.endsWith(".tokenburn.csv"));
   const files = await Promise.all(
     csvNames.map(async (name) => ({
       name,
@@ -327,7 +334,103 @@ export async function loadAirdropSnapshot(): Promise<AirdropSnapshot> {
     )
   ).filter((row): row is TokenBurnDrop => row != null);
 
-  return summarizeAirdrops(files, buyburns, tokenBurns);
+  const remote = await fetchFeeCronBurns();
+  return summarizeAirdrops(
+    files,
+    [...buyburns, ...remote.buyBurns],
+    [...tokenBurns, ...remote.tokenBurns],
+  );
+}
+
+type FeeCronBurn = {
+  kind?: string;
+  at?: string;
+  token?: string;
+  amountRaw?: string;
+  amount?: string;
+  decimals?: number;
+  swapTx?: string;
+  burnTx?: string;
+};
+
+function feeCronBaseUrl(): string | null {
+  const raw = (process.env.AAPL_FEE_CRON_URL ?? "").trim().replace(/\/$/, "");
+  return raw || null;
+}
+
+function isoFileName(at: string, kind: string, suffix: string): string {
+  const stamp = /^\d{4}-\d{2}-\d{2}/.test(at)
+    ? at.slice(0, 19).replace(/[-:]/g, "").replace("T", "-")
+    : kind;
+  return `${stamp}.${suffix}`;
+}
+
+function remoteBuyBurn(row: FeeCronBurn): BuyBurnDrop | null {
+  const token = (row.token ?? "").trim();
+  const burnTx = (row.burnTx ?? "").trim();
+  const decimals = Number(row.decimals ?? 18);
+  if (!/^0x[a-fA-F0-9]{40}$/.test(token)) return null;
+  if (!/^0x[a-fA-F0-9]{64}$/.test(burnTx)) return null;
+  if (!Number.isFinite(decimals) || decimals < 0 || decimals > 36) return null;
+  let raw: bigint | null = null;
+  if (row.amountRaw && /^\d+$/.test(row.amountRaw)) raw = BigInt(row.amountRaw);
+  else {
+    const n = Number(row.amount ?? "");
+    if (Number.isFinite(n) && n > 0) raw = BigInt(Math.round(n * 10 ** decimals));
+  }
+  if (raw == null || raw <= BigInt(0)) return null;
+  const swapTx = (row.swapTx ?? "").trim();
+  return {
+    file: isoFileName(row.at ?? "", "fee", "buyburn.json"),
+    tokenAddress: token.toLowerCase(),
+    tokenOut: Number(raw) / 10 ** decimals,
+    tokenDecimals: decimals,
+    swapTxHash: /^0x[a-fA-F0-9]{64}$/.test(swapTx) ? swapTx.toLowerCase() : "",
+    burnTxHash: burnTx.toLowerCase(),
+  };
+}
+
+function remoteTokenBurn(row: FeeCronBurn): TokenBurnDrop | null {
+  const parsed = remoteBuyBurn(row);
+  if (!parsed) return null;
+  return {
+    file: isoFileName(row.at ?? "", "fee", "tokenburn.json"),
+    tokenAddress: parsed.tokenAddress,
+    amount: parsed.tokenOut,
+    tokenDecimals: parsed.tokenDecimals,
+    burnTxHash: parsed.burnTxHash,
+  };
+}
+
+async function fetchFeeCronBurns(): Promise<{
+  buyBurns: BuyBurnDrop[];
+  tokenBurns: TokenBurnDrop[];
+}> {
+  const base = feeCronBaseUrl();
+  if (!base) return { buyBurns: [], tokenBurns: [] };
+  try {
+    const res = await fetch(`${base}/burns`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!res.ok) return { buyBurns: [], tokenBurns: [] };
+    const json = (await res.json()) as { burns?: FeeCronBurn[] };
+    const rows = Array.isArray(json.burns) ? json.burns : [];
+    const buyBurns: BuyBurnDrop[] = [];
+    const tokenBurns: TokenBurnDrop[] = [];
+    for (const row of rows) {
+      if (row.kind === "buy15") {
+        const parsed = remoteBuyBurn(row);
+        if (parsed) buyBurns.push(parsed);
+      } else if (row.kind === "buy25") {
+        const parsed = remoteTokenBurn(row);
+        if (parsed) tokenBurns.push(parsed);
+      }
+    }
+    return { buyBurns, tokenBurns };
+  } catch {
+    return { buyBurns: [], tokenBurns: [] };
+  }
 }
 
 export function formatAaplAmount(value: number): string {

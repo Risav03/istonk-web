@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Copy, ExternalLink, Flame, Rocket } from "lucide-react";
 
-import type { AirdropDrop, TokenBurnDrop } from "@/lib/airdrops";
+import type { AirdropDrop, BuyBurnDrop, TokenBurnDrop } from "@/lib/airdrops";
 import type { MarketStats } from "@/lib/dex-stats";
 import { shortAddr, timeAgo } from "@/lib/format";
 import { stonksTokenUrl, type PublicLaunch } from "@/lib/launches";
@@ -13,6 +13,23 @@ import { BarChart, ChartCard, ColumnChart, useDailySeries, type ColumnDatum } fr
 
 const POLL_MS = 15_000;
 const PAGE = 25;
+
+function chartPoint(file: string, value: number, hintKind: string): ColumnDatum {
+  const m = /^(\d{4}-\d{2}-\d{2})/.exec(file);
+  const label = m
+    ? new Date(`${m[1]}T00:00:00Z`).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        timeZone: "UTC",
+      })
+    : file.replace(/\.(csv|buyburn\.json|tokenburn\.json)$/i, "");
+  return {
+    key: `${file}-${hintKind}`,
+    label,
+    hint: `${label} · ${hintKind}`,
+    value: Number(value.toFixed(4)),
+  };
+}
 
 type Feed = {
   items: PublicLaunch[];
@@ -30,6 +47,7 @@ export function DashboardLive({
   burnSymbol = "TOKEN",
   tokenBurns = [],
   tokenBurnSymbol = "TOKEN",
+  feeBurns = [],
   airdropStats,
   airdropList,
 }: {
@@ -40,6 +58,7 @@ export function DashboardLive({
   burnSymbol?: string;
   tokenBurns?: TokenBurnDrop[];
   tokenBurnSymbol?: string;
+  feeBurns?: BuyBurnDrop[];
   /** Server-rendered stat cards for the airdrop panel. */
   airdropStats?: ReactNode;
   /** Server-rendered latest-drop recipients + burn links. */
@@ -131,26 +150,14 @@ export function DashboardLive({
     [drops],
   );
   const burnSeries = useMemo<ColumnDatum[]>(
-    () =>
-      drops
+    () => {
+      const fromDrops = drops
         .filter((d) => d.totalBurned > 0)
-        .map((d) => {
-          const m = /^(\d{4}-\d{2}-\d{2})/.exec(d.file);
-          const label = m
-            ? new Date(`${m[1]}T00:00:00Z`).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                timeZone: "UTC",
-              })
-            : d.file.replace(/\.csv$/, "");
-          return {
-            key: `${d.file}-burn`,
-            label,
-            hint: `${label} · burned`,
-            value: Number(d.totalBurned.toFixed(4)),
-          };
-        }),
-    [drops],
+        .map((d) => chartPoint(d.file, d.totalBurned, "burned"));
+      const fromFees = feeBurns.map((d) => chartPoint(d.file, d.tokenOut, "fee burn"));
+      return [...fromDrops, ...fromFees];
+    },
+    [drops, feeBurns],
   );
   const tokenBurnSeries = useMemo<ColumnDatum[]>(
     () =>
@@ -276,7 +283,7 @@ export function DashboardLive({
             </ChartCard>
           ) : null}
           {burnSeries.length > 0 ? (
-            <ChartCard title={`${burnSymbol} burned per drop`} subtitle="Bought with leftover AAPL, then burned">
+            <ChartCard title={`${burnSymbol} burned`} subtitle="Bought with AAPL, then burned">
               <ColumnChart data={burnSeries} valueLabel={burnSymbol} height={150} />
             </ChartCard>
           ) : null}
