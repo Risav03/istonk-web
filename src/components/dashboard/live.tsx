@@ -218,6 +218,7 @@ export function DashboardLive({
             />
           </div>
 
+          <LaunchFeed launches={launches} fresh={fresh} market={market} />
           <ChartCard title="Launches per day" subtitle="Last 30 days, UTC">
             <ColumnChart data={daily} valueLabel="launches" emptyText="No launches in the last 30 days" />
           </ChartCard>
@@ -225,7 +226,6 @@ export function DashboardLive({
             <BarChart data={byPair} valueLabel="launches" />
           </ChartCard>
 
-          <LaunchFeed launches={launches} fresh={fresh} market={market} />
         </section>
 
         <section
