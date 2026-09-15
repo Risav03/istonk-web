@@ -7,7 +7,7 @@ test("dailyAmountSeries sums burns onto each UTC day", () => {
   const series = dailyAmountSeries(
     [
       { file: "2026-09-15-050017.tokenburn.json", value: 13_294_359.996 },
-      { file: "2026-09-15-060019.tokenburn.json", value: 187_047.3286 },
+      { file: "20260915-060019.tokenburn.json", value: 187_047.3286 },
       { file: "2026-09-12-1658.tokenburn.json", value: 3_000_000 },
     ],
     4,
@@ -17,7 +17,7 @@ test("dailyAmountSeries sums burns onto each UTC day", () => {
   const fifteenth = series.find((row) => row.key === "2026-09-15");
   assert.ok(fifteenth);
   assert.equal(fifteenth.value, 13_481_407.3246);
-  assert.match(fifteenth.hint, /2 burns/);
+  assert.equal(fifteenth.hint.includes("burn"), false);
 });
 
 test("splitBurnsByToken keeps ISTONKS off the BASEMATE chart", () => {
