@@ -280,6 +280,7 @@ function ReviewDialog({
   onConfirm: () => void;
 }) {
   const sendUsdLabel = formatUsd(sendUsd);
+  const displayAmount = formatTokenAmount(amount);
   return (
     <div
       role="dialog"
@@ -304,12 +305,17 @@ function ReviewDialog({
             <span className="sr-only">Close</span>
           </button>
         </div>
-        <div className="flex flex-col items-center gap-1.5 px-5 pb-7 pt-3">
-          <div className="flex items-baseline gap-2">
-            <span className="font-mono text-[40px] font-medium leading-none tracking-[-0.03em] tabular">
-              {amount}
+        <div className="flex w-full min-w-0 flex-col items-center gap-1.5 px-5 pb-7 pt-3">
+          <div className="flex w-full min-w-0 flex-col items-center gap-2">
+            <span
+              className="max-w-full break-all text-center font-mono text-[clamp(22px,8vw,36px)] font-medium leading-tight tracking-[-0.03em] tabular"
+              title={amount}
+            >
+              {displayAmount}
             </span>
-            <span className="text-base text-muted">{symbol}</span>
+            <span className="max-w-full break-all text-center text-base text-muted">
+              {symbol}
+            </span>
           </div>
           {sendUsdLabel ? (
             <span className="font-mono text-[13px] text-muted tabular">{sendUsdLabel}</span>
@@ -320,7 +326,7 @@ function ReviewDialog({
         </div>
         <dl className="flex flex-col border-t border-hairline">
           <ReviewRow label="To">
-            <span className="max-w-[240px] break-all text-right font-mono text-xs">
+            <span className="max-w-[min(240px,58%)] break-all text-right font-mono text-xs">
               {to}
             </span>
           </ReviewRow>
@@ -335,8 +341,12 @@ function ReviewDialog({
         </dl>
         <div className="flex flex-col gap-2.5 border-t border-hairline bg-card-inset px-5 pb-5 pt-4">
           {error ? <p className="text-[13px] text-danger">{error}</p> : null}
-          <Button className="h-12 text-sm" busy={busy} onClick={onConfirm}>
-            Send {amount} {symbol}
+          <Button
+            className="h-auto min-h-12 !whitespace-normal px-4 py-3 text-sm leading-snug"
+            busy={busy}
+            onClick={onConfirm}
+          >
+            Send {displayAmount} {symbol}
           </Button>
           <p className="text-center text-xs leading-relaxed text-faint">
             Onchain sends cannot be reversed. Double-check the address.
@@ -358,10 +368,10 @@ function ReviewRow({
 }) {
   return (
     <div
-      className={`flex items-center justify-between px-5 py-3.5 text-[13px] ${last ? "" : "border-b border-hairline"}`}
+      className={`flex items-start justify-between gap-4 px-5 py-3.5 text-[13px] ${last ? "" : "border-b border-hairline"}`}
     >
-      <dt className="text-muted">{label}</dt>
-      <dd>{children}</dd>
+      <dt className="shrink-0 text-muted">{label}</dt>
+      <dd className="min-w-0 text-right">{children}</dd>
     </div>
   );
 }
