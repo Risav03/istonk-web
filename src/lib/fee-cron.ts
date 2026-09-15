@@ -1,4 +1,4 @@
-import type { BuyBurnDrop, TokenBurnDrop } from "@/lib/airdrops";
+import type { BuyBurnDrop, TokenBurnDrop } from "@/lib/airdrop-format";
 
 export type FeeCronBurns = {
   buyBurns: BuyBurnDrop[];

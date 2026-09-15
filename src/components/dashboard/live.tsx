@@ -4,8 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Copy, ExternalLink, Flame, Rocket } from "lucide-react";
 
-import type { AirdropDrop, BuyBurnDrop, TokenBurnDrop } from "@/lib/airdrops";
-import { formatBurnAmount } from "@/lib/airdrops";
+import type { AirdropDrop, BuyBurnDrop, TokenBurnDrop } from "@/lib/airdrop-format";
+import { formatBurnAmount } from "@/lib/airdrop-format";
 import { TokenAvatar } from "@/components/token-avatar";
 import type { MarketStats } from "@/lib/dex-stats";
 import { shortAddr, timeAgo } from "@/lib/format";

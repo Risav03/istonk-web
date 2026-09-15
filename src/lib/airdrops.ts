@@ -2,64 +2,25 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { fetchFeeCronBurns } from "@/lib/fee-cron";
+import {
+  type AirdropDrop,
+  type AirdropRow,
+  type AirdropSnapshot,
+  type BuyBurnDrop,
+  type TokenBurnDrop,
+} from "@/lib/airdrop-format";
+
+export type {
+  AirdropDrop,
+  AirdropRow,
+  AirdropSnapshot,
+  BuyBurnDrop,
+  TokenBurnDrop,
+} from "@/lib/airdrop-format";
+export { formatAaplAmount, formatBurnAmount } from "@/lib/airdrop-format";
 
 const AAPL_DECIMALS = 8;
 const AIRDROP_DIR = path.join(process.cwd(), "data", "airdrops");
-
-export type AirdropRow = {
-  file: string;
-  rank: number;
-  wallet: string;
-  aaplRaw: bigint;
-  aapl: number;
-  txHash: string;
-};
-
-export type BuyBurnDrop = {
-  file: string;
-  tokenAddress: string;
-  tokenOut: number;
-  tokenDecimals: number;
-  swapTxHash: string;
-  burnTxHash: string;
-};
-
-export type TokenBurnDrop = {
-  file: string;
-  tokenAddress: string;
-  amount: number;
-  tokenDecimals: number;
-  burnTxHash: string;
-};
-
-export type AirdropDrop = {
-  file: string;
-  totalAapl: number;
-  recipientCount: number;
-  totalBurned: number;
-  burnTokenAddress: string | null;
-  swapTxHash: string | null;
-  burnTxHash: string | null;
-};
-
-export type AirdropSnapshot = {
-  totalAapl: number;
-  recipientCount: number;
-  dropCount: number;
-  latestFile: string | null;
-  latest: AirdropRow[];
-  /** One entry per CSV with at least one sent row, oldest first. */
-  drops: AirdropDrop[];
-  totalBurned: number;
-  burnTokenAddress: string | null;
-  latestBuyBurn: BuyBurnDrop | null;
-  totalTokenBurned: number;
-  sourceTokenAddress: string | null;
-  latestTokenBurn: TokenBurnDrop | null;
-  tokenBurns: TokenBurnDrop[];
-  /** Buy/burns that are not paired with an airdrop CSV (fee-cron sweeps). */
-  feeBurns: BuyBurnDrop[];
-};
 
 function splitCsvLine(line: string): string[] {
   const cells: string[] = [];
@@ -342,26 +303,4 @@ export async function loadAirdropSnapshot(): Promise<AirdropSnapshot> {
     [...buyburns, ...remote.buyBurns],
     [...tokenBurns, ...remote.tokenBurns],
   );
-}
-
-export function formatAaplAmount(value: number): string {
-  if (!Number.isFinite(value) || value === 0) return "0";
-  return value.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 8,
-  });
-}
-
-export function formatBurnAmount(value: number): string {
-  if (!Number.isFinite(value) || value === 0) return "0";
-  const abs = Math.abs(value);
-  if (abs >= 1_000_000) {
-    return value.toLocaleString("en-US", {
-      notation: "compact",
-      maximumFractionDigits: 2,
-    });
-  }
-  return value.toLocaleString("en-US", {
-    maximumFractionDigits: abs >= 1 ? 2 : 6,
-  });
 }
