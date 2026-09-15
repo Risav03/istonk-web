@@ -22,6 +22,8 @@ export type TokenBurnDrop = {
   amount: number;
   tokenDecimals: number;
   burnTxHash: string;
+  /** ISO time from the fee cron, when known. */
+  at?: string;
 };
 
 export type AirdropDrop = {
@@ -62,32 +64,31 @@ export function formatAaplAmount(value: number): string {
 const DROP_FILE_SUFFIX = /\.(csv|buyburn\.json|tokenburn\.json)$/i;
 
 /** Instant encoded in a drop filename (`2026-09-15.csv` or `20260915-060000.tokenburn.json`). */
-export function parseDropInstant(file: string): Date | null {
+export function parseDropInstant(file: string, at?: string): Date | null {
+  if (at) {
+    const fromAt = new Date(at);
+    if (!Number.isNaN(fromAt.getTime())) return fromAt;
+  }
   const stem = file.replace(DROP_FILE_SUFFIX, "").replace(/^.*[/\\]/, "");
-  let y = "";
-  let mo = "";
-  let d = "";
-  let hh = "00";
-  let mm = "00";
-  let ss = "00";
   const dashed = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?/.exec(stem);
   const compact = /^(\d{4})(\d{2})(\d{2})(?:-(\d{2})(\d{2})(\d{2}))?/.exec(stem);
-  if (dashed) {
-    [, y, mo, d, hh = "00", mm = "00", ss = "00"] = dashed;
-  } else if (compact) {
-    [, y, mo, d, hh = "00", mm = "00", ss = "00"] = compact;
-  } else {
-    return null;
-  }
+  const m = dashed ?? compact;
+  if (!m) return null;
+  const y = m[1];
+  const mo = m[2];
+  const d = m[3];
+  const hh = m[4] ?? "00";
+  const mm = m[5] ?? "00";
+  const ss = m[6] ?? "00";
   const date = new Date(`${y}-${mo}-${d}T${hh}:${mm}:${ss}Z`);
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
 export function formatDropStamp(
   file: string,
-  opts?: { withYear?: boolean; withTime?: boolean },
+  opts?: { withYear?: boolean; withTime?: boolean | "auto"; at?: string },
 ): string {
-  const date = parseDropInstant(file);
+  const date = parseDropInstant(file, opts?.at);
   if (!date) return file.replace(DROP_FILE_SUFFIX, "");
   const datePart = date.toLocaleDateString("en-US", {
     month: "short",
@@ -95,7 +96,10 @@ export function formatDropStamp(
     ...(opts?.withYear ? { year: "numeric" as const } : {}),
     timeZone: "UTC",
   });
-  if (!opts?.withTime) return datePart;
+  const hasClock =
+    date.getUTCHours() !== 0 || date.getUTCMinutes() !== 0 || date.getUTCSeconds() !== 0;
+  const showTime = opts?.withTime === true || (opts?.withTime === "auto" && hasClock);
+  if (!showTime) return datePart;
   const timePart = date.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",

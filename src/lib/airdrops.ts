@@ -236,7 +236,17 @@ export function summarizeAirdrops(
 
   const tokenByTx = new Map<string, TokenBurnDrop>();
   for (const burn of tokenBurns) {
-    if (!tokenByTx.has(burn.burnTxHash)) tokenByTx.set(burn.burnTxHash, burn);
+    const prev = tokenByTx.get(burn.burnTxHash);
+    if (!prev) {
+      tokenByTx.set(burn.burnTxHash, burn);
+      continue;
+    }
+    tokenByTx.set(burn.burnTxHash, {
+      ...prev,
+      ...burn,
+      at: burn.at ?? prev.at,
+      file: burn.at ? burn.file : prev.file,
+    });
   }
   const uniqueTokenBurns = [...tokenByTx.values()].sort((a, b) => a.file.localeCompare(b.file));
   const latestTokenBurn = uniqueTokenBurns.at(-1) ?? null;

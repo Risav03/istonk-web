@@ -4,6 +4,7 @@ import { Aurora } from "@/components/landing/aurora";
 import { Footer } from "@/components/landing/footer";
 import { Nav } from "@/components/landing/nav";
 import { DashboardLive } from "@/components/dashboard/live";
+import { TokenAvatar } from "@/components/token-avatar";
 import { formatBurnAmount, loadAirdropSnapshot } from "@/lib/airdrops";
 import { fetchMarketStats } from "@/lib/dex-stats";
 import { fetchDexScreenerToken } from "@/lib/dex-token";
@@ -15,7 +16,7 @@ export const revalidate = 0;
 
 export const metadata = pageMetadata({
   title: "Dashboard",
-  description: "Tokens launched by iStonk, live on Stonks Exchange.",
+  description: "Tokens launched by iStonk, live on Stonks Exchange, plus ISTONKS burned.",
   path: "/dashboard",
 });
 
@@ -43,7 +44,7 @@ export default async function DashboardPage() {
             Dashboard
           </h1>
           <p className="max-w-[520px] text-[15px] leading-relaxed text-muted">
-            Every coin launched from iMessage, live.
+            Every coin launched from iMessage, live, plus {tokenBurnSymbol} sent to the dead address.
           </p>
         </header>
 
@@ -55,8 +56,19 @@ export default async function DashboardPage() {
           tokenBurnSymbol={tokenBurnSymbol}
           sourceTokenImage={sourceMeta?.imageUrl}
           sourceName={sourceName}
-          tokenBurnTotal={
-            airdrops.totalTokenBurned > 0 ? formatBurnAmount(airdrops.totalTokenBurned) : "—"
+          burnStats={
+            <div className="grid grid-cols-2 gap-3 2xl:grid-cols-4">
+              <StatCard
+                label={`${tokenBurnSymbol} burned`}
+                value={airdrops.totalTokenBurned > 0 ? formatBurnAmount(airdrops.totalTokenBurned) : "—"}
+                note={
+                  airdrops.tokenBurns.length > 0
+                    ? `${sourceName} · ${airdrops.tokenBurns.length} burn${airdrops.tokenBurns.length === 1 ? "" : "s"}`
+                    : "Sent to the dead address"
+                }
+                token={{ src: sourceMeta?.imageUrl, symbol: tokenBurnSymbol }}
+              />
+            </div>
           }
         />
 
@@ -71,5 +83,30 @@ export default async function DashboardPage() {
         <Footer />
       </div>
     </>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  note,
+  token,
+}: {
+  label: string;
+  value: string;
+  note: string;
+  token?: { src?: string | null; symbol: string };
+}) {
+  return (
+    <div className="glass flex min-w-0 flex-col gap-1.5 rounded-[16px] px-4 py-4">
+      <span className="inline-flex items-center gap-1.5 truncate text-[12px] text-muted">
+        {token ? <TokenAvatar src={token.src} symbol={token.symbol} size={16} /> : null}
+        {label}
+      </span>
+      <span className="truncate text-[26px] font-semibold leading-none tracking-[-0.03em] sm:text-[30px]">
+        {value}
+      </span>
+      <span className="truncate text-[11px] text-faint">{note}</span>
+    </div>
   );
 }

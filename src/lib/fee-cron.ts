@@ -47,8 +47,10 @@ export function feeCronBaseCandidates(): string[] {
 }
 
 function isoFileName(at: string, suffix: string): string {
-  const day = /^(\d{4}-\d{2}-\d{2})/.exec(at)?.[1];
-  return `${day ?? "fee"}.${suffix}`;
+  const stamp = /^\d{4}-\d{2}-\d{2}/.test(at)
+    ? at.slice(0, 19).replace(/[-:]/g, "").replace("T", "-")
+    : "fee";
+  return `${stamp}.${suffix}`;
 }
 
 function asRow(row: FeeCronBurn): FeeCronBurn {
@@ -99,6 +101,7 @@ function parseTokenBurn(row: FeeCronBurn): TokenBurnDrop | null {
     amount: parsed.tokenOut,
     tokenDecimals: parsed.tokenDecimals,
     burnTxHash: parsed.burnTxHash,
+    at: (row.at ?? "").trim() || undefined,
   };
 }
 

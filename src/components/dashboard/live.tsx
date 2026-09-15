@@ -27,19 +27,22 @@ type BurnsFeed = {
   tokenBurns?: TokenBurnDrop[];
 };
 
-function mergeByTx<T extends { burnTxHash: string }>(base: T[], extra: T[]): T[] {
+function mergeByTx<T extends { burnTxHash: string; at?: string }>(base: T[], extra: T[]): T[] {
   const map = new Map(base.map((row) => [row.burnTxHash, row]));
-  for (const row of extra) map.set(row.burnTxHash, row);
+  for (const row of extra) {
+    const prev = map.get(row.burnTxHash);
+    map.set(row.burnTxHash, prev ? { ...prev, ...row, at: row.at ?? prev.at } : row);
+  }
   return [...map.values()];
 }
 
-function burnChartPoint(file: string, value: number): ColumnDatum {
-  const label = formatDropStamp(file);
+function burnChartPoint(row: TokenBurnDrop): ColumnDatum {
+  const label = formatDropStamp(row.file, { at: row.at });
   return {
-    key: file,
+    key: row.burnTxHash || row.file,
     label,
-    hint: formatDropStamp(file, { withTime: true }),
-    value: Number(value.toFixed(4)),
+    hint: formatDropStamp(row.file, { withTime: "auto", at: row.at }),
+    value: Number(row.amount.toFixed(4)),
   };
 }
 
@@ -53,7 +56,7 @@ export function DashboardLive({
   tokenBurnSymbol = "TOKEN",
   sourceTokenImage = null,
   sourceName = "Source token",
-  tokenBurnTotal = "—",
+  burnStats,
 }: {
   initialLaunches: PublicLaunch[];
   initialTokensLaunched: number | null;
@@ -62,7 +65,7 @@ export function DashboardLive({
   tokenBurnSymbol?: string;
   sourceTokenImage?: string | null;
   sourceName?: string;
-  tokenBurnTotal?: string;
+  burnStats?: ReactNode;
 }) {
   const [panel, setPanel] = useState<Panel>("launches");
   const [launches, setLaunches] = useState<PublicLaunch[]>(initialLaunches);
@@ -150,7 +153,7 @@ export function DashboardLive({
     return top;
   }, [launches]);
   const tokenBurnSeries = useMemo<ColumnDatum[]>(
-    () => liveTokenBurns.map((d) => burnChartPoint(d.file, d.amount)),
+    () => liveTokenBurns.map((d) => burnChartPoint(d)),
     [liveTokenBurns],
   );
 
@@ -164,7 +167,7 @@ export function DashboardLive({
           {(
             [
               { id: "launches", label: "Launches", Icon: Rocket },
-              { id: "burns", label: `${tokenBurnSymbol} burns`, Icon: Flame },
+              { id: "burns", label: "Burns", Icon: Flame },
             ] as const
           ).map((t) => (
             <button
@@ -193,7 +196,7 @@ export function DashboardLive({
             sub={<LiveDot status={status} fetchedAt={fetchedAt} />}
           />
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 2xl:grid-cols-4">
             <Stat
               label="Launched"
               value={tokensLaunched == null ? "—" : tokensLaunched.toLocaleString("en-US")}
@@ -241,17 +244,10 @@ export function DashboardLive({
           <PanelHeader
             icon={<Flame className="h-4 w-4" />}
             title={`${tokenBurnSymbol} burns`}
-            sub={<span className="text-xs text-faint">Sent to the dead address</span>}
+            sub={<span className="text-xs text-faint">Sent to the dead address per drop</span>}
           />
 
-          <div className="grid grid-cols-2 gap-3">
-            <Stat label={`${tokenBurnSymbol} burned`} value={tokenBurnTotal} note={sourceName} />
-            <Stat
-              label="Drops"
-              value={liveTokenBurns.length.toLocaleString("en-US")}
-              note={liveTokenBurns.length > 0 ? "On-chain burns" : "After the next drop"}
-            />
-          </div>
+          <div>{burnStats}</div>
 
           {tokenBurnSeries.length > 0 ? (
             <ChartCard title={`${tokenBurnSymbol} burned`} subtitle="Sent to the dead address per drop">
@@ -268,6 +264,7 @@ export function DashboardLive({
               rows={liveTokenBurns.map((row) => ({
                 key: row.burnTxHash,
                 when: row.file,
+                at: row.at,
                 amount: row.amount,
                 burnTx: row.burnTxHash,
               }))}
@@ -290,7 +287,7 @@ function BurnList({
   note: string;
   image?: string | null;
   symbol: string;
-  rows: Array<{ key: string; when: string; amount: number; burnTx: string }>;
+  rows: Array<{ key: string; when: string; at?: string; amount: number; burnTx: string }>;
 }) {
   const total = rows.reduce((sum, row) => sum + row.amount, 0);
   return (
@@ -320,7 +317,7 @@ function BurnList({
               className="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-t border-hairline px-4 py-3"
             >
               <span className="text-[13px] text-foreground/80">
-                {formatDropStamp(row.when, { withYear: true, withTime: true })}
+                {formatDropStamp(row.when, { withYear: true, withTime: "auto", at: row.at })}
               </span>
               <span className="text-right font-mono text-[13px] tabular">
                 {formatBurnAmount(row.amount)}
