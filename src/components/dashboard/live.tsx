@@ -7,7 +7,7 @@ import { Check, Copy, ExternalLink, Flame, Rocket } from "lucide-react";
 import type { TokenBurnDrop } from "@/lib/airdrop-format";
 import { formatBurnAmount, formatDropStamp } from "@/lib/airdrop-format";
 import { TokenAvatar } from "@/components/token-avatar";
-import type { MarketStats } from "@/lib/dex-stats";
+import type { MarketStats, TokenMarket } from "@/lib/dex-stats";
 import { shortAddr, timeAgo } from "@/lib/format";
 import { stonksTokenUrl, type PublicLaunch } from "@/lib/launches";
 
@@ -225,7 +225,7 @@ export function DashboardLive({
             <BarChart data={byPair} valueLabel="launches" />
           </ChartCard>
 
-          <LaunchFeed launches={launches} fresh={fresh} />
+          <LaunchFeed launches={launches} fresh={fresh} market={market} />
         </section>
 
         <section
@@ -371,27 +371,47 @@ function Stat({ label, value, note }: { label: string; value: string; note: stri
   );
 }
 
-function LaunchFeed({ launches, fresh }: { launches: PublicLaunch[]; fresh: Set<number> }) {
+function marketFor(market: MarketStats | null, address: string | null): TokenMarket | null {
+  if (!market || !address) return null;
+  return market.byToken[address.toLowerCase()] ?? null;
+}
+
+function LaunchFeed({
+  launches,
+  fresh,
+  market,
+}: {
+  launches: PublicLaunch[];
+  fresh: Set<number>;
+  market: MarketStats | null;
+}) {
   const [shown, setShown] = useState(PAGE);
   const [query, setQuery] = useState("");
 
-  const filtered = useMemo(() => {
+  const ranked = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return launches;
-    return launches.filter(
-      (l) =>
-        (l.tokenName ?? "").toLowerCase().includes(q) ||
-        (l.tokenSymbol ?? "").toLowerCase().includes(q) ||
-        (l.pairSymbol ?? "").toLowerCase().includes(q) ||
-        (l.tokenAddress ?? "").toLowerCase().includes(q),
-    );
-  }, [launches, query]);
+    const rows = q
+      ? launches.filter(
+          (l) =>
+            (l.tokenName ?? "").toLowerCase().includes(q) ||
+            (l.tokenSymbol ?? "").toLowerCase().includes(q) ||
+            (l.pairSymbol ?? "").toLowerCase().includes(q) ||
+            (l.tokenAddress ?? "").toLowerCase().includes(q),
+        )
+      : launches;
+    return [...rows].sort((a, b) => {
+      const volA = marketFor(market, a.tokenAddress)?.volume24hUsd ?? 0;
+      const volB = marketFor(market, b.tokenAddress)?.volume24hUsd ?? 0;
+      if (volB !== volA) return volB - volA;
+      return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
+    });
+  }, [launches, market, query]);
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-sm font-semibold">
-          Launched tokens <span className="font-normal text-faint">· {launches.length}</span>
+          Volume leaderboard <span className="font-normal text-faint">· 24h · {launches.length}</span>
         </h3>
         <input
           value={query}
@@ -400,36 +420,42 @@ function LaunchFeed({ launches, fresh }: { launches: PublicLaunch[]; fresh: Set<
             setShown(PAGE);
           }}
           placeholder="Search name, ticker, pair, 0x"
-          className="h-9 w-[200px] rounded-full border border-border-strong bg-white/70 px-3.5 text-[13px] outline-none transition-colors focus:border-primary sm:w-[240px]"
+          className="h-9 w-full rounded-full border border-border-strong bg-white/70 px-3.5 text-[13px] outline-none transition-colors focus:border-primary sm:w-[240px]"
         />
       </div>
 
       <div className="glass flex flex-col overflow-hidden rounded-[16px]">
-        <div className="hidden grid-cols-[1fr_84px_128px_auto] gap-3 px-4 py-2.5 text-[11px] uppercase tracking-[0.06em] text-faint sm:grid">
+        <div className="hidden grid-cols-[1fr_84px_88px_auto] gap-3 px-4 py-2.5 text-[11px] uppercase tracking-[0.06em] text-faint sm:grid">
           <span>Token</span>
           <span>Pair</span>
-          <span>Contract</span>
+          <span className="text-right">24h vol</span>
           <span className="text-right">Links</span>
         </div>
         <div className="max-h-[560px] overflow-y-auto">
-          {filtered.length === 0 ? (
+          {ranked.length === 0 ? (
             <div className="px-4 py-6 text-[13px] text-muted">
               {launches.length === 0 ? "No launches yet. Text iStonk and say launch." : "Nothing matches that search."}
             </div>
           ) : (
             <AnimatePresence initial={false}>
-              {filtered.slice(0, shown).map((l) => (
-                <LaunchRow key={l.id} launch={l} isNew={fresh.has(l.id)} />
+              {ranked.slice(0, shown).map((l, i) => (
+                <LaunchRow
+                  key={l.id}
+                  launch={l}
+                  rank={i + 1}
+                  isNew={fresh.has(l.id)}
+                  stats={marketFor(market, l.tokenAddress)}
+                />
               ))}
             </AnimatePresence>
           )}
-          {filtered.length > shown ? (
+          {ranked.length > shown ? (
             <button
               type="button"
               onClick={() => setShown((s) => s + PAGE)}
               className="w-full border-t border-hairline px-4 py-3 text-[13px] font-medium text-primary transition-colors hover:bg-white/50"
             >
-              Show {Math.min(PAGE, filtered.length - shown)} more · {filtered.length - shown} left
+              Show {Math.min(PAGE, ranked.length - shown)} more · {ranked.length - shown} left
             </button>
           ) : null}
         </div>
@@ -438,10 +464,21 @@ function LaunchFeed({ launches, fresh }: { launches: PublicLaunch[]; fresh: Set<
   );
 }
 
-function LaunchRow({ launch, isNew }: { launch: PublicLaunch; isNew: boolean }) {
+function LaunchRow({
+  launch,
+  rank,
+  isNew,
+  stats,
+}: {
+  launch: PublicLaunch;
+  rank: number;
+  isNew: boolean;
+  stats: TokenMarket | null;
+}) {
   const [copied, setCopied] = useState(false);
   const addr = launch.tokenAddress;
   const when = timeAgo(launch.createdAt);
+  const volume = stats?.volume24hUsd ?? 0;
 
   async function copy() {
     if (!addr) return;
@@ -461,10 +498,11 @@ function LaunchRow({ launch, isNew }: { launch: PublicLaunch; isNew: boolean }) 
       animate={{ opacity: 1, y: 0, backgroundColor: isNew ? "rgba(47,91,255,0.08)" : "rgba(47,91,255,0)" }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1.5 border-t border-hairline px-4 py-3 sm:grid-cols-[1fr_84px_128px_auto]"
+      className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1.5 border-t border-hairline px-4 py-3 sm:grid-cols-[1fr_84px_88px_auto]"
     >
       <div className="flex min-w-0 items-center gap-3">
-        <span className="h-8 w-8 shrink-0 rounded-full bg-[linear-gradient(135deg,var(--iris-blue),var(--iris-magenta),var(--iris-peach))]" />
+        <span className="w-5 shrink-0 text-right font-mono text-[12px] tabular text-faint">{rank}</span>
+        <TokenAvatar src={stats?.imageUrl} symbol={launch.tokenSymbol ?? "TOKEN"} size={32} />
         <div className="flex min-w-0 flex-col">
           <span className="flex items-center gap-2">
             <span className="truncate text-[14px] font-semibold">{launch.tokenName ?? "Unnamed"}</span>
@@ -477,7 +515,7 @@ function LaunchRow({ launch, isNew }: { launch: PublicLaunch; isNew: boolean }) 
               </span>
             ) : null}
           </span>
-          <span className="text-[12px] text-faint">
+          <span className="text-[12px] text-faint" suppressHydrationWarning>
             {when ?? "·"} · by {shortAddr(launch.launcher)}
           </span>
         </div>
@@ -487,16 +525,9 @@ function LaunchRow({ launch, isNew }: { launch: PublicLaunch; isNew: boolean }) 
         {launch.pairSymbol ? `vs ${launch.pairSymbol}` : "·"}
       </span>
 
-      <button
-        type="button"
-        onClick={copy}
-        disabled={!addr}
-        title={addr ?? undefined}
-        className="order-4 inline-flex w-fit items-center gap-1.5 whitespace-nowrap rounded-full bg-white/60 px-2.5 py-1 font-mono text-[12px] text-foreground/80 transition-colors hover:bg-white disabled:opacity-50 sm:order-none"
-      >
-        {addr ? shortAddr(addr) : "pending"}
-        {copied ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3 text-faint" />}
-      </button>
+      <span className="order-4 text-right font-mono text-[12px] tabular text-foreground/80 sm:order-none">
+        {stats ? formatUsdCompact(volume) : "—"}
+      </span>
 
       <span className="order-2 flex items-center justify-end gap-2.5 text-[12px] sm:order-none">
         {addr ? (
@@ -518,6 +549,17 @@ function LaunchRow({ launch, isNew }: { launch: PublicLaunch; isNew: boolean }) 
           >
             Tx <ExternalLink className="h-3 w-3" />
           </a>
+        ) : null}
+        {addr ? (
+          <button
+            type="button"
+            onClick={copy}
+            title={addr}
+            className="inline-flex items-center text-muted hover:text-foreground"
+          >
+            {copied ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
+            <span className="sr-only">Copy contract</span>
+          </button>
         ) : null}
       </span>
     </motion.div>
