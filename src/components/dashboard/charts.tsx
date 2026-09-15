@@ -2,6 +2,8 @@
 
 import { useId, useMemo, useState, type ReactNode } from "react";
 
+import { dailyAmountSeries } from "@/lib/burn-series";
+
 /*
  * Small inline-SVG charts for the public dashboard.
  * One hue (primary blue) — every chart here compares magnitude, so identity colour
@@ -255,6 +257,13 @@ export function BarChart({
 }
 
 /* ---------- helpers for the dashboard ---------- */
+
+export function useDailyAmountSeries(
+  points: Array<{ file: string; value: number }>,
+  days = 14,
+): ColumnDatum[] {
+  return useMemo(() => dailyAmountSeries(points, days), [points, days]);
+}
 
 export function useDailySeries(
   dates: Array<string | null>,
