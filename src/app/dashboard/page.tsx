@@ -16,7 +16,7 @@ export const revalidate = 0;
 
 export const metadata = pageMetadata({
   title: "Dashboard",
-  description: "Tokens launched by iStonk, live on Stonks Exchange, plus ISTONKS burned.",
+  description: "Tokens launched by iStonk, live on Stonks Exchange, plus ISTONKS burned on-chain.",
   path: "/dashboard",
 });
 
@@ -44,7 +44,8 @@ export default async function DashboardPage() {
             Dashboard
           </h1>
           <p className="max-w-[520px] text-[15px] leading-relaxed text-muted">
-            Every coin launched from iMessage, live, plus {tokenBurnSymbol} sent to the dead address.
+            Every coin launched from iMessage, live, plus {tokenBurnSymbol} bought and burned —
+            supply gone.
           </p>
         </header>
 

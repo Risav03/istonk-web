@@ -2,6 +2,8 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { fetchFeeCronBurns } from "@/lib/fee-cron";
+import { splitBurnsByToken } from "@/lib/burn-series";
+import { fetchOnchainBurns } from "@/lib/onchain-burns";
 import {
   type AirdropDrop,
   type AirdropRow,
@@ -194,6 +196,10 @@ export function summarizeAirdrops(
     }
   }
 
+  const split = splitBurnsByToken(buyburns, tokenBurns);
+  buyburns = split.buyburns;
+  tokenBurns = split.tokenBurns;
+
   const burnsBySidecar = new Map<string, BuyBurnDrop>();
   for (const burn of buyburns) {
     if (burnsBySidecar.has(burn.burnTxHash)) continue;
@@ -307,10 +313,10 @@ export async function loadAirdropSnapshot(): Promise<AirdropSnapshot> {
     )
   ).filter((row): row is TokenBurnDrop => row != null);
 
-  const remote = await fetchFeeCronBurns();
+  const [remote, chain] = await Promise.all([fetchFeeCronBurns(), fetchOnchainBurns()]);
   return summarizeAirdrops(
     files,
-    [...buyburns, ...remote.buyBurns],
-    [...tokenBurns, ...remote.tokenBurns],
+    [...buyburns, ...remote.buyBurns, ...chain.feeBurns],
+    [...tokenBurns, ...remote.tokenBurns, ...chain.tokenBurns],
   );
 }

@@ -1,0 +1,9 @@
+{
+  "tokenAddress": "0xCB2BAff7177C8966A8b059b3Df3e9323dc2Ee267",
+  "amountRaw": "13294359996061897306263990",
+  "amountFormatted": "13294359.99606189730626399",
+  "tokenDecimals": 18,
+  "burnTxHash": "0xe91820e9b8cec10451325fc76ac3ff7dbe64aa5e9f53f9765f73f4aa18f61f48",
+  "burnAddress": "0x000000000000000000000000000000000000dead",
+  "status": "sent"
+}

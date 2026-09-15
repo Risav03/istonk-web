@@ -11,7 +11,7 @@ import type { MarketStats } from "@/lib/dex-stats";
 import { shortAddr, timeAgo } from "@/lib/format";
 import { stonksTokenUrl, type PublicLaunch } from "@/lib/launches";
 
-import { BarChart, ChartCard, ColumnChart, useDailySeries, type ColumnDatum } from "./charts";
+import { BarChart, ChartCard, ColumnChart, useDailyAmountSeries, useDailySeries } from "./charts";
 
 const POLL_MS = 15_000;
 const PAGE = 25;
@@ -34,16 +34,6 @@ function mergeByTx<T extends { burnTxHash: string; at?: string }>(base: T[], ext
     map.set(row.burnTxHash, prev ? { ...prev, ...row, at: row.at ?? prev.at } : row);
   }
   return [...map.values()];
-}
-
-function burnChartPoint(row: TokenBurnDrop): ColumnDatum {
-  const label = formatDropStamp(row.file, { at: row.at });
-  return {
-    key: row.burnTxHash || row.file,
-    label,
-    hint: formatDropStamp(row.file, { withTime: "auto", at: row.at }),
-    value: Number(row.amount.toFixed(4)),
-  };
 }
 
 type Panel = "launches" | "burns";
@@ -152,10 +142,11 @@ export function DashboardLive({
     if (rest > 0) top.push({ key: "other", label: "Other", value: rest });
     return top;
   }, [launches]);
-  const tokenBurnSeries = useMemo<ColumnDatum[]>(
-    () => liveTokenBurns.map((d) => burnChartPoint(d)),
+  const tokenBurnPoints = useMemo(
+    () => liveTokenBurns.map((d) => ({ file: d.file, value: d.amount })),
     [liveTokenBurns],
   );
+  const tokenBurnSeries = useDailyAmountSeries(tokenBurnPoints, 14);
 
   const last7 = daily.slice(-7).reduce((s, d) => s + d.value, 0);
   const prev7 = daily.slice(-14, -7).reduce((s, d) => s + d.value, 0);
@@ -244,13 +235,13 @@ export function DashboardLive({
           <PanelHeader
             icon={<Flame className="h-4 w-4" />}
             title={`${tokenBurnSymbol} burns`}
-            sub={<span className="text-xs text-faint">Sent to the dead address per drop</span>}
+            sub={<span className="text-xs text-faint">{tokenBurnSymbol} bought and burned — supply gone</span>}
           />
 
           <div>{burnStats}</div>
 
-          {tokenBurnSeries.length > 0 ? (
-            <ChartCard title={`${tokenBurnSymbol} burned`} subtitle="Sent to the dead address per drop">
+          {tokenBurnSeries.some((d) => d.value > 0) ? (
+            <ChartCard title={`${tokenBurnSymbol} burned`} subtitle="Per UTC day · sent to the dead address">
               <ColumnChart data={tokenBurnSeries} valueLabel={tokenBurnSymbol} height={150} />
             </ChartCard>
           ) : null}
