@@ -5,6 +5,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check, Copy, ExternalLink, Flame, Rocket } from "lucide-react";
 
 import type { AirdropDrop, BuyBurnDrop, TokenBurnDrop } from "@/lib/airdrops";
+import { formatBurnAmount } from "@/lib/airdrops";
+import { TokenAvatar } from "@/components/token-avatar";
 import type { MarketStats } from "@/lib/dex-stats";
 import { shortAddr, timeAgo } from "@/lib/format";
 import { stonksTokenUrl, type PublicLaunch } from "@/lib/launches";
@@ -31,12 +33,23 @@ function chartPoint(file: string, value: number, hintKind: string): ColumnDatum 
   };
 }
 
+type BurnsFeed = {
+  feeBurns?: BuyBurnDrop[];
+  tokenBurns?: TokenBurnDrop[];
+};
+
 type Feed = {
   items: PublicLaunch[];
   tokensLaunched: number | null;
   market?: MarketStats;
   fetchedAt: string;
 };
+
+function mergeByTx<T extends { burnTxHash: string }>(base: T[], extra: T[]): T[] {
+  const map = new Map(base.map((row) => [row.burnTxHash, row]));
+  for (const row of extra) map.set(row.burnTxHash, row);
+  return [...map.values()];
+}
 type Panel = "launches" | "airdrops";
 
 export function DashboardLive({
@@ -48,6 +61,9 @@ export function DashboardLive({
   tokenBurns = [],
   tokenBurnSymbol = "TOKEN",
   feeBurns = [],
+  burnTokenImage = null,
+  sourceTokenImage = null,
+  sourceName = "Source token",
   airdropStats,
   airdropList,
 }: {
@@ -59,6 +75,9 @@ export function DashboardLive({
   tokenBurns?: TokenBurnDrop[];
   tokenBurnSymbol?: string;
   feeBurns?: BuyBurnDrop[];
+  burnTokenImage?: string | null;
+  sourceTokenImage?: string | null;
+  sourceName?: string;
   /** Server-rendered stat cards for the airdrop panel. */
   airdropStats?: ReactNode;
   /** Server-rendered latest-drop recipients + burn links. */
@@ -71,6 +90,8 @@ export function DashboardLive({
   const [fetchedAt, setFetchedAt] = useState<string | null>(null);
   const [fresh, setFresh] = useState<Set<number>>(() => new Set());
   const [status, setStatus] = useState<"live" | "stale">("live");
+  const [liveFeeBurns, setLiveFeeBurns] = useState<BuyBurnDrop[]>(feeBurns);
+  const [liveTokenBurns, setLiveTokenBurns] = useState<TokenBurnDrop[]>(tokenBurns);
   const seen = useRef<Set<number>>(new Set(initialLaunches.map((l) => l.id)));
 
   const poll = useCallback(async () => {
@@ -100,19 +121,42 @@ export function DashboardLive({
     }
   }, []);
 
+  const pollBurns = useCallback(async () => {
+    try {
+      const res = await fetch("/api/public/burns", { cache: "no-store" });
+      if (!res.ok) return;
+      const body = (await res.json()) as BurnsFeed;
+      if (Array.isArray(body.feeBurns)) {
+        setLiveFeeBurns((prev) => mergeByTx(prev, body.feeBurns ?? []));
+      }
+      if (Array.isArray(body.tokenBurns)) {
+        setLiveTokenBurns((prev) => mergeByTx(prev, body.tokenBurns ?? []));
+      }
+    } catch {
+      /* keep last good burns */
+    }
+  }, []);
+
   useEffect(() => {
+    void pollBurns();
     const id = setInterval(() => {
-      if (document.visibilityState === "visible") void poll();
+      if (document.visibilityState === "visible") {
+        void poll();
+        void pollBurns();
+      }
     }, POLL_MS);
     const onVisible = () => {
-      if (document.visibilityState === "visible") void poll();
+      if (document.visibilityState === "visible") {
+        void poll();
+        void pollBurns();
+      }
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       clearInterval(id);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [poll]);
+  }, [poll, pollBurns]);
 
   // Chart inputs derived from the same feed so they move together.
   const dates = useMemo(() => launches.map((l) => l.createdAt), [launches]);
@@ -154,30 +198,14 @@ export function DashboardLive({
       const fromDrops = drops
         .filter((d) => d.totalBurned > 0)
         .map((d) => chartPoint(d.file, d.totalBurned, "burned"));
-      const fromFees = feeBurns.map((d) => chartPoint(d.file, d.tokenOut, "fee burn"));
+      const fromFees = liveFeeBurns.map((d) => chartPoint(d.file, d.tokenOut, "fee burn"));
       return [...fromDrops, ...fromFees];
     },
-    [drops, feeBurns],
+    [drops, liveFeeBurns],
   );
   const tokenBurnSeries = useMemo<ColumnDatum[]>(
-    () =>
-      tokenBurns.map((d) => {
-        const m = /^(\d{4}-\d{2}-\d{2})/.exec(d.file);
-        const label = m
-          ? new Date(`${m[1]}T00:00:00Z`).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              timeZone: "UTC",
-            })
-          : d.file.replace(/\.tokenburn\.json$/i, "");
-        return {
-          key: d.burnTxHash,
-          label,
-          hint: `${label} · burned`,
-          value: Number(d.amount.toFixed(4)),
-        };
-      }),
-    [tokenBurns],
+    () => liveTokenBurns.map((d) => chartPoint(d.file, d.amount, "burned")),
+    [liveTokenBurns],
   );
 
   const last7 = daily.slice(-7).reduce((s, d) => s + d.value, 0);
@@ -294,7 +322,120 @@ export function DashboardLive({
           ) : null}
 
           <div>{airdropList}</div>
+          {liveFeeBurns.length > 0 ? (
+            <BurnList
+              title={`$${burnSymbol} fee buy/burns`}
+              note="From claimed AAPL"
+              image={burnTokenImage}
+              symbol={burnSymbol}
+              rows={liveFeeBurns.map((row) => ({
+                key: row.burnTxHash,
+                when: row.file,
+                amount: row.tokenOut,
+                swapTx: row.swapTxHash,
+                burnTx: row.burnTxHash,
+              }))}
+            />
+          ) : null}
+          {liveTokenBurns.length > 0 ? (
+            <BurnList
+              title={`$${tokenBurnSymbol} burned`}
+              note={`${sourceName} sent to the dead address`}
+              image={sourceTokenImage}
+              symbol={tokenBurnSymbol}
+              rows={liveTokenBurns.map((row) => ({
+                key: row.burnTxHash,
+                when: row.file,
+                amount: row.amount,
+                burnTx: row.burnTxHash,
+              }))}
+            />
+          ) : null}
         </section>
+      </div>
+    </div>
+  );
+}
+
+}
+
+function dropWhen(file: string): string {
+  const match = /^(\d{4}-\d{2}-\d{2})/.exec(file);
+  if (!match) return file.replace(/\.(csv|buyburn\.json|tokenburn\.json)$/i, "");
+  return new Date(`${match[1]}T00:00:00Z`).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+function BurnList({
+  title,
+  note,
+  image,
+  symbol,
+  rows,
+}: {
+  title: string;
+  note: string;
+  image?: string | null;
+  symbol: string;
+  rows: Array<{ key: string; when: string; amount: number; swapTx?: string; burnTx: string }>;
+}) {
+  const total = rows.reduce((sum, row) => sum + row.amount, 0);
+  return (
+    <div className="flex flex-col gap-3 pt-2">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="inline-flex items-center gap-2 text-sm font-semibold">
+          <TokenAvatar src={image} symbol={symbol} size={18} />
+          {title}
+          <span className="font-normal text-faint">· {rows.length}</span>
+        </h3>
+        <span className="text-xs text-faint">
+          {total > 0 ? `${formatBurnAmount(total)} total` : note}
+        </span>
+      </div>
+      <div className="glass flex flex-col overflow-hidden rounded-[16px]">
+        <div className="grid grid-cols-[1fr_auto_auto] gap-3 px-4 py-2.5 text-[11px] uppercase tracking-[0.06em] text-faint">
+          <span>When</span>
+          <span className="text-right">Amount</span>
+          <span className="text-right">Tx</span>
+        </div>
+        {rows
+          .slice()
+          .reverse()
+          .map((row) => (
+            <div
+              key={row.key}
+              className="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-t border-hairline px-4 py-3"
+            >
+              <span className="text-[13px] text-foreground/80">{dropWhen(row.when)}</span>
+              <span className="text-right font-mono text-[13px] tabular">
+                {formatBurnAmount(row.amount)}
+              </span>
+              <span className="inline-flex items-center justify-end gap-2">
+                {row.swapTx ? (
+                  <a
+                    href={`https://basescan.org/tx/${row.swapTx}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[13px] text-primary hover:text-primary-hover"
+                  >
+                    Swap
+                  </a>
+                ) : null}
+                <a
+                  href={`https://basescan.org/tx/${row.burnTx}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[13px] text-primary hover:text-primary-hover"
+                >
+                  Burn
+                </a>
+              </span>
+            </div>
+          ))}
       </div>
     </div>
   );
