@@ -47,10 +47,8 @@ export function feeCronBaseCandidates(): string[] {
 }
 
 function isoFileName(at: string, suffix: string): string {
-  const stamp = /^\d{4}-\d{2}-\d{2}/.test(at)
-    ? at.slice(0, 19).replace(/[-:]/g, "").replace("T", "-")
-    : "fee";
-  return `${stamp}.${suffix}`;
+  const day = /^(\d{4}-\d{2}-\d{2})/.exec(at)?.[1];
+  return `${day ?? "fee"}.${suffix}`;
 }
 
 function asRow(row: FeeCronBurn): FeeCronBurn {

@@ -17,7 +17,7 @@ export type {
   BuyBurnDrop,
   TokenBurnDrop,
 } from "@/lib/airdrop-format";
-export { formatAaplAmount, formatBurnAmount } from "@/lib/airdrop-format";
+export { formatAaplAmount, formatBurnAmount, formatDropStamp } from "@/lib/airdrop-format";
 
 const AAPL_DECIMALS = 8;
 const AIRDROP_DIR = path.join(process.cwd(), "data", "airdrops");

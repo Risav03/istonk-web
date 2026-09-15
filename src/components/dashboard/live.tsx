@@ -4,8 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Copy, ExternalLink, Flame, Rocket } from "lucide-react";
 
-import type { AirdropDrop, BuyBurnDrop, TokenBurnDrop } from "@/lib/airdrop-format";
-import { formatBurnAmount } from "@/lib/airdrop-format";
+import type { TokenBurnDrop } from "@/lib/airdrop-format";
+import { formatBurnAmount, formatDropStamp } from "@/lib/airdrop-format";
 import { TokenAvatar } from "@/components/token-avatar";
 import type { MarketStats } from "@/lib/dex-stats";
 import { shortAddr, timeAgo } from "@/lib/format";
@@ -16,28 +16,6 @@ import { BarChart, ChartCard, ColumnChart, useDailySeries, type ColumnDatum } fr
 const POLL_MS = 15_000;
 const PAGE = 25;
 
-function chartPoint(file: string, value: number, hintKind: string): ColumnDatum {
-  const m = /^(\d{4}-\d{2}-\d{2})/.exec(file);
-  const label = m
-    ? new Date(`${m[1]}T00:00:00Z`).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        timeZone: "UTC",
-      })
-    : file.replace(/\.(csv|buyburn\.json|tokenburn\.json)$/i, "");
-  return {
-    key: `${file}-${hintKind}`,
-    label,
-    hint: `${label} · ${hintKind}`,
-    value: Number(value.toFixed(4)),
-  };
-}
-
-type BurnsFeed = {
-  feeBurns?: BuyBurnDrop[];
-  tokenBurns?: TokenBurnDrop[];
-};
-
 type Feed = {
   items: PublicLaunch[];
   tokensLaunched: number | null;
@@ -45,43 +23,46 @@ type Feed = {
   fetchedAt: string;
 };
 
+type BurnsFeed = {
+  tokenBurns?: TokenBurnDrop[];
+};
+
 function mergeByTx<T extends { burnTxHash: string }>(base: T[], extra: T[]): T[] {
   const map = new Map(base.map((row) => [row.burnTxHash, row]));
   for (const row of extra) map.set(row.burnTxHash, row);
   return [...map.values()];
 }
-type Panel = "launches" | "airdrops";
+
+function burnChartPoint(file: string, value: number): ColumnDatum {
+  const label = formatDropStamp(file);
+  return {
+    key: file,
+    label,
+    hint: formatDropStamp(file, { withTime: true }),
+    value: Number(value.toFixed(4)),
+  };
+}
+
+type Panel = "launches" | "burns";
 
 export function DashboardLive({
   initialLaunches,
   initialTokensLaunched,
   initialMarket,
-  drops,
-  burnSymbol = "TOKEN",
   tokenBurns = [],
   tokenBurnSymbol = "TOKEN",
-  feeBurns = [],
-  burnTokenImage = null,
   sourceTokenImage = null,
   sourceName = "Source token",
-  airdropStats,
-  airdropList,
+  tokenBurnTotal = "—",
 }: {
   initialLaunches: PublicLaunch[];
   initialTokensLaunched: number | null;
   initialMarket?: MarketStats | null;
-  drops: AirdropDrop[];
-  burnSymbol?: string;
   tokenBurns?: TokenBurnDrop[];
   tokenBurnSymbol?: string;
-  feeBurns?: BuyBurnDrop[];
-  burnTokenImage?: string | null;
   sourceTokenImage?: string | null;
   sourceName?: string;
-  /** Server-rendered stat cards for the airdrop panel. */
-  airdropStats?: ReactNode;
-  /** Server-rendered latest-drop recipients + burn links. */
-  airdropList?: ReactNode;
+  tokenBurnTotal?: string;
 }) {
   const [panel, setPanel] = useState<Panel>("launches");
   const [launches, setLaunches] = useState<PublicLaunch[]>(initialLaunches);
@@ -90,7 +71,6 @@ export function DashboardLive({
   const [fetchedAt, setFetchedAt] = useState<string | null>(null);
   const [fresh, setFresh] = useState<Set<number>>(() => new Set());
   const [status, setStatus] = useState<"live" | "stale">("live");
-  const [liveFeeBurns, setLiveFeeBurns] = useState<BuyBurnDrop[]>(feeBurns);
   const [liveTokenBurns, setLiveTokenBurns] = useState<TokenBurnDrop[]>(tokenBurns);
   const seen = useRef<Set<number>>(new Set(initialLaunches.map((l) => l.id)));
 
@@ -126,9 +106,6 @@ export function DashboardLive({
       const res = await fetch("/api/public/burns", { cache: "no-store" });
       if (!res.ok) return;
       const body = (await res.json()) as BurnsFeed;
-      if (Array.isArray(body.feeBurns)) {
-        setLiveFeeBurns((prev) => mergeByTx(prev, body.feeBurns ?? []));
-      }
       if (Array.isArray(body.tokenBurns)) {
         setLiveTokenBurns((prev) => mergeByTx(prev, body.tokenBurns ?? []));
       }
@@ -158,7 +135,6 @@ export function DashboardLive({
     };
   }, [poll, pollBurns]);
 
-  // Chart inputs derived from the same feed so they move together.
   const dates = useMemo(() => launches.map((l) => l.createdAt), [launches]);
   const daily = useDailySeries(dates, 30);
   const byPair = useMemo(() => {
@@ -173,38 +149,8 @@ export function DashboardLive({
     if (rest > 0) top.push({ key: "other", label: "Other", value: rest });
     return top;
   }, [launches]);
-  const dropSeries = useMemo<ColumnDatum[]>(
-    () =>
-      drops.map((d) => {
-        const m = /^(\d{4}-\d{2}-\d{2})/.exec(d.file);
-        const label = m
-          ? new Date(`${m[1]}T00:00:00Z`).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              timeZone: "UTC",
-            })
-          : d.file.replace(/\.csv$/, "");
-        return {
-          key: d.file,
-          label,
-          hint: `${label} · ${d.recipientCount} recipient${d.recipientCount === 1 ? "" : "s"}`,
-          value: Number(d.totalAapl.toFixed(4)),
-        };
-      }),
-    [drops],
-  );
-  const burnSeries = useMemo<ColumnDatum[]>(
-    () => {
-      const fromDrops = drops
-        .filter((d) => d.totalBurned > 0)
-        .map((d) => chartPoint(d.file, d.totalBurned, "burned"));
-      const fromFees = liveFeeBurns.map((d) => chartPoint(d.file, d.tokenOut, "fee burn"));
-      return [...fromDrops, ...fromFees];
-    },
-    [drops, liveFeeBurns],
-  );
   const tokenBurnSeries = useMemo<ColumnDatum[]>(
-    () => liveTokenBurns.map((d) => chartPoint(d.file, d.amount, "burned")),
+    () => liveTokenBurns.map((d) => burnChartPoint(d.file, d.amount)),
     [liveTokenBurns],
   );
 
@@ -213,13 +159,12 @@ export function DashboardLive({
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Narrow screens: switch panels instead of scrolling past one to reach the other. */}
       <div className="sticky top-[76px] z-20 flex justify-center lg:hidden">
         <div className="glass inline-flex rounded-full p-1">
           {(
             [
               { id: "launches", label: "Launches", Icon: Rocket },
-              { id: "airdrops", label: "Airdrops & burns", Icon: Flame },
+              { id: "burns", label: `${tokenBurnSymbol} burns`, Icon: Flame },
             ] as const
           ).map((t) => (
             <button
@@ -238,7 +183,6 @@ export function DashboardLive({
       </div>
 
       <div className="grid items-start gap-8 lg:grid-cols-2">
-        {/* ---------- Launches ---------- */}
         <section
           className={`flex-col gap-5 ${panel === "launches" ? "flex" : "hidden lg:flex"}`}
           aria-label="Launches"
@@ -246,12 +190,10 @@ export function DashboardLive({
           <PanelHeader
             icon={<Rocket className="h-4 w-4" />}
             title="Launches"
-            sub={
-              <LiveDot status={status} fetchedAt={fetchedAt} />
-            }
+            sub={<LiveDot status={status} fetchedAt={fetchedAt} />}
           />
 
-          <div className="grid grid-cols-2 gap-3 2xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3">
             <Stat
               label="Launched"
               value={tokensLaunched == null ? "—" : tokensLaunched.toLocaleString("en-US")}
@@ -292,51 +234,31 @@ export function DashboardLive({
           <LaunchFeed launches={launches} fresh={fresh} />
         </section>
 
-        {/* ---------- Airdrops & buy/burn ---------- */}
         <section
-          className={`flex-col gap-5 ${panel === "airdrops" ? "flex" : "hidden lg:flex"}`}
-          aria-label="Airdrops and buy/burn"
+          className={`flex-col gap-5 ${panel === "burns" ? "flex" : "hidden lg:flex"}`}
+          aria-label={`${tokenBurnSymbol} burns`}
         >
           <PanelHeader
             icon={<Flame className="h-4 w-4" />}
-            title="Airdrops & burns"
-            sub={<span className="text-xs text-faint">AAPL to holders, leftover AAPL buy/burn, and source-token burns</span>}
+            title={`${tokenBurnSymbol} burns`}
+            sub={<span className="text-xs text-faint">Sent to the dead address</span>}
           />
 
-          <div>{airdropStats}</div>
+          <div className="grid grid-cols-2 gap-3">
+            <Stat label={`${tokenBurnSymbol} burned`} value={tokenBurnTotal} note={sourceName} />
+            <Stat
+              label="Drops"
+              value={liveTokenBurns.length.toLocaleString("en-US")}
+              note={liveTokenBurns.length > 0 ? "On-chain burns" : "After the next drop"}
+            />
+          </div>
 
-          {dropSeries.length > 0 ? (
-            <ChartCard title="AAPL airdropped per drop" subtitle="Sent to holders">
-              <ColumnChart data={dropSeries} valueLabel="AAPL" height={150} />
-            </ChartCard>
-          ) : null}
-          {burnSeries.length > 0 ? (
-            <ChartCard title={`${burnSymbol} burned`} subtitle="Bought with AAPL, then burned">
-              <ColumnChart data={burnSeries} valueLabel={burnSymbol} height={150} />
-            </ChartCard>
-          ) : null}
           {tokenBurnSeries.length > 0 ? (
             <ChartCard title={`${tokenBurnSymbol} burned`} subtitle="Sent to the dead address per drop">
               <ColumnChart data={tokenBurnSeries} valueLabel={tokenBurnSymbol} height={150} />
             </ChartCard>
           ) : null}
 
-          <div>{airdropList}</div>
-          {liveFeeBurns.length > 0 ? (
-            <BurnList
-              title={`$${burnSymbol} fee buy/burns`}
-              note="From claimed AAPL"
-              image={burnTokenImage}
-              symbol={burnSymbol}
-              rows={liveFeeBurns.map((row) => ({
-                key: row.burnTxHash,
-                when: row.file,
-                amount: row.tokenOut,
-                swapTx: row.swapTxHash,
-                burnTx: row.burnTxHash,
-              }))}
-            />
-          ) : null}
           {liveTokenBurns.length > 0 ? (
             <BurnList
               title={`$${tokenBurnSymbol} burned`}
@@ -357,17 +279,6 @@ export function DashboardLive({
   );
 }
 
-function dropWhen(file: string): string {
-  const match = /^(\d{4}-\d{2}-\d{2})/.exec(file);
-  if (!match) return file.replace(/\.(csv|buyburn\.json|tokenburn\.json)$/i, "");
-  return new Date(`${match[1]}T00:00:00Z`).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-}
-
 function BurnList({
   title,
   note,
@@ -379,7 +290,7 @@ function BurnList({
   note: string;
   image?: string | null;
   symbol: string;
-  rows: Array<{ key: string; when: string; amount: number; swapTx?: string; burnTx: string }>;
+  rows: Array<{ key: string; when: string; amount: number; burnTx: string }>;
 }) {
   const total = rows.reduce((sum, row) => sum + row.amount, 0);
   return (
@@ -408,30 +319,20 @@ function BurnList({
               key={row.key}
               className="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-t border-hairline px-4 py-3"
             >
-              <span className="text-[13px] text-foreground/80">{dropWhen(row.when)}</span>
+              <span className="text-[13px] text-foreground/80">
+                {formatDropStamp(row.when, { withYear: true, withTime: true })}
+              </span>
               <span className="text-right font-mono text-[13px] tabular">
                 {formatBurnAmount(row.amount)}
               </span>
-              <span className="inline-flex items-center justify-end gap-2">
-                {row.swapTx ? (
-                  <a
-                    href={`https://basescan.org/tx/${row.swapTx}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[13px] text-primary hover:text-primary-hover"
-                  >
-                    Swap
-                  </a>
-                ) : null}
-                <a
-                  href={`https://basescan.org/tx/${row.burnTx}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-[13px] text-primary hover:text-primary-hover"
-                >
-                  Burn
-                </a>
-              </span>
+              <a
+                href={`https://basescan.org/tx/${row.burnTx}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[13px] text-primary hover:text-primary-hover"
+              >
+                Burn
+              </a>
             </div>
           ))}
       </div>
@@ -482,8 +383,6 @@ function Stat({ label, value, note }: { label: string; value: string; note: stri
   );
 }
 
-/* ---------- Launch feed ---------- */
-
 function LaunchFeed({ launches, fresh }: { launches: PublicLaunch[]; fresh: Set<number> }) {
   const [shown, setShown] = useState(PAGE);
   const [query, setQuery] = useState("");
@@ -524,7 +423,6 @@ function LaunchFeed({ launches, fresh }: { launches: PublicLaunch[]; fresh: Set<
           <span>Contract</span>
           <span className="text-right">Links</span>
         </div>
-        {/* Scrolls inside the panel so the airdrop column stays in view beside it. */}
         <div className="max-h-[560px] overflow-y-auto">
           {filtered.length === 0 ? (
             <div className="px-4 py-6 text-[13px] text-muted">
