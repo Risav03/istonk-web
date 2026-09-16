@@ -68,7 +68,7 @@ export function Hero() {
             href={site.links.app}
             className="glass inline-flex h-12 items-center gap-2 rounded-full px-5 text-[15px] font-semibold text-foreground transition-transform hover:-translate-y-0.5"
           >
-            Open your account
+            Sign in with email
             <ArrowRight className="h-4 w-4 text-muted transition-transform group-hover:translate-x-0.5" />
           </Link>
         </motion.div>

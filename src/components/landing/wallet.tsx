@@ -12,18 +12,18 @@ import { Reveal, Stagger, fadeUp, useLiteMotion } from "./motion";
 const points = [
   {
     icon: Mail,
-    title: "Sign in with email",
-    body: "A one-time code. Your iStonk account is ready. No app to install.",
+    title: "On the web",
+    body: "Open istonks.meme/app and enter your email. We send a one-time code — that's how you sign in.",
   },
   {
     icon: Send,
-    title: "See what you sent",
-    body: "Stocks you sent, who claimed them, and an editable contacts list.",
+    title: "Then you can see everything",
+    body: "Holdings, stocks you sent, who claimed them, and your contacts.",
   },
   {
     icon: Smartphone,
-    title: "Claim what you get",
-    body: "Someone sent you a stock? Text connect and it lands in your account.",
+    title: "From iMessage",
+    body: "Text iStonk connect from your phone so gifts to your number land in the same account.",
   },
 ];
 
@@ -89,14 +89,16 @@ export function Wallet() {
           </Reveal>
           <Reveal delay={0.05}>
             <h2 className="mt-3 text-[36px] font-extrabold leading-[1.02] tracking-[-0.03em] sm:text-[48px]">
-              Your account.
+              Sign in with
               <br />
-              <span className="text-iris">Your sends.</span>
+              <span className="text-iris">your email.</span>
             </h2>
           </Reveal>
           <Reveal delay={0.1}>
             <p className="mt-5 max-w-[460px] text-[16px] leading-relaxed text-muted">
-              See what you sent, what you hold, and what is waiting for someone to claim.
+              No app to install. Go to{" "}
+              <span className="font-semibold text-foreground">istonks.meme/app</span>, enter your
+              email, and tap the code we send. That’s your iStonk account.
             </p>
           </Reveal>
 
@@ -110,14 +112,20 @@ export function Wallet() {
             ))}
           </Stagger>
 
-          <Reveal delay={0.1}>
+          <Reveal delay={0.1} className="mt-8 flex flex-wrap items-center gap-3">
             <Link
               href={site.links.app}
-              className="mt-8 inline-flex h-11 items-center gap-2 rounded-full bg-foreground px-5 text-[14px] font-semibold text-white transition-transform hover:-translate-y-0.5"
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-foreground px-5 text-[14px] font-semibold text-white transition-transform hover:-translate-y-0.5"
             >
-              Your account
+              Sign in with email
               <ArrowRight className="h-4 w-4" />
             </Link>
+            <a
+              href={site.bot.connectSmsHref}
+              className="inline-flex h-11 items-center rounded-full px-4 text-[14px] font-semibold text-foreground/80 transition-colors hover:bg-white/60"
+            >
+              Or text connect
+            </a>
           </Reveal>
         </div>
       </div>

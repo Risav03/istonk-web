@@ -70,7 +70,7 @@ export function Nav() {
             href={site.links.app}
             className="hidden h-9 items-center whitespace-nowrap rounded-full px-4 text-[13px] font-semibold text-foreground/80 transition-colors hover:bg-white/60 sm:inline-flex"
           >
-            Open account
+            Sign in
           </Link>
           <a
             href={site.bot.smsHref}

@@ -65,7 +65,7 @@ export function Footer() {
               href={site.links.app}
               className="glass inline-flex h-12 items-center rounded-full px-5 text-[15px] font-semibold text-foreground transition-transform hover:-translate-y-0.5"
             >
-              Your account
+              Sign in with email
             </Link>
             {socials.map((s) => (
               <a
@@ -94,7 +94,7 @@ export function Footer() {
             How it works
           </a>
           <Link href={site.links.app} className="hover:text-foreground">
-            Your account
+            Sign in
           </Link>
           <a href={site.links.x} target="_blank" rel="noreferrer" className="hover:text-foreground">
             X
