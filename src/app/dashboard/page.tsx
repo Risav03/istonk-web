@@ -9,6 +9,7 @@ import { formatBurnAmount, loadAirdropSnapshot } from "@/lib/airdrops";
 import { fetchMarketStats } from "@/lib/dex-stats";
 import { fetchDexScreenerToken } from "@/lib/dex-token";
 import { fetchLaunches, fetchTokensLaunched } from "@/lib/launch-stats";
+import { getAppSession } from "@/lib/app-session";
 import { pageMetadata } from "@/lib/metadata";
 
 export const dynamic = "force-dynamic";
@@ -21,11 +22,13 @@ export const metadata = pageMetadata({
 });
 
 export default async function DashboardPage() {
-  const [tokensLaunched, launches, airdrops] = await Promise.all([
+  const [tokensLaunched, launches, airdrops, session] = await Promise.all([
     fetchTokensLaunched(),
     fetchLaunches(),
     loadAirdropSnapshot(),
+    getAppSession(),
   ]);
+  const signedIn = Boolean(session);
   const [sourceMeta, market] = await Promise.all([
     airdrops.sourceTokenAddress ? fetchDexScreenerToken(airdrops.sourceTokenAddress) : null,
     fetchMarketStats(launches.map((l) => l.tokenAddress)),
@@ -36,7 +39,7 @@ export default async function DashboardPage() {
   return (
     <>
       <Aurora />
-      <Nav />
+      <Nav signedIn={signedIn} />
       <main className="relative z-10 mx-auto flex w-full max-w-[1280px] flex-col gap-10 px-5 pb-20 pt-32">
         <header className="flex flex-col gap-2">
           <span className="text-[13px] text-muted">iStonk · public stats</span>
@@ -81,7 +84,7 @@ export default async function DashboardPage() {
         </p>
       </main>
       <div className="relative z-10">
-        <Footer />
+        <Footer signedIn={signedIn} />
       </div>
     </>
   );

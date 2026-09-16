@@ -27,7 +27,7 @@ const points = [
   },
 ];
 
-export function Wallet() {
+export function Wallet({ signedIn = false }: { signedIn?: boolean }) {
   const lite = useLiteMotion();
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
@@ -117,7 +117,7 @@ export function Wallet() {
               href={site.links.app}
               className="inline-flex h-11 items-center gap-2 rounded-full bg-foreground px-5 text-[14px] font-semibold text-white transition-transform hover:-translate-y-0.5"
             >
-              Sign in with email
+              {signedIn ? "Open account" : "Sign in with email"}
               <ArrowRight className="h-4 w-4" />
             </Link>
             <a

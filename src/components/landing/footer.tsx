@@ -30,7 +30,7 @@ const socials = [
   { label: "Join the Telegram", href: site.links.telegram, Icon: TelegramIcon },
 ];
 
-export function Footer() {
+export function Footer({ signedIn = false }: { signedIn?: boolean }) {
   const lite = useLiteMotion();
   return (
     <>
@@ -65,7 +65,7 @@ export function Footer() {
               href={site.links.app}
               className="glass inline-flex h-12 items-center rounded-full px-5 text-[15px] font-semibold text-foreground transition-transform hover:-translate-y-0.5"
             >
-              Sign in with email
+              {signedIn ? "Open account" : "Sign in with email"}
             </Link>
             {socials.map((s) => (
               <a
@@ -94,7 +94,7 @@ export function Footer() {
             How it works
           </a>
           <Link href={site.links.app} className="hover:text-foreground">
-            Sign in
+            {signedIn ? "Account" : "Sign in"}
           </Link>
           <a href={site.links.x} target="_blank" rel="noreferrer" className="hover:text-foreground">
             X

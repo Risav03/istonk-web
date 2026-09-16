@@ -12,7 +12,7 @@ import { SplitWords, useLiteMotion } from "./motion";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-export function Hero() {
+export function Hero({ signedIn = false }: { signedIn?: boolean }) {
   const lite = useLiteMotion();
 
   return (
@@ -68,7 +68,7 @@ export function Hero() {
             href={site.links.app}
             className="glass inline-flex h-12 items-center gap-2 rounded-full px-5 text-[15px] font-semibold text-foreground transition-transform hover:-translate-y-0.5"
           >
-            Sign in with email
+            {signedIn ? "Open account" : "Sign in with email"}
             <ArrowRight className="h-4 w-4 text-muted transition-transform group-hover:translate-x-0.5" />
           </Link>
         </motion.div>

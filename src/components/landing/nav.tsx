@@ -16,7 +16,7 @@ const links = [
   { href: "/#next", label: "What's next" },
 ];
 
-export function Nav() {
+export function Nav({ signedIn = false }: { signedIn?: boolean }) {
   // A single class toggle instead of interpolating backdrop-filter on every scroll frame.
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
@@ -70,7 +70,7 @@ export function Nav() {
             href={site.links.app}
             className="hidden h-9 items-center whitespace-nowrap rounded-full px-4 text-[13px] font-semibold text-foreground/80 transition-colors hover:bg-white/60 sm:inline-flex"
           >
-            Sign in
+            {signedIn ? "Account" : "Sign in"}
           </Link>
           <a
             href={site.bot.smsHref}
