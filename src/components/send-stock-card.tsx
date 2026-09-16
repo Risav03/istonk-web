@@ -6,31 +6,24 @@ import {
   api,
   ApiError,
   type ContactRow,
-  type GiftChannel,
   type StockOffer,
 } from "@/lib/api";
-import { SEND_CHANNELS } from "@/lib/send-channels";
 
 import { Button, Card, CardHeader, Field, inputClass } from "./ui";
 
-const CHANNEL_HINT: Record<GiftChannel, string> = {
-  imessage: "They get an iMessage from iStonk after you pay.",
-  text: "We'll text their number from the web after you pay.",
-  email: "We'll email them with AgentMail after you pay.",
-};
+const SEND_HINT =
+  "They get an iMessage after you pay. Add an email and we also send a claim link — they sign in with that phone number within 72 hours or it returns to you.";
 
 export function SendStockCard({
-  channel,
   contacts,
   onSent,
   onReauth,
 }: {
-  channel: GiftChannel | null;
+  channel?: string | null;
   contacts: ContactRow[];
   onSent: () => Promise<void>;
   onReauth: () => void;
 }) {
-  const [channelId, setChannelId] = useState<GiftChannel>(channel ?? "imessage");
   const [stocks, setStocks] = useState<StockOffer[]>([]);
   const [contactId, setContactId] = useState<string>("");
   const [name, setName] = useState("");
@@ -43,10 +36,6 @@ export function SendStockCard({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sentLabel, setSentLabel] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (channel) setChannelId(channel);
-  }, [channel]);
 
   useEffect(() => {
     void api
@@ -74,16 +63,13 @@ export function SendStockCard({
     setEmail(selected.email ?? "");
   }, [selected]);
 
-  const needsPhone = channelId !== "email";
-  const needsEmail = channelId === "email";
-
   async function submit() {
     setBusy(true);
     setError(null);
     setSentLabel(null);
     try {
       const result = await api.createGift({
-        channel: channelId,
+        channel: "imessage",
         symbol,
         usd,
         memo: memo.trim() || undefined,
@@ -113,28 +99,8 @@ export function SendStockCard({
 
   return (
     <Card accent className="gap-0">
-      <CardHeader
-        title="Send a stock"
-        subtitle={CHANNEL_HINT[channelId]}
-      />
+      <CardHeader title="Send a stock" subtitle={SEND_HINT} />
       <div className="flex flex-col gap-4 px-5 pb-5">
-        <div className="grid grid-cols-2 gap-1.5 rounded-[12px] bg-chip p-1">
-          {SEND_CHANNELS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setChannelId(item.id)}
-              className={`h-9 rounded-[10px] text-[12.5px] font-semibold transition-colors ${
-                channelId === item.id
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted hover:text-foreground"
-              }`}
-            >
-              {item.title}
-            </button>
-          ))}
-        </div>
-
         {contacts.length > 0 ? (
           <Field label="Contact">
             <select
@@ -171,42 +137,27 @@ export function SendStockCard({
           />
         </Field>
 
-        {needsPhone ? (
-          <Field label="Phone">
-            <input
-              className={inputClass}
-              value={phone}
-              onChange={(event) => setPhone(event.target.value)}
-              placeholder="+1 555 123 4567"
-              inputMode="tel"
-              autoComplete="tel"
-            />
-          </Field>
-        ) : (
-          <Field label="Phone (optional)">
-            <input
-              className={inputClass}
-              value={phone}
-              onChange={(event) => setPhone(event.target.value)}
-              placeholder="+1 555 123 4567"
-              inputMode="tel"
-              autoComplete="tel"
-            />
-          </Field>
-        )}
+        <Field label="Phone">
+          <input
+            className={inputClass}
+            value={phone}
+            onChange={(event) => setPhone(event.target.value)}
+            placeholder="+1 555 123 4567"
+            inputMode="tel"
+            autoComplete="tel"
+          />
+        </Field>
 
-        {needsEmail || Boolean(email) ? (
-          <Field label={needsEmail ? "Email" : "Email (optional)"}>
-            <input
-              className={inputClass}
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="mom@example.com"
-              type="email"
-              autoComplete="email"
-            />
-          </Field>
-        ) : null}
+        <Field label="Email (optional)">
+          <input
+            className={inputClass}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="mom@example.com"
+            type="email"
+            autoComplete="email"
+          />
+        </Field>
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="Stock">

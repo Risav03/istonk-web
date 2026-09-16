@@ -204,7 +204,6 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
         {panel === "send" ? (
           <div className="grid gap-6 lg:grid-cols-2">
             <SendStockCard
-              channel={sendChannel}
               contacts={contacts}
               onSent={load}
               onReauth={() => setReauth(true)}
