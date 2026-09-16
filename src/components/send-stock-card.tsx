@@ -14,6 +14,18 @@ import { Button, Card, CardHeader, Field, inputClass } from "./ui";
 const SEND_HINT =
   "They get an iMessage after you pay. Add an email and we also send a claim link — they sign in with that phone number within 72 hours or it returns to you.";
 
+/** Matches server giftOnrampUsd: stock + 1% fee, grossed up ~2.5% for Coinbase, min $2. */
+function estimateApplePayUsd(stockUsd: number): number {
+  if (!Number.isFinite(stockUsd) || stockUsd <= 0) return 0;
+  const usdcNeeded = Math.round((stockUsd + stockUsd * 0.01) * 100) / 100;
+  const total = Math.ceil((usdcNeeded / 0.975) * 100 - 1e-9) / 100;
+  return Math.max(total, 2);
+}
+
+function formatUsd(n: number): string {
+  return Number.isInteger(n) ? String(n) : n.toFixed(2);
+}
+
 export function SendStockCard({
   contacts,
   onSent,
@@ -30,7 +42,7 @@ export function SendStockCard({
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [symbol, setSymbol] = useState("AAPLc");
-  const [usd, setUsd] = useState("25");
+  const [usd, setUsd] = useState("");
   const [memo, setMemo] = useState("");
   const [saveContact, setSaveContact] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -63,7 +75,20 @@ export function SendStockCard({
     setEmail(selected.email ?? "");
   }, [selected]);
 
+  const stockUsd = Number(usd.trim());
+  const applePayEstimate =
+    Number.isFinite(stockUsd) && stockUsd > 0 ? estimateApplePayUsd(stockUsd) : null;
+  const stockName =
+    (stocks.find((item) => item.symbol === symbol) ?? { name: "Apple" }).name;
+
   async function submit() {
+    const amount = usd.trim();
+    const parsed = Number(amount);
+    if (!amount || !Number.isFinite(parsed) || parsed <= 0) {
+      setError("Enter how many dollars of stock to send.");
+      return;
+    }
+
     setBusy(true);
     setError(null);
     setSentLabel(null);
@@ -71,7 +96,7 @@ export function SendStockCard({
       const result = await api.createGift({
         channel: "imessage",
         symbol,
-        usd,
+        usd: amount,
         memo: memo.trim() || undefined,
         saveContact: saveContact && !selected,
         recipient: {
@@ -86,7 +111,7 @@ export function SendStockCard({
         return;
       }
       setSentLabel(`Sent ${result.amountLabel}.`);
-      setUsd("25");
+      setUsd("");
       setMemo("");
       await onSent();
     } catch (err) {
@@ -179,10 +204,18 @@ export function SendStockCard({
               value={usd}
               onChange={(event) => setUsd(event.target.value)}
               inputMode="decimal"
-              placeholder="25"
+              placeholder="2"
             />
           </Field>
         </div>
+
+        {applePayEstimate ? (
+          <p className="text-[13px] leading-relaxed text-muted">
+            You'll pay about{" "}
+            <span className="font-semibold text-foreground">${formatUsd(applePayEstimate)}</span> with
+            Apple Pay to send ${formatUsd(stockUsd)} of {stockName}.
+          </p>
+        ) : null}
 
         <Field label="Note (optional)">
           <input

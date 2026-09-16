@@ -53,7 +53,7 @@ export type ActivityItem = {
   symbol: string;
   counterparty: string;
   txHash: string | null;
-  status: "sent" | "pending" | "failed";
+  status: "sent" | "pending" | "failed" | "awaiting_payment";
   createdAt: string;
 };
 

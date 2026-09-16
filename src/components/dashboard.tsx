@@ -742,7 +742,18 @@ function ActivityFeed({ items }: { items: ActivityItem[] }) {
         ) : (
           items.map((row) => {
             const when = timeAgo(row.createdAt);
-            const directionLabel = row.direction === "sent" ? "Sent" : "Received";
+            const awaitingPay = row.status === "awaiting_payment";
+            const directionLabel = awaitingPay
+              ? "Checkout"
+              : row.direction === "sent"
+                ? "Sent"
+                : "Received";
+            const statusLabel =
+              row.status === "awaiting_payment"
+                ? "awaiting Apple Pay"
+                : row.status === "pending"
+                  ? "pending"
+                  : row.status;
             const statusTone = row.status === "sent" ? "primary" : undefined;
             return (
               <Row key={row.id}>
@@ -751,12 +762,12 @@ function ActivityFeed({ items }: { items: ActivityItem[] }) {
                     {directionLabel} {row.amountLabel}
                   </span>
                   <span className="truncate text-xs text-muted">
-                    {row.direction === "sent" ? "to" : "from"} {row.counterparty}
+                    {row.direction === "sent" || awaitingPay ? "to" : "from"} {row.counterparty}
                     {when ? ` · ${when}` : ""}
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <Pill tone={statusTone}>{row.status}</Pill>
+                  <Pill tone={statusTone}>{statusLabel}</Pill>
                   {row.txHash ? (
                     <a
                       href={`https://basescan.org/tx/${row.txHash}`}
