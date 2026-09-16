@@ -153,7 +153,7 @@ export function DashboardLive({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="sticky top-[76px] z-20 flex justify-center lg:hidden">
+      <div className="sticky top-[76px] z-20 flex justify-center xl:hidden">
         <div className="glass inline-flex rounded-full p-1">
           {(
             [
@@ -176,9 +176,9 @@ export function DashboardLive({
         </div>
       </div>
 
-      <div className="grid items-start gap-8 lg:grid-cols-2">
+      <div className="grid items-start gap-8 xl:grid-cols-2">
         <section
-          className={`flex-col gap-5 ${panel === "launches" ? "flex" : "hidden lg:flex"}`}
+          className={`flex-col gap-5 ${panel === "launches" ? "flex" : "hidden xl:flex"}`}
           aria-label="Launches"
         >
           <PanelHeader
@@ -229,7 +229,7 @@ export function DashboardLive({
         </section>
 
         <section
-          className={`flex-col gap-5 ${panel === "burns" ? "flex" : "hidden lg:flex"}`}
+          className={`flex-col gap-5 ${panel === "burns" ? "flex" : "hidden xl:flex"}`}
           aria-label={`${tokenBurnSymbol} burns`}
         >
           <PanelHeader
@@ -425,13 +425,13 @@ function LaunchFeed({
       </div>
 
       <div className="glass flex flex-col overflow-hidden rounded-[16px]">
-        <div className="hidden grid-cols-[1fr_84px_88px_auto] gap-3 px-4 py-2.5 text-[11px] uppercase tracking-[0.06em] text-faint sm:grid">
+        <div className="hidden grid-cols-[minmax(0,1fr)_76px_72px_auto] gap-3 px-4 py-2.5 text-[11px] uppercase tracking-[0.06em] text-faint sm:grid">
           <span>Token</span>
           <span>Pair</span>
           <span className="text-right">24h vol</span>
           <span className="text-right">Links</span>
         </div>
-        <div className="max-h-[560px] overflow-y-auto">
+        <div className="sm:max-h-[560px] sm:overflow-y-auto">
           {ranked.length === 0 ? (
             <div className="px-4 py-6 text-[13px] text-muted">
               {launches.length === 0 ? "No launches yet. Text iStonk and say launch." : "Nothing matches that search."}
@@ -498,16 +498,16 @@ function LaunchRow({
       animate={{ opacity: 1, y: 0, backgroundColor: isNew ? "rgba(47,91,255,0.08)" : "rgba(47,91,255,0)" }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1.5 border-t border-hairline px-4 py-3 sm:grid-cols-[1fr_84px_88px_auto]"
+      className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-t border-hairline px-4 py-3 sm:grid-cols-[minmax(0,1fr)_76px_72px_auto]"
     >
       <div className="flex min-w-0 items-center gap-3">
         <span className="w-5 shrink-0 text-right font-mono text-[12px] tabular text-faint">{rank}</span>
         <TokenAvatar src={stats?.imageUrl} symbol={launch.tokenSymbol ?? "TOKEN"} size={32} />
         <div className="flex min-w-0 flex-col">
-          <span className="flex items-center gap-2">
-            <span className="truncate text-[14px] font-semibold">{launch.tokenName ?? "Unnamed"}</span>
+          <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
+            <span className="min-w-0 truncate text-[14px] font-semibold">{launch.tokenName ?? "Unnamed"}</span>
             {launch.tokenSymbol ? (
-              <span className="shrink-0 font-mono text-[12px] text-muted">${launch.tokenSymbol}</span>
+              <span className="max-w-full truncate font-mono text-[12px] text-muted">${launch.tokenSymbol}</span>
             ) : null}
             {isNew ? (
               <span className="shrink-0 rounded-full bg-primary-dim px-1.5 py-[1px] text-[10px] font-semibold text-primary">
@@ -515,53 +515,68 @@ function LaunchRow({
               </span>
             ) : null}
           </span>
-          <span className="text-[12px] text-faint" suppressHydrationWarning>
+          <span className="truncate text-[12px] text-faint" suppressHydrationWarning>
             {when ?? "·"} · by {shortAddr(launch.launcher)}
           </span>
         </div>
       </div>
 
-      <span className="order-3 font-mono text-[12px] text-foreground/80 sm:order-none">
-        {launch.pairSymbol ? `vs ${launch.pairSymbol}` : "·"}
+      {/* Mobile: volume sits top-right beside the identity so the name keeps the width. */}
+      <span className="flex flex-col items-end sm:hidden">
+        <span className="font-mono text-[14px] font-semibold tabular">{stats ? formatUsdCompact(volume) : "—"}</span>
+        <span className="text-[10px] uppercase tracking-[0.06em] text-faint">24h vol</span>
       </span>
 
-      <span className="order-4 text-right font-mono text-[12px] tabular text-foreground/80 sm:order-none">
-        {stats ? formatUsdCompact(volume) : "—"}
-      </span>
+      {/* Mobile: pair + links share a second full-width row; on sm+ `contents` flattens them into grid cells. */}
+      <div className="col-span-2 flex min-w-0 items-center justify-between gap-3 sm:contents">
+        <span className="min-w-0 truncate font-mono text-[12px] text-foreground/80">
+          {launch.pairSymbol ? (
+            <span className="rounded-full bg-black/[0.04] px-2 py-[2px] sm:bg-transparent sm:px-0 sm:py-0">
+              vs {launch.pairSymbol}
+            </span>
+          ) : (
+            "·"
+          )}
+        </span>
 
-      <span className="order-2 flex items-center justify-end gap-2.5 text-[12px] sm:order-none">
-        {addr ? (
-          <a
-            href={stonksTokenUrl(addr)}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 font-medium text-primary hover:text-primary-hover"
-          >
-            Stonks <ExternalLink className="h-3 w-3" />
-          </a>
-        ) : null}
-        {launch.explorerUrl ? (
-          <a
-            href={launch.explorerUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 text-muted hover:text-foreground"
-          >
-            Tx <ExternalLink className="h-3 w-3" />
-          </a>
-        ) : null}
-        {addr ? (
-          <button
-            type="button"
-            onClick={copy}
-            title={addr}
-            className="inline-flex items-center text-muted hover:text-foreground"
-          >
-            {copied ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
-            <span className="sr-only">Copy contract</span>
-          </button>
-        ) : null}
-      </span>
+        <span className="hidden text-right font-mono text-[12px] tabular text-foreground/80 sm:block">
+          {stats ? formatUsdCompact(volume) : "—"}
+        </span>
+
+        <span className="flex shrink-0 items-center justify-end gap-3 text-[12px] sm:gap-2.5">
+          {addr ? (
+            <a
+              href={stonksTokenUrl(addr)}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 font-medium text-primary hover:text-primary-hover"
+            >
+              Stonks <ExternalLink className="h-3 w-3" />
+            </a>
+          ) : null}
+          {launch.explorerUrl ? (
+            <a
+              href={launch.explorerUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-muted hover:text-foreground"
+            >
+              Tx <ExternalLink className="h-3 w-3" />
+            </a>
+          ) : null}
+          {addr ? (
+            <button
+              type="button"
+              onClick={copy}
+              title={addr}
+              className="inline-flex items-center text-muted hover:text-foreground"
+            >
+              {copied ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
+              <span className="sr-only">Copy contract</span>
+            </button>
+          ) : null}
+        </span>
+      </div>
     </motion.div>
   );
 }
