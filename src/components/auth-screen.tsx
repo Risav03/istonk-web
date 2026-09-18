@@ -1,8 +1,7 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
-
-import { Button, Logo, inputClass } from "./ui";
+import { ConnectHint } from "./connect-hint";
+import { Button, Input, OtpField, Wordmark } from "./ds";
 
 export type AuthPhase = "checking" | "email" | "otp" | "linking" | "error";
 
@@ -21,54 +20,75 @@ type Props = {
 
 export function AuthScreen(props: Props) {
   const { phase } = props;
+  const waiting = phase === "linking" || phase === "checking";
   return (
-    <main className="mx-auto flex min-h-[100dvh] w-full max-w-[360px] flex-col justify-center gap-8 px-5 py-12">
-      <div className="flex flex-col gap-4">
-        <Logo size={40} />
+    <main
+      className="relative mx-auto flex min-h-[100dvh] w-full flex-col justify-center gap-7 px-[var(--gutter-mobile)] py-14"
+      style={{ maxWidth: 420 }}
+    >
+      <span aria-hidden className="istonk-grain pointer-events-none absolute inset-0" />
+
+      <div className="relative flex flex-col gap-6">
+        <Wordmark size={20} markSize={44} priority />
+
         {phase === "otp" ? (
           <Heading
             title="Check your email"
             body={
               <>
-                We sent a 6-digit code to <span className="text-foreground">{props.email}</span>.
+                Six digits, sent to{" "}
+                <span style={{ color: "var(--text-primary)" }}>{props.email}</span>.
               </>
             }
           />
-        ) : phase === "linking" || phase === "checking" ? (
+        ) : waiting ? (
           <Heading title="Opening your account" body="One sec." />
         ) : (
           <Heading
             title="Open your iStonk account"
-            body="Use the email you signed up with when iStonk texted you an account. We will send a one-time code."
+            body="Use the email iStonk texted you about. We will send a one-time code."
           />
         )}
       </div>
 
-      {phase === "otp" ? (
-        <OtpStep {...props} />
-      ) : phase === "linking" || phase === "checking" ? (
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      ) : (
-        <EmailStep {...props} />
-      )}
+      <div className="relative flex flex-col gap-4">
+        {phase === "otp" ? (
+          <OtpStep {...props} />
+        ) : waiting ? (
+          <span
+            className="istonk-spin inline-block"
+            style={{
+              width: 18,
+              height: 18,
+              borderRadius: "var(--r-pill)",
+              border: "2px solid var(--ink)",
+              borderTopColor: "transparent",
+            }}
+          />
+        ) : (
+          <EmailStep {...props} />
+        )}
 
-      {props.message ? <p className="text-sm text-danger">{props.message}</p> : null}
+        {props.message ? (
+          <p style={{ font: "var(--type-body-sm)", color: "var(--down)" }}>{props.message}</p>
+        ) : null}
 
-      {phase === "email" || phase === "error" ? (
-        <p className="text-xs leading-relaxed text-faint">
-          No account yet? Text iStonk on iMessage and say <span className="font-mono text-muted">connect</span>. It
-          will send you here.
-        </p>
-      ) : null}
+        {phase === "email" || phase === "error" ? <ConnectHint /> : null}
+      </div>
     </main>
   );
 }
 
 function Heading({ title, body }: { title: string; body: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <h1 className="text-2xl font-semibold tracking-[-0.02em]">{title}</h1>
-      <p className="text-sm leading-relaxed text-muted">{body}</p>
+    <div>
+      <h1 className="type-d3">{title}</h1>
+      <p
+        className="mt-3"
+        style={{ font: "var(--type-body)", color: "var(--text-secondary)" }}
+      >
+        {body}
+      </p>
     </div>
   );
 }
@@ -76,22 +96,23 @@ function Heading({ title, body }: { title: string; body: React.ReactNode }) {
 function EmailStep({ email, busy, onEmailChange, onSubmitEmail }: Props) {
   return (
     <form
-      className="flex flex-col gap-2.5"
+      className="flex flex-col gap-4"
       onSubmit={(e) => {
         e.preventDefault();
         onSubmitEmail();
       }}
     >
-      <input
+      <Input
+        label="Email"
         type="email"
+        inputMode="email"
         autoComplete="email"
         autoFocus
         value={email}
         onChange={(e) => onEmailChange(e.target.value)}
         placeholder="you@email.com"
-        className={`${inputClass} h-12 rounded-xl bg-card px-4 text-[15px]`}
       />
-      <Button type="submit" className="h-12 text-sm" busy={busy} disabled={!email}>
+      <Button type="submit" size="lg" shape="square" busy={busy} disabled={!email}>
         Send code
       </Button>
     </form>
@@ -101,48 +122,32 @@ function EmailStep({ email, busy, onEmailChange, onSubmitEmail }: Props) {
 const OTP_LENGTH = 6;
 
 function OtpStep({ otp, busy, onOtpChange, onSubmitOtp, onRestart }: Props) {
-  const digits = Array.from({ length: OTP_LENGTH }, (_, i) => otp[i] ?? "");
-  const active = Math.min(otp.length, OTP_LENGTH - 1);
   return (
     <form
-      className="flex flex-col gap-2.5"
+      className="flex flex-col gap-4"
       onSubmit={(e) => {
         e.preventDefault();
         onSubmitOtp();
       }}
     >
-      <label className="relative block">
-        <span className="sr-only">6-digit code</span>
-        <input
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          autoFocus
-          value={otp}
-          onChange={(e) => onOtpChange(e.target.value.replace(/\D/g, "").slice(0, OTP_LENGTH))}
-          className="absolute inset-0 z-10 w-full opacity-0"
-        />
-        <div className="grid grid-cols-6 gap-2" aria-hidden>
-          {digits.map((d, i) => (
-            <div
-              key={i}
-              className={`flex h-14 items-center justify-center rounded-xl border bg-card font-mono text-[22px] ${
-                d || i === active ? "border-primary" : "border-border-strong text-faint"
-              }`}
-            >
-              {d || "·"}
-            </div>
-          ))}
-        </div>
-      </label>
-      <Button type="submit" className="h-12 text-sm" busy={busy} disabled={otp.length < OTP_LENGTH}>
-        Verify
+      <OtpField value={otp} onChange={onOtpChange} autoFocus disabled={busy} />
+      <Button
+        type="submit"
+        size="lg"
+        shape="square"
+        busy={busy}
+        disabled={otp.length < OTP_LENGTH}
+      >
+        Open your account
       </Button>
-      <p className="flex gap-1.5 pt-2 text-xs text-faint">
-        <span>Didn&apos;t get it?</span>
-        <button type="button" onClick={onRestart} className="text-muted hover:text-foreground">
-          Use a different email
-        </button>
-      </p>
+      <button
+        type="button"
+        onClick={onRestart}
+        className="cursor-pointer border-0 bg-transparent text-left"
+        style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}
+      >
+        Use a different email
+      </button>
     </form>
   );
 }

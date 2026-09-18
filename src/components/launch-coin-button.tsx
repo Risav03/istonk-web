@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { Globe, MessageCircle, Rocket, X } from "lucide-react";
 
 import { api, ApiError, type StockOffer } from "@/lib/api";
 import { site } from "@/lib/site";
 
-import { Button, Field, inputClass } from "./ui";
+import { Button, Chip, Panel } from "./ds";
+import { Field, inputClass } from "./ui";
 
 type Step = "pick" | "web";
 
@@ -45,10 +45,20 @@ export function LaunchCoinButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2"
+        className="istonk-press inline-flex shrink-0 cursor-pointer items-center gap-2.5 border-0 bg-transparent p-0"
       >
-        <span className="text-xs text-faint">Launch a coin</span>
-        <span className="inline-flex rounded-[14px] bg-primary px-3 py-1.5 font-mono text-xs text-primary-foreground">
+        <Chip tone="ink">Launch a coin</Chip>
+        <span
+          className="hidden sm:inline-flex"
+          style={{
+            padding: "6px 12px",
+            background: "var(--msg-out)",
+            color: "var(--msg-out-ink)",
+            borderRadius: "var(--r-bubble)",
+            borderBottomRightRadius: "var(--r-bubble-tail)",
+            font: "var(--type-mono-sm)",
+          }}
+        >
           launch pizza coin vs AAPL
         </span>
       </button>
@@ -58,21 +68,26 @@ export function LaunchCoinButton({
           <button
             type="button"
             aria-label="Close"
-            className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+            className="absolute inset-0 cursor-default border-0"
+            style={{ background: "rgba(16,16,20,.34)", backdropFilter: "blur(2px)" }}
             onClick={close}
           />
-          <div
+          <Panel
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            className="glass relative z-10 w-full max-w-[440px] rounded-[28px] p-5 shadow-[0_24px_80px_-24px_rgba(20,24,48,0.45)] sm:p-6"
+            className="relative z-10 w-full max-w-[440px] p-5 sm:p-6"
+            style={{ borderRadius: "var(--r-xl)", boxShadow: "var(--shadow-pop)" }}
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 id={titleId} className="text-[20px] font-extrabold tracking-tight">
+                <h2 id={titleId} className="type-h1 font-text-face">
                   {step === "web" ? "Launch on the web" : "How do you want to launch?"}
                 </h2>
-                <p className="mt-1 text-[13.5px] leading-relaxed text-muted">
+                <p
+                  className="mt-1.5"
+                  style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}
+                >
                   {step === "web"
                     ? "Name the coin and pick the stock it trades against."
                     : "Same launch, from this account or in iMessage."}
@@ -81,43 +96,28 @@ export function LaunchCoinButton({
               <button
                 type="button"
                 onClick={close}
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:bg-white/70 hover:text-foreground"
+                className="shrink-0 cursor-pointer border-0 bg-transparent p-0"
+                style={{ font: "var(--type-micro)", color: "var(--text-secondary)" }}
               >
-                <X className="h-4 w-4" />
+                Close
               </button>
             </div>
 
             {step === "pick" ? (
               <div className="mt-5 flex flex-col gap-2.5">
-                <button
-                  type="button"
+                <Choice
+                  as="button"
                   onClick={() => setStep("web")}
-                  className="flex items-start gap-3 rounded-[18px] border border-border-strong bg-white/70 px-4 py-3.5 text-left transition-colors hover:border-primary-border hover:bg-white"
-                >
-                  <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-dim text-primary">
-                    <Globe className="h-4 w-4" />
-                  </span>
-                  <span className="flex flex-col gap-0.5">
-                    <span className="text-[15px] font-semibold tracking-tight">Web</span>
-                    <span className="text-[13px] leading-relaxed text-muted">
-                      Name it, pick a stock, launch from this account.
-                    </span>
-                  </span>
-                </button>
-                <a
+                  title="Web"
+                  body="Name it, pick a stock, launch from this account."
+                />
+                <Choice
+                  as="a"
                   href={site.bot.launchSmsHref}
-                  className="flex items-start gap-3 rounded-[18px] border border-border-strong bg-white/70 px-4 py-3.5 transition-colors hover:border-primary-border hover:bg-white"
-                >
-                  <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-dim text-primary">
-                    <MessageCircle className="h-4 w-4" />
-                  </span>
-                  <span className="flex flex-col gap-0.5">
-                    <span className="text-[15px] font-semibold tracking-tight">iMessage</span>
-                    <span className="text-[13px] leading-relaxed text-muted">
-                      Text iStonk and say launch pizza coin vs Apple.
-                    </span>
-                  </span>
-                </a>
+                  title="iMessage"
+                  body="Text iStonk and say launch pizza coin vs Apple."
+                  accent
+                />
               </div>
             ) : (
               <LaunchForm
@@ -129,10 +129,65 @@ export function LaunchCoinButton({
                 onBack={() => setStep("pick")}
               />
             )}
-          </div>
+          </Panel>
         </div>
       ) : null}
     </>
+  );
+}
+
+/** Two ways to do the same thing. The iMessage one carries the accent. */
+function Choice({
+  as,
+  href,
+  onClick,
+  title,
+  body,
+  accent = false,
+}: {
+  as: "a" | "button";
+  href?: string;
+  onClick?: () => void;
+  title: string;
+  body: string;
+  accent?: boolean;
+}) {
+  const inner = (
+    <>
+      <span className="flex flex-1 flex-col gap-1">
+        <span style={{ font: "var(--type-h3)" }}>{title}</span>
+        <span style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}>{body}</span>
+      </span>
+      <span
+        aria-hidden
+        style={{ font: "var(--type-h3)", color: accent ? "var(--tang)" : "var(--text-tertiary)" }}
+      >
+        ›
+      </span>
+    </>
+  );
+  const style = {
+    display: "flex",
+    alignItems: "center",
+    gap: 14,
+    width: "100%",
+    padding: "14px 16px",
+    textAlign: "left" as const,
+    background: accent ? "var(--tang-50)" : "var(--bg-sunk)",
+    border: `1px solid ${accent ? "var(--tang-100)" : "var(--border-hairline)"}`,
+    borderRadius: "var(--r-md)",
+    cursor: "pointer",
+    textDecoration: "none",
+    color: "var(--text-primary)",
+  };
+  return as === "a" ? (
+    <a href={href} className="istonk-press" style={style}>
+      {inner}
+    </a>
+  ) : (
+    <button type="button" onClick={onClick} className="istonk-press" style={style}>
+      {inner}
+    </button>
   );
 }
 
@@ -187,7 +242,7 @@ function LaunchForm({
   }
 
   return (
-    <div className="mt-5 flex flex-col gap-3">
+    <div className="mt-5 flex flex-col gap-3.5">
       <Field label="Name">
         <input
           className={inputClass}
@@ -198,7 +253,7 @@ function LaunchForm({
       </Field>
       <Field label="Ticker">
         <input
-          className={inputClass}
+          className={`${inputClass} type-mono`}
           value={symbol}
           onChange={(event) => setSymbol(event.target.value.toUpperCase())}
           placeholder="PIZZA"
@@ -217,18 +272,19 @@ function LaunchForm({
           ))}
         </select>
       </Field>
-      {error ? <p className="text-[13px] text-danger">{error}</p> : null}
+      {error ? (
+        <p style={{ font: "var(--type-body-sm)", color: "var(--down)" }}>{error}</p>
+      ) : null}
       {fundUrl ? (
-        <a href={fundUrl} className="text-[13px] font-medium text-primary hover:text-primary-hover">
+        <a href={fundUrl} style={{ font: "var(--type-label)" }}>
           Add ETH for gas, then try again
         </a>
       ) : null}
-      <div className="flex gap-2">
+      <div className="mt-1 flex gap-2.5">
         <Button variant="outline" onClick={onBack} className="flex-1">
           Back
         </Button>
         <Button busy={busy} onClick={() => void submit()} className="flex-1">
-          <Rocket className="h-3.5 w-3.5" />
           Launch
         </Button>
       </div>

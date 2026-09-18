@@ -9,7 +9,8 @@ import {
   type StockOffer,
 } from "@/lib/api";
 
-import { Button, Card, CardHeader, Field, inputClass } from "./ui";
+import { Button } from "./ds";
+import { Card, CardHeader, Field, inputClass } from "./ui";
 
 const SEND_HINT =
   "They get an iMessage after you pay. Add an email and we also send a claim link — they sign in with that phone number within 72 hours or it returns to you.";
@@ -125,7 +126,7 @@ export function SendStockCard({
   return (
     <Card accent className="gap-0">
       <CardHeader title="Send a stock" subtitle={SEND_HINT} />
-      <div className="flex flex-col gap-4 px-5 pb-5">
+      <div className="flex flex-col gap-4 px-5 pt-1 pb-5">
         {contacts.length > 0 ? (
           <Field label="Contact">
             <select
@@ -210,10 +211,12 @@ export function SendStockCard({
         </div>
 
         {applePayEstimate ? (
-          <p className="text-[13px] leading-relaxed text-muted">
-            You'll pay about{" "}
-            <span className="font-semibold text-foreground">${formatUsd(applePayEstimate)}</span> with
-            Apple Pay to send ${formatUsd(stockUsd)} of {stockName}.
+          <p style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}>
+            You&apos;ll pay about{" "}
+            <span className="type-mono" style={{ color: "var(--text-primary)" }}>
+              ${formatUsd(applePayEstimate)}
+            </span>{" "}
+            with Apple Pay to send ${formatUsd(stockUsd)} of {stockName}.
           </p>
         ) : null}
 
@@ -227,20 +230,33 @@ export function SendStockCard({
         </Field>
 
         {!selected ? (
-          <label className="flex items-center gap-2 text-[13px] text-muted">
+          <label
+            className="flex cursor-pointer items-center gap-2.5"
+            style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}
+          >
             <input
               type="checkbox"
               checked={saveContact}
               onChange={(event) => setSaveContact(event.target.checked)}
+              style={{ width: 16, height: 16, accentColor: "var(--ink)" }}
             />
             Save to contacts
           </label>
         ) : null}
 
-        {error ? <p className="text-[13px] text-danger">{error}</p> : null}
-        {sentLabel ? <p className="text-[13px] text-primary">{sentLabel}</p> : null}
+        {error ? (
+          <p style={{ font: "var(--type-body-sm)", color: "var(--down)" }}>{error}</p>
+        ) : null}
+        {sentLabel ? (
+          <p style={{ font: "var(--type-body-sm)", color: "var(--up)" }}>{sentLabel}</p>
+        ) : null}
 
-        <Button busy={busy} onClick={() => void submit()} className="h-11 w-full">
+        <Button
+          size="lg"
+          busy={busy}
+          onClick={() => void submit()}
+          style={{ width: "100%" }}
+        >
           Continue to Apple Pay
         </Button>
       </div>

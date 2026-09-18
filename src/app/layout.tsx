@@ -1,19 +1,39 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 
 import { defaultTitle, ogImage } from "@/lib/metadata";
 import { site } from "@/lib/site";
 
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+/**
+ * Three faces, self-hosted as subset variable woff2.
+ * Display  Bricolage Grotesque — poster lines only, 800 at -0.045em
+ * Text     Instrument Sans     — all UI and body, tabular figures
+ * Mono     Spline Sans Mono    — 0x, tickers, percents, what the user types
+ */
+const bricolage = localFont({
+  src: "../fonts/BricolageGrotesque-Variable.woff2",
+  variable: "--font-bricolage",
+  weight: "200 800",
+  display: "swap",
+  fallback: ["Georgia", "serif"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const instrument = localFont({
+  src: "../fonts/InstrumentSans-Variable.woff2",
+  variable: "--font-instrument",
+  weight: "400 700",
+  display: "swap",
+  fallback: ["ui-sans-serif", "sans-serif"],
+});
+
+const spline = localFont({
+  src: "../fonts/SplineSansMono-Variable.woff2",
+  variable: "--font-spline",
+  weight: "300 700",
+  display: "swap",
+  fallback: ["ui-monospace", "Menlo", "monospace"],
 });
 
 export const metadata: Metadata = {
@@ -63,7 +83,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f7f6fc",
+  themeColor: "#f4f1e9",
   width: "device-width",
   initialScale: 1,
 };
@@ -90,8 +110,11 @@ const jsonLd = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="aurora-wash min-h-full text-foreground">
+    <html
+      lang="en"
+      className={`${bricolage.variable} ${instrument.variable} ${spline.variable} h-full antialiased`}
+    >
+      <body className="min-h-full">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

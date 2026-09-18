@@ -1,10 +1,9 @@
 import Link from "next/link";
 
-import { Aurora } from "@/components/landing/aurora";
+import { Eyebrow } from "@/components/ds";
+import { DashboardLive, StatCard } from "@/components/dashboard/live";
 import { Footer } from "@/components/landing/footer";
 import { Nav } from "@/components/landing/nav";
-import { DashboardLive } from "@/components/dashboard/live";
-import { TokenAvatar } from "@/components/token-avatar";
 import { formatBurnAmount, loadAirdropSnapshot } from "@/lib/airdrops";
 import { fetchMarketStats } from "@/lib/dex-stats";
 import { fetchDexScreenerToken } from "@/lib/dex-token";
@@ -38,17 +37,19 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <Aurora />
       <Nav signedIn={signedIn} />
-      <main className="relative z-10 mx-auto flex w-full max-w-[1280px] flex-col gap-10 px-5 pb-20 pt-32">
+      <main
+        className="mx-auto flex w-full max-w-[var(--container-app)] flex-col gap-8 px-[var(--gutter-mobile)] pt-8 pb-20 md:px-7"
+      >
         <header className="flex flex-col gap-2">
-          <span className="text-[13px] text-muted">iStonk · public stats</span>
-          <h1 className="text-[34px] font-extrabold leading-none tracking-[-0.035em] sm:text-[44px]">
-            Dashboard
-          </h1>
-          <p className="max-w-[520px] text-[15px] leading-relaxed text-muted">
-            Every coin launched from iMessage, live, plus {tokenBurnSymbol} bought and burned —
-            supply gone.
+          <Eyebrow>iStonk · public board</Eyebrow>
+          <h1 className="type-d3">Every coin launched from a text</h1>
+          <p
+            className="max-w-[520px]"
+            style={{ font: "var(--type-body)", color: "var(--text-secondary)" }}
+          >
+            Markets and charts live on Stonks Exchange; iStonk does not trade. {tokenBurnSymbol}{" "}
+            bought and burned is supply gone.
           </p>
         </header>
 
@@ -76,41 +77,12 @@ export default async function DashboardPage() {
           }
         />
 
-        <p className="text-[13px] text-muted">
+        <p style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}>
           Want to send a stock?{" "}
-          <Link href="/app?send=imessage" className="font-medium text-primary hover:text-primary-hover">
-            Send from your account
-          </Link>
+          <Link href="/app?send=imessage">Send from your account</Link>
         </p>
       </main>
-      <div className="relative z-10">
-        <Footer signedIn={signedIn} />
-      </div>
+      <Footer />
     </>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  note,
-  token,
-}: {
-  label: string;
-  value: string;
-  note: string;
-  token?: { src?: string | null; symbol: string };
-}) {
-  return (
-    <div className="glass flex min-w-0 flex-col gap-1.5 rounded-[16px] px-4 py-4">
-      <span className="inline-flex items-center gap-1.5 truncate text-[12px] text-muted">
-        {token ? <TokenAvatar src={token.src} symbol={token.symbol} size={16} /> : null}
-        {label}
-      </span>
-      <span className="truncate text-[26px] font-semibold leading-none tracking-[-0.03em] sm:text-[30px]">
-        {value}
-      </span>
-      <span className="truncate text-[11px] text-faint">{note}</span>
-    </div>
   );
 }

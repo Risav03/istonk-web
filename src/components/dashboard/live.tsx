@@ -2,11 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Copy, ExternalLink, Flame, Rocket } from "lucide-react";
 
 import type { TokenBurnDrop } from "@/lib/airdrop-format";
 import { formatBurnAmount, formatDropStamp } from "@/lib/airdrop-format";
-import { TokenAvatar } from "@/components/token-avatar";
+import { Eyebrow, ExternalIcon, Figure, Panel, TokenLogo } from "@/components/ds";
 import type { MarketStats, TokenMarket } from "@/lib/dex-stats";
 import { shortAddr, timeAgo } from "@/lib/format";
 import { stonksTokenUrl, type PublicLaunch } from "@/lib/launches";
@@ -36,7 +35,7 @@ function mergeByTx<T extends { burnTxHash: string; at?: string }>(base: T[], ext
   return [...map.values()];
 }
 
-type Panel = "launches" | "burns";
+type PanelId = "launches" | "burns";
 
 export function DashboardLive({
   initialLaunches,
@@ -57,7 +56,7 @@ export function DashboardLive({
   sourceName?: string;
   burnStats?: ReactNode;
 }) {
-  const [panel, setPanel] = useState<Panel>("launches");
+  const [panel, setPanel] = useState<PanelId>("launches");
   const [launches, setLaunches] = useState<PublicLaunch[]>(initialLaunches);
   const [tokensLaunched, setTokensLaunched] = useState<number | null>(initialTokensLaunched);
   const [market, setMarket] = useState<MarketStats | null>(initialMarket ?? null);
@@ -152,48 +151,32 @@ export function DashboardLive({
   const prev7 = daily.slice(-14, -7).reduce((s, d) => s + d.value, 0);
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="sticky top-[76px] z-20 flex justify-center xl:hidden">
-        <div className="glass inline-flex rounded-full p-1">
-          {(
-            [
-              { id: "launches", label: "Launches", Icon: Rocket },
-              { id: "burns", label: "Burns", Icon: Flame },
-            ] as const
-          ).map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setPanel(t.id)}
-              className={`inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-[13px] font-semibold transition-colors ${
-                panel === t.id ? "bg-primary text-white" : "text-muted hover:text-foreground"
-              }`}
-            >
-              <t.Icon className="h-3.5 w-3.5" />
-              {t.label}
-            </button>
-          ))}
-        </div>
+    <div className="flex flex-col gap-6">
+      <div className="sticky top-[68px] z-20 flex justify-center xl:hidden">
+        <Segmented
+          value={panel}
+          onChange={setPanel}
+          options={[
+            { id: "launches", label: "Launches" },
+            { id: "burns", label: `${tokenBurnSymbol} burns` },
+          ]}
+        />
       </div>
 
-      <div className="grid items-start gap-8 xl:grid-cols-2">
+      <div className="grid items-start gap-9 xl:grid-cols-2">
         <section
           className={`flex-col gap-5 ${panel === "launches" ? "flex" : "hidden xl:flex"}`}
           aria-label="Launches"
         >
-          <PanelHeader
-            icon={<Rocket className="h-4 w-4" />}
-            title="Launches"
-            sub={<LiveDot status={status} fetchedAt={fetchedAt} />}
-          />
+          <BoardHead title="Launches" sub={<LiveDot status={status} fetchedAt={fetchedAt} />} />
 
           <div className="grid grid-cols-2 gap-3 2xl:grid-cols-4">
-            <Stat
+            <StatCard
               label="Launched"
               value={tokensLaunched == null ? "—" : tokensLaunched.toLocaleString("en-US")}
               note="On Stonks Exchange"
             />
-            <Stat
+            <StatCard
               label="Last 7 days"
               value={last7.toLocaleString("en-US")}
               note={
@@ -201,8 +184,9 @@ export function DashboardLive({
                   ? "vs 0 prior week"
                   : `${last7 >= prev7 ? "+" : ""}${last7 - prev7} vs prior week`
               }
+              tone={prev7 === 0 ? "ink" : last7 >= prev7 ? "up" : "down"}
             />
-            <Stat
+            <StatCard
               label="24h volume"
               value={market ? formatUsdCompact(market.volume24hUsd) : "—"}
               note={
@@ -211,7 +195,7 @@ export function DashboardLive({
                   : "Loading from DexScreener"
               }
             />
-            <Stat
+            <StatCard
               label="24h trades"
               value={market ? market.trades24h.toLocaleString("en-US") : "—"}
               note="Buys + sells, all coins"
@@ -225,17 +209,19 @@ export function DashboardLive({
           <ChartCard title="Launches by pair" subtitle={`Of the latest ${launches.length}`}>
             <BarChart data={byPair} valueLabel="launches" />
           </ChartCard>
-
         </section>
 
         <section
           className={`flex-col gap-5 ${panel === "burns" ? "flex" : "hidden xl:flex"}`}
           aria-label={`${tokenBurnSymbol} burns`}
         >
-          <PanelHeader
-            icon={<Flame className="h-4 w-4" />}
+          <BoardHead
             title={`${tokenBurnSymbol} burns`}
-            sub={<span className="text-xs text-faint">{tokenBurnSymbol} bought and burned — supply gone</span>}
+            sub={
+              <span style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}>
+                {tokenBurnSymbol} bought and burned — supply gone
+              </span>
+            }
           />
 
           <div>{burnStats}</div>
@@ -267,6 +253,63 @@ export function DashboardLive({
   );
 }
 
+function Segmented<T extends string>({
+  value,
+  onChange,
+  options,
+}: {
+  value: T;
+  onChange: (next: T) => void;
+  options: Array<{ id: T; label: string }>;
+}) {
+  return (
+    <div
+      className="inline-flex gap-1 border border-rule p-1"
+      style={{
+        background: "var(--bg-card)",
+        borderRadius: "var(--r-pill)",
+        boxShadow: "var(--shadow-card)",
+      }}
+    >
+      {options.map((o) => {
+        const on = o.id === value;
+        return (
+          <button
+            key={o.id}
+            type="button"
+            onClick={() => onChange(o.id)}
+            className="istonk-press inline-flex h-8 items-center px-4"
+            style={{
+              borderRadius: "var(--r-pill)",
+              border: 0,
+              background: on ? "var(--action-primary)" : "transparent",
+              color: on ? "var(--text-on-ink)" : "var(--text-secondary)",
+              font: "var(--type-label)",
+              letterSpacing: "var(--track-tight)",
+              cursor: "pointer",
+            }}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Table head: uppercase micro, on paper, above the card. */
+function TableHead({ cols, className }: { cols: ReactNode[]; className: string }) {
+  return (
+    <div className={className}>
+      {cols.map((c, i) => (
+        <Eyebrow key={i} style={{ color: "var(--text-tertiary)" }}>
+          {c}
+        </Eyebrow>
+      ))}
+    </div>
+  );
+}
+
 function BurnList({
   title,
   note,
@@ -282,74 +325,80 @@ function BurnList({
 }) {
   const total = rows.reduce((sum, row) => sum + row.amount, 0);
   return (
-    <div className="flex flex-col gap-3 pt-2">
+    <div className="flex flex-col gap-3 pt-1">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="inline-flex items-center gap-2 text-sm font-semibold">
-          <TokenAvatar src={image} symbol={symbol} size={18} />
+        <h3 className="inline-flex items-center gap-2 font-text-face" style={{ font: "var(--type-h3)" }}>
+          <TokenLogo src={image} symbol={symbol} size={18} />
           {title}
-          <span className="font-normal text-faint">· {rows.length}</span>
+          <span style={{ font: "var(--type-body-sm)", color: "var(--text-tertiary)" }}>
+            · {rows.length}
+          </span>
         </h3>
-        <span className="text-xs text-faint">
+        <span style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}>
           {total > 0 ? `${formatBurnAmount(total)} total` : note}
         </span>
       </div>
-      <div className="glass flex flex-col overflow-hidden rounded-[16px]">
-        <div className="grid grid-cols-[1fr_auto_auto] gap-3 px-4 py-2.5 text-[11px] uppercase tracking-[0.06em] text-faint">
-          <span>When</span>
-          <span className="text-right">Amount</span>
-          <span className="text-right">Tx</span>
-        </div>
+      <Panel>
+        <TableHead
+          className="grid grid-cols-[1fr_auto_auto] gap-3 px-4 py-2.5 [&>*:not(:first-child)]:text-right"
+          cols={["When", "Amount", "Tx"]}
+        />
         {rows
           .slice()
           .reverse()
           .map((row) => (
             <div
               key={row.key}
-              className="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-t border-hairline px-4 py-3"
+              className="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-t border-rule px-4 py-3"
             >
-              <span className="text-[13px] text-foreground/80">
+              <span style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}>
                 {formatDropStamp(row.when, { withYear: true, withTime: "auto", at: row.at })}
               </span>
-              <span className="text-right font-mono text-[13px] tabular">
-                {formatBurnAmount(row.amount)}
-              </span>
+              <span className="type-mono istonk-tabular text-right">{formatBurnAmount(row.amount)}</span>
               <a
                 href={`https://basescan.org/tx/${row.burnTx}`}
                 target="_blank"
                 rel="noreferrer"
-                className="text-[13px] text-primary hover:text-primary-hover"
+                className="inline-flex items-center gap-1 no-underline"
+                style={{ font: "var(--type-label)" }}
               >
-                Burn
+                Burn <ExternalIcon />
               </a>
             </div>
           ))}
-      </div>
+      </Panel>
     </div>
   );
 }
 
-function PanelHeader({ icon, title, sub }: { icon: ReactNode; title: string; sub?: ReactNode }) {
+function BoardHead({ title, sub }: { title: string; sub?: ReactNode }) {
   return (
-    <div className="flex flex-col gap-1">
-      <h2 className="inline-flex items-center gap-2 text-[17px] font-bold tracking-tight">
-        <span className="glass inline-flex h-7 w-7 items-center justify-center rounded-full text-primary">{icon}</span>
-        {title}
-      </h2>
+    <div className="flex flex-col gap-1.5">
+      <h2 className="type-h1 font-text-face">{title}</h2>
       {sub}
     </div>
   );
 }
 
+/** Status is a 6px dot plus a word. Never a coloured icon, never a pulse. */
 function LiveDot({ status, fetchedAt }: { status: "live" | "stale"; fetchedAt: string | null }) {
+  const live = status === "live";
   return (
-    <span className="flex items-center gap-2 text-xs text-faint">
-      <span className="relative flex h-1.5 w-1.5">
-        {status === "live" ? (
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
-        ) : null}
-        <span className={`relative inline-flex h-1.5 w-1.5 rounded-full ${status === "live" ? "bg-primary" : "bg-faint"}`} />
-      </span>
-      {status === "live"
+    <span
+      className="inline-flex items-center gap-2"
+      style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}
+      suppressHydrationWarning
+    >
+      <span
+        aria-hidden
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: "var(--r-pill)",
+          background: live ? "var(--live)" : "var(--pending)",
+        }}
+      />
+      {live
         ? `Live · refreshes every ${POLL_MS / 1000}s${fetchedAt ? ` · updated ${timeAgo(fetchedAt) ?? "just now"}` : ""}`
         : "Couldn't reach the API · retrying"}
     </span>
@@ -361,13 +410,39 @@ function formatUsdCompact(n: number): string {
   return `$${n.toLocaleString("en-US", { maximumFractionDigits: n >= 100 ? 0 : 2 })}`;
 }
 
-function Stat({ label, value, note }: { label: string; value: string; note: string }) {
+export function StatCard({
+  label,
+  value,
+  note,
+  tone = "ink",
+  token,
+}: {
+  label: string;
+  value: string;
+  note: string;
+  tone?: "ink" | "up" | "down";
+  token?: { src?: string | null; symbol: string };
+}) {
   return (
-    <div className="glass flex min-w-0 flex-col gap-1.5 rounded-[16px] px-4 py-4">
-      <span className="truncate text-[12px] text-muted">{label}</span>
-      <span className="text-[26px] font-semibold leading-none tracking-[-0.03em] sm:text-[30px]">{value}</span>
-      <span className="truncate text-[11px] text-faint">{note}</span>
-    </div>
+    <Panel className="flex min-w-0 flex-col gap-1.5 px-4 py-4">
+      <span
+        className="inline-flex min-w-0 items-center gap-2 truncate"
+        style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}
+      >
+        {token ? <TokenLogo src={token.src} symbol={token.symbol} size={18} /> : null}
+        {label}
+      </span>
+      <Figure value={value} size="lg" />
+      <span
+        className="truncate"
+        style={{
+          font: "var(--type-legal)",
+          color: tone === "ink" ? "var(--text-tertiary)" : `var(--${tone})`,
+        }}
+      >
+        {note}
+      </span>
+    </Panel>
   );
 }
 
@@ -409,9 +484,12 @@ function LaunchFeed({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="text-sm font-semibold">
-          Volume leaderboard <span className="font-normal text-faint">· 24h · {launches.length}</span>
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <h3 className="font-text-face" style={{ font: "var(--type-h3)" }}>
+          Volume leaderboard{" "}
+          <span style={{ font: "var(--type-body-sm)", color: "var(--text-tertiary)" }}>
+            · 24h · {launches.length}
+          </span>
         </h3>
         <input
           value={query}
@@ -420,20 +498,25 @@ function LaunchFeed({
             setShown(PAGE);
           }}
           placeholder="Search name, ticker, pair, 0x"
-          className="h-9 w-full rounded-full border border-border-strong bg-white/70 px-3.5 text-[13px] outline-none transition-colors focus:border-primary sm:w-[240px]"
+          className="h-10 w-full border border-rule-strong px-3.5 sm:w-[248px]"
+          style={{
+            background: "var(--bg-card)",
+            borderRadius: "var(--r-field)",
+            boxShadow: "var(--shadow-flat)",
+            font: "var(--type-body-sm)",
+            outline: "none",
+          }}
         />
       </div>
 
-      <div className="glass flex flex-col overflow-hidden rounded-[16px]">
-        <div className="hidden grid-cols-[minmax(0,1fr)_76px_72px_auto] gap-3 px-4 py-2.5 text-[11px] uppercase tracking-[0.06em] text-faint sm:grid">
-          <span>Token</span>
-          <span>Pair</span>
-          <span className="text-right">24h vol</span>
-          <span className="text-right">Links</span>
-        </div>
+      <TableHead
+        className="hidden grid-cols-[minmax(0,1fr)_82px_112px] gap-3 px-4 sm:grid [&>*:not(:first-child)]:text-right"
+        cols={["Token", "24h vol", "Links"]}
+      />
+      <Panel>
         <div className="sm:max-h-[560px] sm:overflow-y-auto">
           {ranked.length === 0 ? (
-            <div className="px-4 py-6 text-[13px] text-muted">
+            <div className="px-4 py-6" style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}>
               {launches.length === 0 ? "No launches yet. Text iStonk and say launch." : "Nothing matches that search."}
             </div>
           ) : (
@@ -453,13 +536,21 @@ function LaunchFeed({
             <button
               type="button"
               onClick={() => setShown((s) => s + PAGE)}
-              className="w-full border-t border-hairline px-4 py-3 text-[13px] font-medium text-primary transition-colors hover:bg-white/50"
+              className="w-full px-4 py-3.5"
+              style={{
+                background: "transparent",
+                border: 0,
+                borderTop: "1px solid var(--rule)",
+                font: "var(--type-label)",
+                color: "var(--text-accent)",
+                cursor: "pointer",
+              }}
             >
               Show {Math.min(PAGE, ranked.length - shown)} more · {ranked.length - shown} left
             </button>
           ) : null}
         </div>
-      </div>
+      </Panel>
     </div>
   );
 }
@@ -494,64 +585,64 @@ function LaunchRow({
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: -12, backgroundColor: "rgba(47,91,255,0.12)" }}
-      animate={{ opacity: 1, y: 0, backgroundColor: isNew ? "rgba(47,91,255,0.08)" : "rgba(47,91,255,0)" }}
+      initial={{ opacity: 0, y: -10, backgroundColor: "rgba(255,90,20,0.10)" }}
+      animate={{ opacity: 1, y: 0, backgroundColor: isNew ? "rgba(255,90,20,0.06)" : "rgba(255,90,20,0)" }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-t border-hairline px-4 py-3 sm:grid-cols-[minmax(0,1fr)_76px_72px_auto]"
+      transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+      className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-t border-rule px-4 py-3 first:border-t-0 sm:grid-cols-[minmax(0,1fr)_82px_112px]"
     >
       <div className="flex min-w-0 items-center gap-3">
-        <span className="w-5 shrink-0 text-right font-mono text-[12px] tabular text-faint">{rank}</span>
-        <TokenAvatar src={stats?.imageUrl} symbol={launch.tokenSymbol ?? "TOKEN"} size={32} />
-        <div className="flex min-w-0 flex-col">
+        <span className="type-mono-sm istonk-tabular w-5 shrink-0 text-right" style={{ color: "var(--text-tertiary)" }}>
+          {rank}
+        </span>
+        <TokenLogo src={stats?.imageUrl} symbol={launch.tokenSymbol ?? "TOKEN"} size={32} />
+        <div className="flex min-w-0 flex-col gap-0.5">
           <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
-            <span className="min-w-0 truncate text-[14px] font-semibold">{launch.tokenName ?? "Unnamed"}</span>
+            <span className="min-w-0 truncate" style={{ font: "var(--type-label)" }}>
+              {launch.tokenName ?? "Unnamed"}
+            </span>
             {launch.tokenSymbol ? (
-              <span className="max-w-full truncate font-mono text-[12px] text-muted">${launch.tokenSymbol}</span>
-            ) : null}
-            {isNew ? (
-              <span className="shrink-0 rounded-full bg-primary-dim px-1.5 py-[1px] text-[10px] font-semibold text-primary">
-                NEW
+              <span className="type-mono-sm max-w-full truncate" style={{ color: "var(--text-secondary)" }}>
+                ${launch.tokenSymbol}
               </span>
             ) : null}
+            {isNew ? <NewTag /> : null}
           </span>
-          <span className="truncate text-[12px] text-faint" suppressHydrationWarning>
-            {when ?? "·"} · by {shortAddr(launch.launcher)}
+          <span
+            className="truncate"
+            style={{ font: "var(--type-legal)", color: "var(--text-tertiary)" }}
+            suppressHydrationWarning
+          >
+            {when ?? "·"}
+            {launch.pairSymbol ? ` · vs ${launch.pairSymbol}` : ""} · by{" "}
+            {shortAddr(launch.launcher)}
           </span>
         </div>
       </div>
 
       {/* Mobile: volume sits top-right beside the identity so the name keeps the width. */}
-      <span className="flex flex-col items-end sm:hidden">
-        <span className="font-mono text-[14px] font-semibold tabular">{stats ? formatUsdCompact(volume) : "—"}</span>
-        <span className="text-[10px] uppercase tracking-[0.06em] text-faint">24h vol</span>
+      <span className="flex flex-col items-end gap-0.5 sm:hidden">
+        <Figure value={stats ? formatUsdCompact(volume) : "—"} size="sm" mono />
+        <Eyebrow style={{ color: "var(--text-tertiary)" }}>24h vol</Eyebrow>
       </span>
 
-      {/* Mobile: pair + links share a second full-width row; on sm+ `contents` flattens them into grid cells. */}
-      <div className="col-span-2 flex min-w-0 items-center justify-between gap-3 sm:contents">
-        <span className="min-w-0 truncate font-mono text-[12px] text-foreground/80">
-          {launch.pairSymbol ? (
-            <span className="rounded-full bg-black/[0.04] px-2 py-[2px] sm:bg-transparent sm:px-0 sm:py-0">
-              vs {launch.pairSymbol}
-            </span>
-          ) : (
-            "·"
-          )}
+      {/* Mobile: links get a second full-width row; on sm+ `contents` flattens
+          volume and links into the two trailing grid cells. */}
+      <div className="col-span-2 flex min-w-0 items-center justify-end gap-3 sm:contents">
+        <span className="hidden justify-end sm:flex">
+          <Figure value={stats ? formatUsdCompact(volume) : "—"} size="sm" mono tone="muted" />
         </span>
 
-        <span className="hidden text-right font-mono text-[12px] tabular text-foreground/80 sm:block">
-          {stats ? formatUsdCompact(volume) : "—"}
-        </span>
-
-        <span className="flex shrink-0 items-center justify-end gap-3 text-[12px] sm:gap-2.5">
+        <span className="flex shrink-0 items-center justify-end gap-3 sm:gap-2.5">
           {addr ? (
             <a
               href={stonksTokenUrl(addr)}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 font-medium text-primary hover:text-primary-hover"
+              className="inline-flex items-center gap-1 no-underline"
+              style={{ font: "var(--type-micro)" }}
             >
-              Stonks <ExternalLink className="h-3 w-3" />
+              Stonks <ExternalIcon />
             </a>
           ) : null}
           {launch.explorerUrl ? (
@@ -559,9 +650,10 @@ function LaunchRow({
               href={launch.explorerUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 text-muted hover:text-foreground"
+              className="inline-flex items-center gap-1 no-underline"
+              style={{ font: "var(--type-micro)", color: "var(--text-secondary)" }}
             >
-              Tx <ExternalLink className="h-3 w-3" />
+              Tx <ExternalIcon />
             </a>
           ) : null}
           {addr ? (
@@ -569,14 +661,36 @@ function LaunchRow({
               type="button"
               onClick={copy}
               title={addr}
-              className="inline-flex items-center text-muted hover:text-foreground"
+              style={{
+                background: "transparent",
+                border: 0,
+                padding: 0,
+                cursor: "pointer",
+                font: "var(--type-micro)",
+                color: copied ? "var(--up)" : "var(--text-secondary)",
+              }}
             >
-              {copied ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
-              <span className="sr-only">Copy contract</span>
+              {copied ? "Copied" : "Copy"}
+              <span className="sr-only"> contract address</span>
             </button>
           ) : null}
         </span>
       </div>
     </motion.div>
+  );
+}
+
+function NewTag() {
+  return (
+    <span
+      className="istonk-caps shrink-0 px-1.5 py-[1px]"
+      style={{
+        background: "var(--tang-50)",
+        color: "var(--text-accent)",
+        borderRadius: "var(--r-xs)",
+      }}
+    >
+      New
+    </span>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Check, Copy, Loader2, Rocket, Send, Wallet, History } from "lucide-react";
 
 import {
   api,
@@ -19,22 +18,28 @@ import { site } from "@/lib/site";
 import { useUsdPrices } from "@/lib/use-usd-prices";
 
 import { AmountWithUsd, CompactDecimal } from "./compact-decimal";
+import { ConnectHint } from "./connect-hint";
 import { ContactsCard } from "./contacts-card";
 import { LaunchCoinButton } from "./launch-coin-button";
 import { SendCard, type SendAsset } from "./send-card";
 import { SendStockCard } from "./send-stock-card";
 import {
+  Badge,
   Button,
-  Card,
-  CardHeader,
+  Chip,
+  DataRow,
   ETH_LOGO_URL,
-  USDC_LOGO_URL,
+  Eyebrow,
   ExternalIcon,
-  Logo,
-  Pill,
-  Row,
+  Figure,
+  Panel,
+  PanelHead,
   TokenLogo,
-} from "./ui";
+  USDC_LOGO_URL,
+  Wordmark,
+  type BadgeState,
+} from "./ds";
+import { Card, Row } from "./ui";
 
 /** Balances read from RPC can lag the claim receipt by a block or two. */
 const POST_CLAIM_REFRESH_MS = 6_000;
@@ -42,10 +47,10 @@ const POST_CLAIM_REFRESH_MS = 6_000;
 type AppPanel = "send" | "wallet" | "launches" | "activity";
 
 const APP_TABS = [
-  { id: "send", label: "Send", Icon: Send },
-  { id: "wallet", label: "Wallet", Icon: Wallet },
-  { id: "launches", label: "Launches", Icon: Rocket },
-  { id: "activity", label: "Activity", Icon: History },
+  { id: "send", label: "Send" },
+  { id: "wallet", label: "Account" },
+  { id: "launches", label: "Launches" },
+  { id: "activity", label: "Activity" },
 ] as const;
 
 export function Dashboard({ onLogout }: { onLogout: () => void }) {
@@ -167,38 +172,41 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
   }, [wallet, ethUsd, held, prices]);
 
   return (
-    <div className="flex min-h-[100dvh] flex-col">
+    <div className="relative flex min-h-[100dvh] flex-col">
+      <span aria-hidden className="istonk-grain pointer-events-none fixed inset-0" />
       <TopBar address={wallet?.address ?? null} onLogout={onLogout} />
 
-      <main className="mx-auto flex w-full max-w-[1040px] flex-col gap-6 px-5 pb-20 pt-10 sm:pt-12">
+      <main className="relative mx-auto flex w-full max-w-[1040px] flex-col gap-7 px-[var(--gutter-mobile)] pt-9 pb-24 md:px-7">
         {wallet?.linked === false ? <LinkPhoneBanner /> : null}
 
         <BalanceHero wallet={wallet} coinCount={held.length} totalUsd={totalUsd} />
 
-        <div className="sticky top-0 z-20 -mx-5 bg-background/10 px-5 py-2 rounded-full backdrop-blur-md">
-          <div className="flex justify-center">
-            <div
-              role="tablist"
-              aria-label="Account sections"
-              className="glass inline-flex max-w-full overflow-x-auto rounded-full p-1"
-            >
-              {APP_TABS.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={panel === t.id}
-                  onClick={() => setPanel(t.id)}
-                  className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold transition-colors sm:px-4 ${
-                    panel === t.id ? "bg-primary text-white" : "text-muted hover:text-foreground"
-                  }`}
-                >
-                  <t.Icon className="h-3.5 w-3.5" />
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          </div>
+        <div
+          role="tablist"
+          aria-label="Account sections"
+          className="flex gap-6 overflow-x-auto border-b border-rule"
+        >
+          {APP_TABS.map((t) => {
+            const on = panel === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={on}
+                onClick={() => setPanel(t.id)}
+                className="shrink-0 cursor-pointer border-0 bg-transparent pb-3"
+                style={{
+                  font: "var(--type-label)",
+                  letterSpacing: "var(--track-tight)",
+                  color: on ? "var(--text-primary)" : "var(--text-secondary)",
+                  boxShadow: on ? "inset 0 -2px 0 var(--ink)" : "none",
+                }}
+              >
+                {t.label}
+              </button>
+            );
+          })}
         </div>
 
         {panel === "send" ? (
@@ -247,41 +255,56 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
         {panel === "activity" ? <ActivityFeed items={activity} /> : null}
 
         {reauth ? (
-          <p className="text-[13px] text-muted">
-            Your account authorization expired. Text iStonk{" "}
-            <span className="font-mono">connect</span> to renew it, then try
-            again.
-          </p>
+          <ConnectHint eyebrow="Authorization expired" tail="to renew it, then try that again." />
         ) : null}
-        {error ? <p className="text-[13px] text-danger">{error}</p> : null}
+        {error ? (
+          <p style={{ font: "var(--type-body-sm)", color: "var(--down)" }}>{error}</p>
+        ) : null}
       </main>
     </div>
   );
 }
 
 /**
- * Web sign-in creates the wallet under a CDP user id only. Gifts sent by phone
- * number look the recipient up by phone, so until this wallet is linked to one
+ * Web sign-in creates the account under a CDP user id only. Gifts sent by phone
+ * number look the recipient up by phone, so until this account is linked to one
  * they land in escrow and never release here. `connect` from iMessage links it.
  */
 function LinkPhoneBanner() {
   return (
-    <Card accent className="gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-col gap-1">
-        <p className="text-[14px] font-semibold text-foreground">
-          Link your phone number to this account
-        </p>
-        <p className="text-[13px] leading-relaxed text-muted">
-          Stock sent to your number can&apos;t reach this account yet — it waits in
-          escrow instead. Text iStonk <span className="font-mono">connect</span> and
+    <Card accent className="gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-1.5">
+        <p style={{ font: "var(--type-h3)" }}>Link your phone number to this account</p>
+        <p
+          className="max-w-[52ch]"
+          style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}
+        >
+          Stock sent to your number can&apos;t reach this account yet — it waits in escrow
+          instead. Text <code style={{ font: "var(--type-mono)" }}>connect</code> to iStonk and
           sign in with the same email to link it.
         </p>
       </div>
       <a
         href={site.bot.connectSmsHref}
-        className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-primary px-4 text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
+        className="istonk-press inline-flex shrink-0 flex-col items-center justify-center no-underline"
+        style={{
+          minHeight: 52,
+          padding: "8px 20px",
+          borderRadius: "var(--r-pill)",
+          background: "var(--action-accent)",
+          color: "#fff",
+          boxShadow: "var(--shadow-accent)",
+          font: "600 15px/1.15 var(--font-text)",
+          letterSpacing: "var(--track-tight)",
+        }}
       >
         Text connect
+        <span
+          className="type-mono-sm"
+          style={{ color: "rgba(255,255,255,.82)", letterSpacing: 0 }}
+        >
+          {site.bot.phonePretty}
+        </span>
       </a>
     </Card>
   );
@@ -302,39 +325,28 @@ function TopBar({
     setTimeout(() => setCopied(false), 1500);
   }
   return (
-    <header className="border-b border-hairline">
-      <div className="mx-auto flex h-16 w-full max-w-[1040px] items-center justify-between px-5">
-        <div className="flex items-center gap-2.5">
-          <Logo />
-          <span className="text-[15px] font-semibold tracking-[-0.01em]">
-            iStonk
-          </span>
-        </div>
+    <header
+      className="sticky top-0 z-30 border-b border-rule"
+      style={{ background: "color-mix(in oklch, var(--paper) 88%, transparent)", backdropFilter: "blur(12px)" }}
+    >
+      <div className="mx-auto flex h-16 w-full max-w-[1040px] items-center justify-between gap-4 px-[var(--gutter-mobile)] md:px-7">
+        <Wordmark size={17} markSize={34} priority />
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={copy}
             disabled={!address}
             title={address ?? undefined}
-            className="flex h-9 items-center gap-2 rounded-full border border-border-strong bg-chip px-3 transition-colors hover:border-primary-border"
+            className="cursor-pointer border-0 bg-transparent p-0 disabled:cursor-default"
           >
-            <span
-              className={`h-2 w-2 rounded-full ${address ? "bg-primary" : "bg-faint"}`}
-            />
-            <span className="font-mono text-[13px] text-foreground/80">
+            <Chip mono dot={address ? "var(--live)" : "var(--faint)"} tone="paper">
               {address ? shortAddr(address) : "…"}
-            </span>
-            {copied ? (
-              <Check className="h-3.5 w-3.5 text-primary" />
-            ) : (
-              <Copy className="h-3.5 w-3.5 text-muted" />
-            )}
+              <span style={{ color: copied ? "var(--up)" : "var(--text-tertiary)" }}>
+                {copied ? "copied" : "copy"}
+              </span>
+            </Chip>
           </button>
-          <Button
-            variant="ghost"
-            onClick={onLogout}
-            className="h-9 px-3.5 font-normal"
-          >
+          <Button variant="ghost" size="sm" onClick={onLogout}>
             Sign out
           </Button>
         </div>
@@ -342,9 +354,6 @@ function TopBar({
     </header>
   );
 }
-
-const HERO_FIGURE =
-  "whitespace-nowrap font-mono text-[44px] font-medium leading-none tracking-[-0.03em] tabular sm:text-[56px]";
 
 function BalanceHero({
   wallet,
@@ -361,33 +370,49 @@ function BalanceHero({
   return (
     <section className="flex flex-col gap-5">
       <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
-        <div className="flex flex-col gap-2.5">
-          <span className="text-[13px] text-muted">iStonk account · Base</span>
-          <div className="flex items-baseline gap-3">
+        <div className="flex flex-col gap-2">
+          <Eyebrow>iStonk account · Base</Eyebrow>
+          <div className="flex min-h-[56px] items-baseline gap-3">
             {!wallet ? (
-              <span className="flex h-[44px] items-center sm:h-[56px]">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </span>
+              <span
+                className="istonk-spin"
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: "var(--r-pill)",
+                  border: "2px solid var(--ink)",
+                  borderTopColor: "transparent",
+                  alignSelf: "center",
+                }}
+              />
             ) : totalLabel ? (
-              <span className={HERO_FIGURE}>{totalLabel}</span>
+              <Figure value={totalLabel} size="hero" mono />
             ) : (
-              <>
-                <CompactDecimal as="eth" value={weiToEth(wallet.ethWei)} className={HERO_FIGURE} />
-                <span className="text-xl text-muted">ETH</span>
-              </>
+              <Figure
+                value={<CompactDecimal as="eth" value={weiToEth(wallet.ethWei)} />}
+                suffix="ETH"
+                size="hero"
+                mono
+              />
             )}
           </div>
           {wallet && totalLabel ? (
-            <span className="flex items-baseline gap-1.5 font-mono text-[15px] text-muted tabular">
+            <span
+              className="type-mono inline-flex items-baseline gap-1.5"
+              style={{ color: "var(--text-secondary)" }}
+            >
               <CompactDecimal as="eth" value={weiToEth(wallet.ethWei)} />
               <span>ETH for gas</span>
             </span>
           ) : null}
-          <span className="text-sm text-muted">
+          <p
+            className="max-w-[46ch]"
+            style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}
+          >
             {coinCount > 0
               ? `${coinCount} asset${coinCount === 1 ? "" : "s"} held in this account, plus ETH`
               : "USDC, coins you launch, and fees you collect land here"}
-          </span>
+          </p>
         </div>
         <div className="flex w-full gap-2 sm:w-auto">
           <Button
@@ -396,45 +421,35 @@ function BalanceHero({
             onClick={() => setShowDeposit((v) => !v)}
             disabled={!wallet}
           >
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden
-            >
-              <path d="M8 13V3" />
-              <path d="M4 7l4-4 4 4" />
-            </svg>
             Deposit
           </Button>
           <a
-            href={
-              wallet
-                ? `https://basescan.org/address/${wallet.address}`
-                : undefined
-            }
+            href={wallet ? `https://basescan.org/address/${wallet.address}` : undefined}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-full border border-border-strong px-4 text-[13px] font-semibold transition-colors hover:bg-chip sm:flex-none"
+            className="inline-flex flex-1 items-center justify-center gap-2 border border-rule-strong no-underline sm:flex-none"
+            style={{
+              height: 44,
+              padding: "0 20px",
+              borderRadius: "var(--r-pill)",
+              font: "600 15px/1 var(--font-text)",
+              letterSpacing: "var(--track-tight)",
+              color: "var(--text-primary)",
+            }}
           >
             Basescan <ExternalIcon />
           </a>
         </div>
       </div>
       {showDeposit && wallet ? (
-        <Card className="gap-1.5 p-5">
-          <span className="text-sm font-medium">
+        <Card className="gap-2 p-5">
+          <span style={{ font: "var(--type-h3)" }}>
             Send ETH or any Base token to this address
           </span>
-          <span className="break-all font-mono text-[13px] text-muted">
+          <span className="type-mono break-all" style={{ color: "var(--text-secondary)" }}>
             {wallet.address}
           </span>
-          <span className="text-xs text-faint">
+          <span style={{ font: "var(--type-legal)", color: "var(--text-tertiary)" }}>
             Base network only. Funds sent on another chain will not show up.
           </span>
         </Card>
@@ -467,76 +482,61 @@ function Holdings({
       .join(" · ");
   };
   return (
-    <Card>
-      <CardHeader
+    <Panel>
+      <PanelHead
         title="Holdings"
         action={
-          <span className="text-xs text-faint">{held.length + 1} assets</span>
+          <Eyebrow>
+            {held.length + 1} asset{held.length === 0 ? "" : "s"}
+          </Eyebrow>
         }
       />
-      <Row>
-        <AssetLabel
-          logo={ETH_LOGO_URL}
-          symbol="ETH"
-          name="ETH"
-          note="Pays gas for sends and claims"
-        />
-        {wallet ? (
-          <AmountWithUsd
-            as="eth"
-            value={weiToEth(wallet.ethWei)}
-            usd={amountUsd(weiToEth(wallet.ethWei), prices.eth)}
-            className="font-mono text-sm tabular"
-          />
-        ) : (
-          <span className="font-mono text-sm tabular">…</span>
-        )}
-      </Row>
-      {held.map((row) => (
-        <Row key={row.token}>
-          <AssetLabel
-            logo={
-              row.symbol.toUpperCase() === "USDC"
-                ? row.logoUrl || USDC_LOGO_URL
-                : row.logoUrl
+      <DataRow
+        leading={<TokenLogo src={ETH_LOGO_URL} symbol="ETH" size={34} />}
+        title="ETH"
+        note="Covers gas to collect fees or withdraw"
+        value={
+          wallet ? (
+            <AmountWithUsd
+              as="eth"
+              value={weiToEth(wallet.ethWei)}
+              usd={amountUsd(weiToEth(wallet.ethWei), prices.eth)}
+              className="type-mono"
+              usdClassName="type-mono-sm"
+            />
+          ) : (
+            <span className="type-mono" style={{ color: "var(--text-tertiary)" }}>
+              …
+            </span>
+          )
+        }
+      />
+      {held.map((row) => {
+        const isUsdc = row.symbol.toUpperCase() === "USDC";
+        return (
+          <DataRow
+            key={row.token}
+            leading={
+              <TokenLogo
+                src={isUsdc ? row.logoUrl || USDC_LOGO_URL : row.logoUrl}
+                symbol={row.symbol}
+                size={34}
+              />
             }
-            symbol={row.symbol}
-            name={row.symbol.toUpperCase() === "USDC" ? "USDC" : `$${row.symbol}`}
-            note={
-              pairFor(row.token) ??
-              (row.symbol.toUpperCase() === "USDC" ? "USD Coin on Base" : null)
+            title={isUsdc ? "USDC" : `$${row.symbol}`}
+            note={pairFor(row.token) ?? (isUsdc ? "USD Coin on Base" : null)}
+            value={
+              <AmountWithUsd
+                value={Number(row.amount)}
+                usd={amountUsd(Number(row.amount), prices[row.token.toLowerCase()])}
+                className="type-mono"
+                usdClassName="type-mono-sm"
+              />
             }
           />
-          <AmountWithUsd
-            value={Number(row.amount)}
-            usd={amountUsd(Number(row.amount), prices[row.token.toLowerCase()])}
-            className="font-mono text-sm tabular"
-          />
-        </Row>
-      ))}
-    </Card>
-  );
-}
-
-function AssetLabel({
-  logo,
-  symbol,
-  name,
-  note,
-}: {
-  logo?: string | null;
-  symbol: string;
-  name: string;
-  note: string | null;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <TokenLogo src={logo} symbol={symbol} />
-      <div className="flex flex-col gap-0.5">
-        <span className="text-sm font-medium">{name}</span>
-        {note ? <span className="text-xs text-muted">{note}</span> : null}
-      </div>
-    </div>
+        );
+      })}
+    </Panel>
   );
 }
 
@@ -559,38 +559,39 @@ function CreatorFees({
 }) {
   return (
     <Card accent={canCollect}>
-      <CardHeader
+      <PanelHead
         title="Creator fees"
-        subtitle="Uncollected trading fees from your launches"
+        sub="Uncollected trading fees from your launches"
         action={
-          <Button
-            onClick={onClaim}
-            busy={claiming}
-            disabled={!canCollect}
-            className="h-9"
-          >
+          <Button size="sm" onClick={onClaim} busy={claiming} disabled={!canCollect}>
             {claiming ? "Collecting" : "Collect all"}
           </Button>
         }
       />
       {pending.length > 0 ? (
         pending.map((row) => (
-          <Row key={row.token}>
-            <span className="flex items-center gap-2.5 text-sm font-medium">
-              <TokenLogo src={row.logoUrl} symbol={row.symbol} size={24} />
-              {row.symbol}
-            </span>
-            <AmountWithUsd
-              prefix="+"
-              value={Number(row.amount)}
-              usd={amountUsd(Number(row.amount), prices[row.token.toLowerCase()])}
-              className="font-mono text-sm text-primary tabular"
-            />
-          </Row>
+          <DataRow
+            key={row.token}
+            style={{
+              background: "linear-gradient(90deg, var(--up-tint), transparent 60%)",
+            }}
+            leading={<TokenLogo src={row.logoUrl} symbol={row.symbol} size={34} />}
+            title={row.symbol}
+            note={<Badge state="pending">ready to collect</Badge>}
+            value={
+              <AmountWithUsd
+                prefix="+"
+                value={Number(row.amount)}
+                usd={amountUsd(Number(row.amount), prices[row.token.toLowerCase()])}
+                className="type-mono"
+                usdClassName="type-mono-sm"
+              />
+            }
+          />
         ))
       ) : (
         <Row>
-          <span className="text-[13px] text-muted">
+          <span style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}>
             {canCollect
               ? "New trading fees are ready. Collect to pull them in."
               : heldCount > 0
@@ -600,15 +601,16 @@ function CreatorFees({
         </Row>
       )}
       {claimedTx ? (
-        <Row className="bg-card-inset">
-          <span className="text-xs text-muted">
+        <Row style={{ background: "var(--bg-sunk)" }}>
+          <span style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}>
             Collected. Holdings above are updated.
           </span>
           <a
             href={`https://basescan.org/tx/${claimedTx}`}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary-hover"
+            className="inline-flex items-center gap-1 no-underline"
+            style={{ font: "var(--type-micro)" }}
           >
             View tx <ExternalIcon />
           </a>
@@ -636,24 +638,35 @@ function Launches({
         fee.token.toLowerCase() === row.quoteAddress?.toLowerCase(),
     );
   return (
-    <section className="flex flex-col gap-3.5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-sm font-semibold">Your launches</h2>
+    <section className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="type-h2 font-text-face">Your launches</h2>
+          <p
+            className="mt-1"
+            style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}
+          >
+            Coins you created. Trading happens on Stonks Exchange.
+          </p>
+        </div>
         <LaunchCoinButton onLaunched={onLaunched} onReauth={onReauth} />
       </div>
-      <Card>
+      <Panel>
         {launches.length === 0 ? (
-          <div className="px-5 py-6 text-[13px] text-muted">
+          <div
+            className="px-5 py-7"
+            style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}
+          >
             No coins yet. Launch one from here or in iMessage.
           </div>
         ) : (
           <>
-            <div className="hidden grid-cols-5 px-5 py-2.5 text-[11px] uppercase tracking-[0.06em] text-faint sm:grid">
-              <span>Coin</span>
-              <span>Pair</span>
-              <span>Launched</span>
-              <span>Fees</span>
-              <span className="text-right">Link</span>
+            <div className="hidden grid-cols-[1.4fr_0.7fr_0.8fr_1fr_auto] gap-3 px-5 py-2.5 sm:grid">
+              {["Coin", "Pair", "Launched", "Fees", "Link"].map((h, i) => (
+                <Eyebrow key={h} style={i === 4 ? { textAlign: "right" } : undefined}>
+                  {h}
+                </Eyebrow>
+              ))}
             </div>
             {launches.map((row) => {
               const ready = readyFor(row);
@@ -664,45 +677,52 @@ function Launches({
               return (
                 <div
                   key={`${row.tokenAddress}-${row.txHash}`}
-                  className="grid grid-cols-[1fr_auto] items-center gap-3 border-t border-hairline px-5 py-3.5 sm:grid-cols-5"
+                  className="grid grid-cols-[1fr_auto] items-center gap-3 border-t border-rule px-5 py-3.5 sm:grid-cols-[1.4fr_0.7fr_0.8fr_1fr_auto]"
                 >
-                  <div className="flex items-center gap-3">
-                    <TokenLogo
-                      src={row.imageUrl}
-                      symbol={row.tokenSymbol ?? "TOKEN"}
-                    />
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-sm font-medium">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <TokenLogo src={row.imageUrl} symbol={row.tokenSymbol ?? "TOKEN"} size={34} />
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <span className="truncate" style={{ font: "var(--type-label)" }}>
                         ${row.tokenSymbol ?? "TOKEN"}
                         {row.pairSymbol ? (
-                          <span className="font-normal text-muted sm:hidden">
+                          <span className="sm:hidden" style={{ color: "var(--text-secondary)" }}>
                             {" "}
                             / {row.pairSymbol}
                           </span>
                         ) : null}
                       </span>
-                      <span className="text-xs text-muted">
+                      <span
+                        className="truncate"
+                        style={{ font: "var(--type-legal)", color: "var(--text-tertiary)" }}
+                      >
                         {row.tokenName}
                       </span>
                     </div>
                   </div>
-                  <span className="hidden font-mono text-[13px] text-foreground/80 sm:block">
+                  <span
+                    className="type-mono-sm hidden sm:block"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
                     {row.pairSymbol ?? "·"}
                   </span>
-                  <span className="hidden text-[13px] text-muted sm:block">
+                  <span
+                    className="hidden sm:block"
+                    style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}
+                    suppressHydrationWarning
+                  >
                     {when ?? "·"}
                   </span>
                   <div className="flex justify-end sm:justify-start">
                     {ready.length > 0 ? (
-                      <Pill tone="primary">
+                      <Badge state="pending">
                         {ready.length === 1
                           ? `${formatTokenAmount(ready[0].amount)} ${ready[0].symbol} ready`
                           : "fees ready"}
-                      </Pill>
+                      </Badge>
                     ) : row.canCollect ? (
-                      <Pill tone="primary">fees ready</Pill>
+                      <Badge state="pending">fees ready</Badge>
                     ) : (
-                      <Pill>nothing new</Pill>
+                      <Badge state="claimed">nothing new</Badge>
                     )}
                   </div>
                   <div className="hidden justify-end sm:flex">
@@ -711,9 +731,10 @@ function Launches({
                         href={link}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-[13px] text-primary hover:text-primary-hover"
+                        className="inline-flex items-center gap-1 whitespace-nowrap no-underline"
+                        style={{ font: "var(--type-micro)" }}
                       >
-                        Stonks Exchange <ExternalIcon />
+                        Stonks <ExternalIcon />
                       </a>
                     ) : null}
                   </div>
@@ -722,26 +743,33 @@ function Launches({
             })}
           </>
         )}
-      </Card>
+      </Panel>
     </section>
   );
 }
 
 function ActivityFeed({ items }: { items: ActivityItem[] }) {
   return (
-    <section className="flex flex-col gap-3.5">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-sm font-semibold">Activity</h2>
-        <p className="text-xs text-muted">Stock sends from iMessage and Apple Pay</p>
+    <section className="flex flex-col gap-4">
+      <div>
+        <h2 className="type-h2 font-text-face">Activity</h2>
+        <p
+          className="mt-1"
+          style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}
+        >
+          Stock sends from iMessage and Apple Pay
+        </p>
       </div>
-      <Card>
+      <Panel>
         {items.length === 0 ? (
-          <div className="px-5 py-6 text-[13px] text-muted">
+          <div
+            className="px-5 py-7"
+            style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}
+          >
             No stock sends yet. Text iStonk and say send $2 of Apple to a friend.
           </div>
         ) : (
           items.map((row) => {
-            const when = timeAgo(row.createdAt);
             const awaitingPay = row.status === "awaiting_payment";
             const directionLabel = awaitingPay
               ? "Checkout"
@@ -754,36 +782,44 @@ function ActivityFeed({ items }: { items: ActivityItem[] }) {
                 : row.status === "pending"
                   ? "pending"
                   : row.status;
-            const statusTone = row.status === "sent" ? "primary" : undefined;
+            const state: BadgeState =
+              row.status === "sent"
+                ? "claimed"
+                : row.status === "failed"
+                  ? "down"
+                  : awaitingPay
+                    ? "escrow"
+                    : "pending";
+            const when = timeAgo(row.createdAt);
             return (
-              <Row key={row.id}>
-                <div className="flex min-w-0 flex-col gap-0.5">
-                  <span className="truncate text-sm font-medium">
-                    {directionLabel} {row.amountLabel}
-                  </span>
-                  <span className="truncate text-xs text-muted">
+              <DataRow
+                key={row.id}
+                title={`${directionLabel} ${row.amountLabel}`}
+                note={
+                  <span suppressHydrationWarning>
                     {row.direction === "sent" || awaitingPay ? "to" : "from"} {row.counterparty}
                     {when ? ` · ${when}` : ""}
                   </span>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <Pill tone={statusTone}>{statusLabel}</Pill>
-                  {row.txHash ? (
+                }
+                value={<Badge state={state}>{statusLabel}</Badge>}
+                trailing={
+                  row.txHash ? (
                     <a
                       href={`https://basescan.org/tx/${row.txHash}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary-hover"
+                      className="inline-flex shrink-0 items-center gap-1 no-underline"
+                      style={{ font: "var(--type-micro)" }}
                     >
                       tx <ExternalIcon />
                     </a>
-                  ) : null}
-                </div>
-              </Row>
+                  ) : null
+                }
+              />
             );
           })
         )}
-      </Card>
+      </Panel>
     </section>
   );
 }
