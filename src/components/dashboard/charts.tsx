@@ -5,18 +5,18 @@ import { useId, useMemo, useState, type ReactNode } from "react";
 import { dailyAmountSeries } from "@/lib/burn-series";
 
 /*
- * Small inline-SVG charts for the public dashboard.
- * One hue (primary blue) — every chart here compares magnitude, so identity colour
- * isn't needed. Marks: <=24px columns with 4px rounded caps, hairline solid grid,
- * text in text tokens, per-mark hover tooltip.
+ * Small inline-SVG charts for the public board.
+ * Bars are ink, not tangerine: charts compare magnitude, and the accent belongs
+ * to the one action that opens Messages. Marks: <=24px columns with 4px caps,
+ * hairline grid, per-mark hover tooltip.
  */
 
-const INK = "var(--foreground)";
-const MUTED = "var(--muted)";
-const FAINT = "var(--faint)";
-const GRID = "rgba(20, 26, 70, 0.08)";
-const BAR = "var(--primary)";
-const BAR_DIM = "rgba(47, 91, 255, 0.28)";
+const INK = "var(--text-primary)";
+const MUTED = "var(--text-secondary)";
+const FAINT = "var(--text-tertiary)";
+const GRID = "var(--rule)";
+const BAR = "var(--ink)";
+const BAR_DIM = "rgba(16, 16, 20, 0.22)";
 
 function niceMax(max: number): number {
   if (max <= 0) return 1;
@@ -59,11 +59,22 @@ export function ChartCard({
   aside?: ReactNode;
 }) {
   return (
-    <figure className="glass flex flex-col gap-4 rounded-[16px] px-5 pb-4 pt-5">
+    <figure
+      className="flex flex-col gap-4 border border-rule px-5 pt-5 pb-4"
+      style={{
+        background: "var(--surface)",
+        borderRadius: "var(--r-card)",
+        boxShadow: "var(--shadow-card)",
+      }}
+    >
       <figcaption className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-0.5">
-          <span className="text-sm font-semibold">{title}</span>
-          {subtitle ? <span className="text-xs text-muted">{subtitle}</span> : null}
+          <span style={{ font: "var(--type-h3)" }}>{title}</span>
+          {subtitle ? (
+            <span style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}>
+              {subtitle}
+            </span>
+          ) : null}
         </div>
         {aside}
       </figcaption>
@@ -77,7 +88,15 @@ function Tooltip({ x, y, w, children }: { x: number; y: number; w: number; child
   const flip = x > w - 140;
   return (
     <foreignObject x={flip ? x - 150 : x + 10} y={Math.max(0, y - 44)} width={140} height={44}>
-      <div className="glass pointer-events-none inline-flex flex-col rounded-lg px-2.5 py-1.5 text-[11.5px] leading-tight">
+      <div
+        className="pointer-events-none inline-flex flex-col border border-rule px-2.5 py-1.5"
+        style={{
+          background: "var(--surface)",
+          borderRadius: "var(--r-sm)",
+          boxShadow: "var(--shadow-card)",
+          font: "var(--type-legal)",
+        }}
+      >
         {children}
       </div>
     </foreignObject>
@@ -115,7 +134,16 @@ export function ColumnChart({
 
   if (data.length === 0 || total === 0) {
     return (
-      <div className="flex h-[140px] items-center justify-center text-[13px] text-muted">{emptyText}</div>
+      <div
+        className="flex items-center"
+        style={{
+          minHeight: 44,
+          font: "var(--type-body-sm)",
+          color: "var(--text-tertiary)",
+        }}
+      >
+        {emptyText}
+      </div>
     );
   }
 
@@ -218,7 +246,16 @@ export function BarChart({
 
   if (data.length === 0 || total === 0) {
     return (
-      <div className="flex h-[140px] items-center justify-center text-[13px] text-muted">{emptyText}</div>
+      <div
+        className="flex items-center"
+        style={{
+          minHeight: 44,
+          font: "var(--type-body-sm)",
+          color: "var(--text-tertiary)",
+        }}
+      >
+        {emptyText}
+      </div>
     );
   }
 
@@ -235,19 +272,21 @@ export function BarChart({
             onMouseEnter={() => setHover(i)}
             title={`${d.label}: ${fmt(d.value)} ${valueLabel} (${share}%)`}
           >
-            <span className="truncate font-mono text-[12px] text-foreground/80">{d.label}</span>
+            <span className="type-mono truncate">{d.label}</span>
             <span className="relative h-[14px] w-full">
               <span
-                className="absolute inset-y-0 left-0 rounded-r-[4px] transition-[width,background-color] duration-500"
+                className="absolute inset-y-0 left-0 transition-[width,background-color] duration-500"
                 style={{
                   width: `${pct}%`,
                   background: active || hover === null ? BAR : BAR_DIM,
+                  borderTopRightRadius: "var(--r-xs)",
+                  borderBottomRightRadius: "var(--r-xs)",
                 }}
               />
             </span>
-            <span className="w-16 text-right font-mono text-[12px] tabular text-muted">
+            <span className="type-mono w-16 text-right" style={{ color: "var(--text-secondary)" }}>
               {fmt(d.value)}
-              <span className="text-faint"> · {share}%</span>
+              <span style={{ color: "var(--text-tertiary)" }}> · {share}%</span>
             </span>
           </li>
         );

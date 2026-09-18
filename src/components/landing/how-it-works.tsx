@@ -1,116 +1,101 @@
-"use client";
-
-import { useRef } from "react";
-import { motion, useScroll, useSpring, useTransform } from "framer-motion";
-
+import { Button, Eyebrow, MsgGlyph } from "@/components/ds";
 import { site } from "@/lib/site";
 
-import { Reveal, Stagger, fadeUp, useLiteMotion } from "./motion";
-
-const steps = [
+const STEPS = [
   {
     n: "01",
-    title: "Name it",
-    body: "Two to fifty characters. Give a ticker alone and that becomes the name.",
-    you: "fruit",
+    you: "launch fruit vs Apple stock",
+    title: "Say it in one text",
+    body: "Name, ticker, pair. Say it all at once and iStonk skips straight to confirm.",
   },
   {
     n: "02",
-    title: "Ticker",
-    body: "Two to eleven letters or numbers. Skip it and iStonk guesses one from the name.",
-    you: "$FRUIT",
+    you: "fruit.png",
+    title: "Send a photo, or skip",
+    body: "Up to 5 MB. Skip it and the Stonks logo fills in.",
   },
   {
     n: "03",
-    title: "Picture",
-    body: "Send a photo or a link, up to 5 MB. Or say skip and the Stonks logo fills in.",
-    you: "fruit.png",
-  },
-  {
-    n: "04",
-    title: "Pair it",
-    body: "Any live asset in the registry: AAPL, NVDA, TSLA, ETH, STONKEX. Written any way you like.",
-    you: "vs Apple stock",
-  },
-  {
-    n: "05",
-    title: "Confirm",
-    body: "Your account signs the launch. Fees route to you, on-chain, from block one.",
     you: "confirm",
+    title: "Your account signs",
+    body: "Creator fees route to you on-chain from block one. Locked at create.",
   },
 ];
 
+/** Editorial columns on paper. No three-up icon grid. */
 export function HowItWorks() {
-  const lite = useLiteMotion();
-  const ref = useRef<HTMLDivElement>(null);
-  // Rail is hidden below `sm`; on lite it just renders full so nothing ticks on scroll.
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 80%", "end 60%"] });
-  const line = useSpring(scrollYProgress, { stiffness: 90, damping: 24 });
-  const lineScale = useTransform(line, [0, 1], [0, 1]);
-
   return (
-    <section id="how" className="relative mx-auto w-full max-w-6xl scroll-mt-24 px-6 py-24 lg:py-32">
-      <div className="grid grid-cols-1 gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
-        <div className="lg:sticky lg:top-32 lg:self-start">
-          <Reveal>
-            <span className="text-[12px] font-semibold uppercase tracking-[0.18em] text-primary">
-              How it works
-            </span>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <h2 className="mt-3 text-[36px] font-extrabold leading-[1.02] tracking-[-0.03em] sm:text-[48px]">
-              Five texts.
-              <br />
-              <span className="text-iris">One live coin.</span>
-            </h2>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <p className="mt-5 max-w-[420px] text-[16px] leading-relaxed text-muted">
-              The whole wizard runs in plain text. Say everything in one message and iStonk skips
-              straight to confirm. Change your mind mid-way? Say cancel.
-            </p>
-          </Reveal>
-          <Reveal delay={0.15}>
-            <a
-              href={site.bot.smsHref}
-              className="mt-8 inline-flex h-11 items-center rounded-full bg-foreground px-5 text-[14px] font-semibold text-white transition-transform hover:-translate-y-0.5"
-            >
-              Start a launch
+    <section
+      id="how"
+      className="relative scroll-mt-[68px] border-t border-rule"
+      style={{ background: "var(--surface)" }}
+    >
+      <div className="mx-auto grid max-w-[var(--container)] grid-cols-1 gap-12 px-[var(--gutter-mobile)] py-16 md:px-[var(--gutter-desktop)] lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:gap-16 lg:py-22">
+        <div>
+          <Eyebrow>How it works</Eyebrow>
+          <h2 className="type-d2 mt-3.5">
+            Three texts.
+            <br />
+            One live coin.
+          </h2>
+          <p
+            className="mt-4.5 max-w-[380px]"
+            style={{ font: "var(--type-body)", color: "var(--text-secondary)" }}
+          >
+            The whole wizard runs in plain text. Change your mind halfway? Say
+            cancel. Nothing to install, nothing to write down.
+          </p>
+          <div className="mt-6.5">
+            <a href={site.bot.launchSmsHref} className="no-underline">
+              <Button variant="accent" size="md" icon={<MsgGlyph />}>
+                Text iStonk
+              </Button>
             </a>
-          </Reveal>
-        </div>
-
-        <div ref={ref} className="relative">
-          {/* progress rail */}
-          <div className="absolute left-[27px] top-2 bottom-2 hidden w-px bg-border-strong sm:block">
-            <motion.div
-              style={{ scaleY: lite ? 1 : lineScale }}
-              className="h-full w-full origin-top bg-[linear-gradient(180deg,var(--iris-blue),var(--iris-magenta),var(--iris-peach))]"
-            />
           </div>
-
-          <Stagger as="ol" className="flex flex-col gap-4">
-            {steps.map((s) => (
-              <motion.li key={s.n} variants={fadeUp} className="relative flex items-start gap-4">
-                <span className="glass iris-ring relative z-10 hidden h-14 w-14 shrink-0 items-center justify-center rounded-full font-mono text-[13px] font-bold text-foreground sm:flex">
-                  {s.n}
-                </span>
-                <div className="glass group flex min-w-0 flex-1 flex-col gap-3 rounded-[22px] p-6">
-                  <span className="inline-flex w-fit self-end rounded-2xl rounded-br-md bg-primary px-3.5 py-2 font-mono text-[13px] text-white shadow-[0_8px_20px_-10px_rgba(47,91,255,0.9)]">
-                    {s.you}
-                  </span>
-                  <div className="max-w-[380px]">
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono text-[12px] font-bold text-faint sm:hidden">{s.n}</span>
-                      <h3 className="text-[19px] font-bold tracking-tight">{s.title}</h3>
-                    </div>
-                    <p className="mt-2 text-[14.5px] leading-relaxed text-muted">{s.body}</p>
-                  </div>
-                </div>
-              </motion.li>
-            ))}
-          </Stagger>
         </div>
+
+        <ol className="flex list-none flex-col">
+          {STEPS.map((s) => (
+            <li
+              key={s.n}
+              className="grid grid-cols-[40px_minmax(0,1fr)] items-start gap-x-4 gap-y-3 border-t border-rule py-6.5 sm:grid-cols-[56px_minmax(0,1fr)_auto] sm:gap-x-5"
+            >
+              <span
+                className="pt-1"
+                style={{ font: "var(--type-mono)", color: "var(--text-tertiary)" }}
+              >
+                {s.n}
+              </span>
+              <div>
+                <h3 className="type-h2 font-text-face">{s.title}</h3>
+                <p
+                  className="mt-1.75 max-w-[380px]"
+                  style={{
+                    font: "var(--type-body-sm)",
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  {s.body}
+                </p>
+              </div>
+              {/* What the user typed, in their own blue bubble. */}
+              <span
+                className="col-start-2 justify-self-start sm:col-start-3"
+                style={{
+                  display: "inline-flex",
+                  padding: "8px 13px",
+                  borderRadius: "var(--r-bubble)",
+                  borderBottomRightRadius: "var(--r-bubble-tail)",
+                  background: "var(--msg-out)",
+                  color: "#fff",
+                  font: "400 14px/1.3 var(--font-text)",
+                }}
+              >
+                {s.you}
+              </span>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );

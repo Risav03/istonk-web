@@ -1,30 +1,54 @@
 @import "tailwindcss";
 
 /*
- * iStonks palette — holographic glass on a soft pastel wash.
- * Derived from the brand mark: electric blue chrome, magenta / peach / cyan
- * refractions, near-white centre fading to lavender + sky at the edges.
+ * iStonk design system.
+ * Warm paper, hard ink, one lacquer accent. Iridescence is a material on the
+ * mark and the mascot only — never a page wash, never behind type.
+ *
+ * Token names match the design system bundle 1:1 so its guidelines read
+ * directly onto this code.
  */
-:root {
-  --background: #f7f6fc;
-  --foreground: #0f1436;
-  --muted: #5a6087;
-  --faint: #979cba;
-  --card: rgba(255, 255, 255, 0.72);
-  --card-inset: rgba(255, 255, 255, 0.5);
-  --chip: rgba(255, 255, 255, 0.55);
-  --border: rgba(20, 26, 70, 0.08);
-  --hairline: rgba(20, 26, 70, 0.06);
-  --border-strong: rgba(20, 26, 70, 0.14);
-  --primary: #2f5bff;
-  --primary-hover: #1d49f0;
-  --primary-dim: #e8edff;
-  --primary-border: #c5d1ff;
-  --primary-foreground: #ffffff;
-  --disabled: #e3e5f0;
-  --danger: #e5484d;
 
-  /* iridescent accents */
+:root {
+  /* ── ground ──────────────────────────────────────────── */
+  --paper: #f4f1e9;
+  --paper-2: #fbf9f3;
+  --surface: #ffffff;
+  --surface-sunk: #efebe1;
+
+  /* ── ink ramp ────────────────────────────────────────── */
+  --ink: #101014;
+  --graphite: #3a3a42;
+  --slate: #6c6c78;
+  --faint: #a0a0ac;
+  --rule: #e3ded2;
+  --rule-strong: #cfc8b8;
+
+  /* ── lacquer accent: the colour of "send a text" ─────── */
+  --tang-50: #fff4ee;
+  --tang-100: #ffe3d4;
+  --tang-200: #ffc4a5;
+  --tang-300: #ff9c6c;
+  --tang-400: #ff7638;
+  --tang: #ff5a14;
+  --tang-600: #e24608;
+  --tang-700: #b83706;
+  --tang-ink: #a33005; /* clears 4.5:1 as small text on paper */
+
+  /* ── semantic market states ──────────────────────────── */
+  --up: #0b8f4d;
+  --up-tint: #e4f4ea;
+  --down: #c2281f;
+  --down-tint: #fbe9e7;
+  --pending: #a9761b;
+  --pending-tint: #f8efdc;
+  --live: #0b8f4d;
+  --escrow: #6c6c78;
+  --escrow-tint: #ecebe6;
+  --claimed: #101014;
+  --claimed-tint: #e8e6df;
+
+  /* ── iridescent stops, lifted from the 3D mark ───────── */
   --iris-blue: #2f5bff;
   --iris-violet: #7a5cff;
   --iris-magenta: #ff4fd8;
@@ -34,137 +58,533 @@
   --iris: linear-gradient(
     100deg,
     var(--iris-blue) 0%,
-    var(--iris-violet) 22%,
-    var(--iris-magenta) 48%,
-    var(--iris-peach) 72%,
+    var(--iris-violet) 20%,
+    var(--iris-magenta) 46%,
+    var(--iris-peach) 70%,
+    var(--iris-yellow) 84%,
     var(--iris-cyan) 100%
   );
+  --iris-edge: linear-gradient(
+    120deg,
+    rgba(47, 91, 255, 0.9),
+    rgba(255, 79, 216, 0.9) 40%,
+    rgba(255, 154, 60, 0.9) 70%,
+    rgba(56, 209, 255, 0.9)
+  );
+
+  /* ── night: share cards, OG, night iMessage only ─────── */
+  --night: #0e0e11;
+  --night-2: #17171c;
+  --night-rule: #2a2a32;
+  --night-ink: #f6f4ee;
+  --night-slate: #9a9aa6;
+
+  /* ── iMessage system colours (Apple's, used as-is) ───── */
+  --msg-in: #e9e9eb;
+  --msg-in-ink: #000000;
+  --msg-out: #0b93f6;
+  --msg-out-ink: #ffffff;
+  --msg-sms: #34c759;
+  --msg-field: #ffffff;
+  --msg-chrome: #f6f6f6;
+
+  /* ── semantic aliases — prefer these in product code ─── */
+  --bg-page: var(--paper);
+  --bg-card: var(--surface);
+  --bg-sunk: var(--surface-sunk);
+  --text-primary: var(--ink);
+  --text-secondary: var(--slate);
+  --text-tertiary: var(--faint);
+  --text-accent: var(--tang-ink);
+  --text-on-ink: #fbf9f3;
+  --border-hairline: var(--rule);
+  --border-strong: var(--rule-strong);
+  --focus-ring: var(--tang);
+  --action-primary: var(--ink);
+  --action-primary-press: #26262e;
+  --action-accent: var(--tang);
+  --action-accent-press: var(--tang-600);
+  --action-disabled: #dfdad0;
+
+  /* ── type ────────────────────────────────────────────── */
+  --font-display: var(--font-bricolage), "Bricolage Grotesque", Georgia, serif;
+  --font-text: var(--font-instrument), "Instrument Sans", sans-serif;
+  --font-mono: var(--font-spline), "Spline Sans Mono", ui-monospace, Menlo, monospace;
+
+  --type-poster: 800 clamp(56px, 9vw, 132px) / 0.88 var(--font-display);
+  --type-d1: 800 72px/0.9 var(--font-display);
+  --type-d2: 800 52px/0.94 var(--font-display);
+  --type-d3: 700 36px/1 var(--font-display);
+  --type-h1: 700 26px/1.12 var(--font-text);
+  --type-h2: 700 20px/1.2 var(--font-text);
+  --type-h3: 650 17px/1.3 var(--font-text);
+  --type-body-lg: 400 18px/1.55 var(--font-text);
+  --type-body: 400 15px/1.55 var(--font-text);
+  --type-body-sm: 400 13.5px/1.5 var(--font-text);
+  --type-label: 600 13px/1.2 var(--font-text);
+  --type-micro: 600 11px/1.2 var(--font-text);
+  --type-legal: 400 11.5px/1.45 var(--font-text);
+  --type-data: 500 15px/1.2 var(--font-text);
+  --type-figure: 500 56px/1 var(--font-text);
+  --type-mono: 500 13px/1.4 var(--font-mono);
+  --type-mono-sm: 500 11.5px/1.4 var(--font-mono);
+
+  --track-poster: -0.045em;
+  --track-display: -0.035em;
+  --track-tight: -0.015em;
+  --track-normal: 0;
+  --track-caps: 0.14em;
+  --numeric-tabular: tabular-nums;
+
+  /* ── spacing: 4px base. 5 and 14 exist because we use them. ── */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+  --sp-20: 80px;
+  --sp-24: 96px;
+  --sp-32: 128px;
+
+  --gutter-mobile: 20px;
+  --gutter-desktop: 40px;
+  --measure: 62ch;
+  --container: 1120px;
+  --container-narrow: 720px;
+  --container-app: 1040px;
+  --tap-min: 44px;
+
+  /* ── shape hierarchy is meaning, not decoration ───────
+     pill     → conversation: bubbles, chips, tapbacks, the one CTA
+     squircle → objects you hold: cards, receipts, media, tiles
+     tape     → data: tables, ticker, OTP cells, legal. Tape is square. */
+  --r-tape: 2px;
+  --r-xs: 4px;
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-bubble: 18px;
+  --r-bubble-tail: 5px;
+  --r-pill: 999px;
+  --r-card: var(--r-lg);
+  --r-receipt: var(--r-md);
+  --r-field: var(--r-sm);
+  --stroke-hair: 1px;
+  --stroke: 1.5px;
+  --stroke-bold: 2px;
+  --icon-stroke: 1.75px;
+
+  /* ── elevation: paper on a table, not glass in the air ── */
+  --shadow-flat: 0 1px 0 rgba(16, 16, 20, 0.05);
+  --shadow-card: 0 1px 1px rgba(16, 16, 20, 0.04), 0 6px 16px -10px rgba(16, 16, 20, 0.18);
+  --shadow-raised: 0 2px 2px rgba(16, 16, 20, 0.04), 0 14px 32px -16px rgba(16, 16, 20, 0.28);
+  --shadow-pop: 0 18px 44px -18px rgba(16, 16, 20, 0.4);
+  --shadow-accent: 0 10px 26px -12px rgba(255, 90, 20, 0.55);
+  --shadow-inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --shadow-night: 0 20px 50px -22px rgba(0, 0, 0, 0.8);
+
+  --glass-tint: rgba(255, 255, 255, 0.72);
+  --glass-tint-solid: rgba(251, 249, 243, 0.94);
+  --glass-blur: blur(20px) saturate(150%);
+
+  /* ── motion: a message arriving or a number settling ─── */
+  --ease-msg: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-snap: cubic-bezier(0.5, 1.6, 0.55, 1);
+
+  --dur-instant: 90ms;
+  --dur-tap: 140ms;
+  --dur-msg: 260ms;
+  --dur-tick: 420ms;
+  --dur-card: 340ms;
+  --dur-claim: 520ms;
+  --dur-handoff: 600ms;
+
+  --lift-hover: -1px;
+  --press-scale: 0.97;
+
+  /* ── the four materials. Nothing else. ───────────────── */
+  --mat-paper: linear-gradient(180deg, var(--paper-2), var(--paper));
+  --mat-tape: repeating-linear-gradient(90deg, rgba(16, 16, 20, 0.08) 0 1px, transparent 1px 7px);
+  --mat-perf: radial-gradient(circle at 50% 0, transparent 5px, var(--surface) 5px);
+  --noise-opacity: 0.035;
 }
 
+/* Tailwind utility surface over the tokens above. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-muted: var(--muted);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-surface: var(--surface);
+  --color-sunk: var(--surface-sunk);
+
+  --color-ink: var(--ink);
+  --color-graphite: var(--graphite);
+  --color-slate: var(--slate);
   --color-faint: var(--faint);
-  --color-card: var(--card);
-  --color-card-inset: var(--card-inset);
-  --color-chip: var(--chip);
-  --color-border: var(--border);
-  --color-hairline: var(--hairline);
-  --color-border-strong: var(--border-strong);
-  --color-primary: var(--primary);
-  --color-primary-hover: var(--primary-hover);
-  --color-primary-dim: var(--primary-dim);
-  --color-primary-border: var(--primary-border);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-disabled: var(--disabled);
-  --color-danger: var(--danger);
-  --color-iris-blue: var(--iris-blue);
-  --color-iris-violet: var(--iris-violet);
-  --color-iris-magenta: var(--iris-magenta);
-  --color-iris-peach: var(--iris-peach);
-  --color-iris-yellow: var(--iris-yellow);
-  --color-iris-cyan: var(--iris-cyan);
-  --font-sans: var(--font-geist-sans), "SF Pro Text", -apple-system, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), "SF Mono", ui-monospace, Menlo, monospace;
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-on-ink: var(--text-on-ink);
+
+  --color-tang: var(--tang);
+  --color-tang-50: var(--tang-50);
+  --color-tang-100: var(--tang-100);
+  --color-tang-200: var(--tang-200);
+  --color-tang-300: var(--tang-300);
+  --color-tang-400: var(--tang-400);
+  --color-tang-600: var(--tang-600);
+  --color-tang-700: var(--tang-700);
+  --color-tang-ink: var(--tang-ink);
+
+  --color-up: var(--up);
+  --color-up-tint: var(--up-tint);
+  --color-down: var(--down);
+  --color-down-tint: var(--down-tint);
+  --color-pending: var(--pending);
+  --color-pending-tint: var(--pending-tint);
+  --color-live: var(--live);
+  --color-escrow: var(--escrow);
+  --color-escrow-tint: var(--escrow-tint);
+  --color-claimed-tint: var(--claimed-tint);
+
+  --color-night: var(--night);
+  --color-night-2: var(--night-2);
+  --color-night-rule: var(--night-rule);
+  --color-night-ink: var(--night-ink);
+  --color-night-slate: var(--night-slate);
+
+  --color-msg-in: var(--msg-in);
+  --color-msg-out: var(--msg-out);
+  --color-msg-sms: var(--msg-sms);
+  --color-msg-chrome: var(--msg-chrome);
+
+  --font-display: var(--font-display);
+  --font-text: var(--font-text);
+  --font-mono: var(--font-mono);
+
+  --radius-tape: var(--r-tape);
+  --radius-xs: var(--r-xs);
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+  --radius-bubble: var(--r-bubble);
+  --radius-pill: var(--r-pill);
+
+  --shadow-flat: var(--shadow-flat);
+  --shadow-card: var(--shadow-card);
+  --shadow-raised: var(--shadow-raised);
+  --shadow-pop: var(--shadow-pop);
+  --shadow-accent: var(--shadow-accent);
+
+  --ease-msg: var(--ease-msg);
+  --ease-out: var(--ease-out);
+  --ease-snap: var(--ease-snap);
 }
 
-html,
-body {
-  background: var(--background);
-  color: var(--foreground);
+/*
+ * Base element styles must live in @layer base. Unlayered rules beat every
+ * layered rule regardless of specificity, so `p { margin: 0 }` outside a layer
+ * would silently defeat `mt-4` on every paragraph.
+ */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg-page);
+    color: var(--text-primary);
+    font: var(--type-body);
+    letter-spacing: var(--track-normal);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    margin: 0;
+    font-family: var(--font-display);
+    letter-spacing: var(--track-display);
+  }
+
+  p {
+    margin: 0;
+    text-wrap: pretty;
+  }
+
+  a {
+    color: var(--text-accent);
+    text-decoration-color: color-mix(in oklch, var(--tang) 45%, transparent);
+    text-underline-offset: 2px;
+  }
+
+  a:hover {
+    color: var(--tang-700);
+    text-decoration-color: var(--tang);
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  input::placeholder {
+    color: var(--text-tertiary);
+  }
+
+  ::selection {
+    background: var(--tang-100);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
 }
 
-html {
-  scroll-behavior: smooth;
+/* ── type scale as classes (the tokens are `font` shorthand) ──
+   In @layer components so a Tailwind utility can still override them. */
+@layer components {
+
+.type-poster {
+  font: var(--type-poster);
+  letter-spacing: var(--track-poster);
+}
+.type-d1 {
+  font: var(--type-d1);
+  letter-spacing: var(--track-display);
+}
+.type-d2 {
+  font: var(--type-d2);
+  letter-spacing: var(--track-display);
+}
+.type-d3 {
+  font: var(--type-d3);
+  letter-spacing: var(--track-display);
+}
+.type-h1 {
+  font: var(--type-h1);
+  letter-spacing: var(--track-tight);
+}
+.type-h2 {
+  font: var(--type-h2);
+  letter-spacing: var(--track-tight);
+}
+.type-h3 {
+  font: var(--type-h3);
+  letter-spacing: var(--track-tight);
+}
+.type-body-lg {
+  font: var(--type-body-lg);
+}
+.type-body {
+  font: var(--type-body);
+}
+.type-body-sm {
+  font: var(--type-body-sm);
+}
+.type-label {
+  font: var(--type-label);
+  letter-spacing: var(--track-tight);
+}
+.type-micro {
+  font: var(--type-micro);
+}
+.type-legal {
+  font: var(--type-legal);
+}
+.type-mono {
+  font: var(--type-mono);
+  font-variant-numeric: var(--numeric-tabular);
+}
+.type-mono-sm {
+  font: var(--type-mono-sm);
+  font-variant-numeric: var(--numeric-tabular);
 }
 
-body {
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
+/* Headings default to the display face; these opt a heading back to text. */
+.font-text-face {
+  font-family: var(--font-text);
 }
 
-button,
-input,
-select {
-  font: inherit;
-}
-
-input::placeholder {
-  color: var(--faint);
-}
-
-::selection {
-  background: rgba(47, 91, 255, 0.18);
-}
-
+.istonk-tabular,
 .tabular {
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: var(--numeric-tabular);
 }
 
-/* DexScreener-style leading-zero count: 0.0₄739 */
-.ds-sub {
-  font-size: 0.55em;
-  font-weight: 650;
-  line-height: 0;
-  vertical-align: -0.12em;
-  margin-inline: 0.04em;
+.istonk-caps {
+  font: var(--type-micro);
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
 }
 
-/* ---- shared iridescent utilities ---- */
+/* Field on paper. Square-ish: forms are data, not conversation. */
+.istonk-field {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-field);
+  box-shadow: var(--shadow-flat);
+  font: 400 15px/1.2 var(--font-text);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color var(--dur-tap) var(--ease-out);
+}
+.istonk-field:hover:not(:disabled) {
+  border-color: var(--tang-300);
+}
+.istonk-field:focus-visible {
+  border-color: var(--tang);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+.istonk-field:disabled {
+  background: var(--bg-sunk);
+  color: var(--text-tertiary);
+}
+textarea.istonk-field {
+  height: auto;
+  padding: 11px 14px;
+  line-height: 1.5;
+  resize: vertical;
+}
 
-/* Text filled with the brand gradient */
-.text-iris {
+/* Selects lose the OS chrome and get the same chevron as iOS list rows. */
+select.istonk-field {
+  appearance: none;
+  padding-right: 36px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1.5 6 6.5l5-5' stroke='%236c6c78' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+
+}
+
+/* ── materials ─────────────────────────────────────────── */
+
+@layer components {
+
+/* Iridescent chrome: the mark, the mascot, a 1px refraction edge. Never a background. */
+.istonk-iris-text {
   background: var(--iris);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
-/* Frosted glass surface used across landing + dashboard cards */
-.glass {
-  background: var(--card);
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.9) inset,
-    0 10px 40px -12px rgba(30, 40, 120, 0.18),
-    0 0 0 1px rgba(20, 26, 70, 0.04);
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-}
-
-/* 1px iridescent ring via mask, sits on top of .glass */
-.iris-ring {
+.istonk-iris-edge {
   position: relative;
 }
-.iris-ring::before {
+.istonk-iris-edge::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: var(--iris);
+  background: var(--iris-edge);
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  opacity: 0.55;
+  opacity: 0.7;
   pointer-events: none;
 }
 
-/* Soft pastel wash behind the whole site */
-.aurora-wash {
-  background:
-    radial-gradient(60% 50% at 8% 0%, rgba(255, 173, 224, 0.55), transparent 70%),
-    radial-gradient(50% 45% at 100% 0%, rgba(255, 196, 120, 0.5), transparent 70%),
-    radial-gradient(60% 55% at 0% 100%, rgba(150, 200, 255, 0.55), transparent 70%),
-    radial-gradient(55% 50% at 100% 100%, rgba(180, 160, 255, 0.55), transparent 70%),
-    var(--background);
+/* Newsprint grain. Sits over the paper, under the type. */
+.istonk-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--noise-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* Desktop ticker: pure CSS, runs on the compositor */
-@keyframes marquee {
+/* Receipt edge: torn tape, not a rounded card. */
+.istonk-receipt-edge {
+  --p: 7px;
+  -webkit-mask:
+    radial-gradient(circle at 50% 0, transparent var(--p), #000 var(--p)) top left / 22px 100% repeat-x,
+    radial-gradient(circle at 50% 100%, transparent var(--p), #000 var(--p)) bottom left / 22px 100% repeat-x,
+    linear-gradient(#000 0 0) center / 100% calc(100% - 14px) no-repeat;
+  mask-composite: intersect;
+}
+
+/*
+ * Glass earns its place in three places only: the Messages header, the sticky
+ * site nav, and media over the mark. Coarse pointers drop the blur entirely —
+ * assume it is expensive and still make it look branded.
+ */
+.istonk-glass {
+  background: var(--glass-tint);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+@media (hover: none), (pointer: coarse), (max-width: 900px) {
+  .istonk-glass {
+    background: var(--glass-tint-solid);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+}
+
+/* ── motion ────────────────────────────────────────────── */
+
+/* A bubble arriving: 260ms, scale 0.96→1, y +10→0. */
+@keyframes istonk-arrive {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+.istonk-arrive {
+  animation: istonk-arrive var(--dur-msg) var(--ease-msg) both;
+}
+
+/* A receipt unfurling from its top edge: 340ms. */
+@keyframes istonk-unfurl {
+  from {
+    opacity: 0;
+    transform: scaleY(0.82);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+.istonk-unfurl {
+  transform-origin: top center;
+  animation: istonk-unfurl var(--dur-card) var(--ease-out) both;
+}
+
+/* Ticker tape runs on the compositor. */
+@keyframes istonk-tape {
   from {
     transform: translate3d(0, 0, 0);
   }
@@ -172,13 +592,22 @@ input::placeholder {
     transform: translate3d(-50%, 0, 0);
   }
 }
-.marquee {
-  animation: marquee 38s linear infinite;
+.istonk-tape-track {
+  animation: istonk-tape var(--tape-speed, 46s) linear infinite;
   will-change: transform;
 }
 
-/* iMessage typing indicator */
-@keyframes typing-dot {
+@keyframes istonk-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.istonk-spin {
+  animation: istonk-spin 0.7s linear infinite;
+}
+
+/* iMessage typing indicator. */
+@keyframes istonk-typing {
   0%,
   100% {
     transform: translateY(0);
@@ -190,33 +619,48 @@ input::placeholder {
   }
 }
 .typing-dot {
-  animation: typing-dot 0.9s ease-in-out infinite;
+  animation: istonk-typing 0.9s ease-in-out infinite;
 }
 
-/*
- * Touch devices / small screens: backdrop-filter is the single most expensive
- * thing on the page (every glass element re-blurs the wash on every scroll
- * frame, and dozens of them will crash a low-end GPU). Swap it for a slightly
- * more opaque card — same look, near-zero cost.
- */
-@media (hover: none), (pointer: coarse), (max-width: 1023px) {
-  .glass {
-    background: rgba(255, 255, 255, 0.84);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.9) inset,
-      0 8px 24px -12px rgba(30, 40, 120, 0.16),
-      0 0 0 1px rgba(20, 26, 70, 0.04);
-  }
+/* Hover lifts 1px or shifts one step darker. It never changes hue or glows. */
+.istonk-press {
+  transition:
+    transform var(--dur-tap) var(--ease-out),
+    background var(--dur-tap) linear,
+    opacity var(--dur-tap) linear;
+}
+.istonk-press:active:not(:disabled) {
+  transform: scale(var(--press-scale));
 }
 
+/* Every duration collapses to 0ms, and every frame reads as designed when still. */
 @media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-instant: 0ms;
+    --dur-tap: 0ms;
+    --dur-msg: 0ms;
+    --dur-tick: 0ms;
+    --dur-card: 0ms;
+    --dur-claim: 0ms;
+    --dur-handoff: 0ms;
+  }
+
   html {
     scroll-behavior: auto;
   }
-  .marquee,
-  .typing-dot {
-    animation: none;
+
+  .istonk-tape-track,
+  .typing-dot,
+  .istonk-spin {
+    animation: none !important;
   }
+}
+
+/* DexScreener-style leading-zero count: 0.0₄739 */
+.ds-sub {
+  font-size: 0.55em;
+  font-weight: 650;
+  line-height: 0;
+  vertical-align: -0.12em;
+  margin-inline: 0.04em;
 }

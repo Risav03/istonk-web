@@ -12,8 +12,9 @@ import {
   useSignInWithEmail,
   useVerifyEmailOTP,
 } from "@coinbase/cdp-hooks";
-import { AlertCircle, CheckCircle2, Loader2, Wallet } from "lucide-react";
 
+import { ConnectHint } from "@/components/connect-hint";
+import { Button, Chip, Input, OtpField, Wordmark } from "@/components/ds";
 import { cdpSignInError } from "@/lib/cdp-errors";
 
 const DELEGATION_DAYS = 90;
@@ -30,7 +31,11 @@ export function ConnectClient({ sessionToken }: { sessionToken: string }) {
   if (!PROJECT_ID) {
     return (
       <Shell>
-        <StatusBlock icon="error" message="Account setup is not configured (missing project id)." />
+        <StatusBlock
+          tone="error"
+          title="Setup is not configured"
+          message="Account setup is missing its project id."
+        />
       </Shell>
     );
   }
@@ -46,7 +51,6 @@ type Phase = "loading" | "email" | "otp" | "finishing" | "error";
 function ConnectInner({ sessionToken }: { sessionToken: string }) {
   const router = useRouter();
   const { isSignedIn } = useIsSignedIn();
-  const { currentUser } = useCurrentUser();
   const { evmSmartAccounts } = useEvmSmartAccounts();
   const { signInWithEmail } = useSignInWithEmail();
   const { verifyEmailOTP } = useVerifyEmailOTP();
@@ -187,7 +191,7 @@ function ConnectInner({ sessionToken }: { sessionToken: string }) {
       await verifyEmailOTP({ flowId, otp });
       setPhase("finishing");
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "That code didn't work — try again.");
+      setMessage(err instanceof Error ? err.message : "That code didn't work. Try again.");
     } finally {
       setBusy(false);
     }
@@ -196,89 +200,192 @@ function ConnectInner({ sessionToken }: { sessionToken: string }) {
   return (
     <Shell>
       {phase === "loading" ? (
-        <StatusBlock icon="spin" message="Loading…" />
-      ) : phase === "error" ? (
-        <StatusBlock icon="error" message={message} />
+        <StatusBlock tone="wait" title="Opening your setup link" message="One moment." />
       ) : phase === "finishing" ? (
-        <StatusBlock icon="spin" message="Setting up your iStonk account…" />
+        <StatusBlock
+          tone="wait"
+          title="Setting up your account"
+          message="Creating your smart account on Base and authorizing iStonk to sign for it. This takes a few seconds."
+        />
+      ) : phase === "error" ? (
+        <StatusBlock tone="error" title="That didn't work" message={message} />
       ) : phase === "otp" ? (
-        <div className="w-full max-w-sm">
-          <p className="mb-3 text-sm text-[var(--muted)]">Enter the 6-digit code we emailed you.</p>
-          <input
-            inputMode="numeric"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 8))}
-            placeholder="123456"
-            className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 text-center text-lg tracking-widest"
-          />
-          {message ? <p className="mt-2 text-sm text-[var(--danger)]">{message}</p> : null}
+        <>
+          <div>
+            <h2 className="type-h1 font-text-face">Check your email</h2>
+            <p
+              className="mt-2"
+              style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}
+            >
+              Six digits, sent to{" "}
+              <span style={{ color: "var(--text-primary)" }}>{email || "your email"}</span>.
+            </p>
+          </div>
+          <OtpField value={otp} onChange={setOtp} autoFocus disabled={busy} />
+          {message ? <ErrorLine>{message}</ErrorLine> : null}
+          <Button
+            size="lg"
+            shape="square"
+            busy={busy}
+            disabled={otp.length < 6}
+            onClick={submitOtp}
+          >
+            Open your account
+          </Button>
           <button
             type="button"
-            onClick={submitOtp}
-            disabled={busy || otp.length < 6}
-            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--primary)] px-6 py-3 text-sm font-semibold text-[var(--primary-foreground)] disabled:opacity-60"
+            onClick={() => {
+              setPhase("email");
+              setOtp("");
+              setMessage("");
+            }}
+            className="cursor-pointer border-0 bg-transparent text-left"
+            style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}
           >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Verify
+            Use a different email
           </button>
-        </div>
+        </>
       ) : (
-        <div className="w-full max-w-sm">
-          <p className="mb-3 text-sm text-[var(--muted)]">
-            Sign in with your email — no account apps, no seed phrases.
-          </p>
-          <input
+        <>
+          <div>
+            <h2 className="type-h1 font-text-face">Set up your account</h2>
+            <p
+              className="mt-2"
+              style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}
+            >
+              Use the email iStonk texted you about. We will send a one-time code.
+            </p>
+          </div>
+          <Input
+            label="Email"
             type="email"
+            inputMode="email"
+            autoComplete="email"
+            placeholder="you@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@email.com"
-            className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && email && !busy) void submitEmail();
+            }}
           />
-          {message ? <p className="mt-2 text-sm text-[var(--danger)]">{message}</p> : null}
-          <button
-            type="button"
-            onClick={submitEmail}
-            disabled={busy || !email}
-            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--primary)] px-6 py-3 text-sm font-semibold text-[var(--primary-foreground)] disabled:opacity-60"
-          >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          {message ? <ErrorLine>{message}</ErrorLine> : null}
+          <Button size="lg" shape="square" busy={busy} disabled={!email} onClick={submitEmail}>
             Send code
-          </button>
-        </div>
+          </Button>
+          <ConnectHint />
+        </>
       )}
     </Shell>
   );
 }
 
+function ErrorLine({ children }: { children: React.ReactNode }) {
+  return (
+    <p style={{ font: "var(--type-body-sm)", color: "var(--down)" }}>{children}</p>
+  );
+}
+
+/**
+ * Poster on the left, form on the right. The left panel is the only place this
+ * page argues; the right panel just takes an email and a code.
+ */
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <section className="mx-auto flex min-h-[100dvh] max-w-xl flex-col items-center justify-center gap-6 px-4 py-8 text-center">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-[var(--primary)]/30 bg-[var(--primary)]/10 text-[var(--primary)]">
-        <Wallet className="h-7 w-7" />
+    <div
+      className="grid min-h-[100dvh] grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px]"
+      style={{ background: "var(--mat-paper)" }}
+    >
+      <div className="relative flex flex-col justify-between gap-12 border-b border-rule px-[var(--gutter-mobile)] py-10 md:px-14 md:py-14 lg:border-r lg:border-b-0">
+        <span aria-hidden className="istonk-grain pointer-events-none absolute inset-0" />
+        <Wordmark size={22} markSize={52} priority />
+        <div className="relative">
+          <h1 className="type-d2 max-w-[460px]">
+            No app.
+            <br />
+            No seed phrase.
+          </h1>
+          <p
+            className="mt-5 max-w-[430px]"
+            style={{ font: "var(--type-body-lg)", color: "var(--text-secondary)" }}
+          >
+            One email code opens your iStonk account. It signs your launches and holds
+            your creator fees for about 90 days before it asks again.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-2">
+            <Chip mono tone="paper">
+              connect
+            </Chip>
+            <Chip mono tone="paper">
+              fees
+            </Chip>
+            <Chip mono tone="paper">
+              send $25 of AAPL to Alex
+            </Chip>
+          </div>
+        </div>
+        <p
+          className="relative max-w-[420px]"
+          style={{ font: "var(--type-legal)", color: "var(--text-tertiary)" }}
+        >
+          Coinbase embedded smart account on Base. iStonk never sees a private key and
+          never asks for a seed phrase.
+        </p>
       </div>
-      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Set up your iStonk account</h1>
-      {children}
-    </section>
+
+      <div
+        className="flex flex-col justify-center gap-5.5 px-[var(--gutter-mobile)] py-12 md:px-11 md:py-14"
+        style={{ background: "var(--surface)" }}
+      >
+        {children}
+      </div>
+    </div>
   );
 }
 
 function StatusBlock({
-  icon,
+  tone,
+  title,
   message,
 }: {
-  icon: "spin" | "ok" | "error";
+  tone: "wait" | "error";
+  title: string;
   message: string;
 }) {
   return (
-    <div className="flex flex-col items-center gap-3">
-      {icon === "spin" ? (
-        <Loader2 className="h-8 w-8 animate-spin text-[var(--primary)]" />
-      ) : icon === "ok" ? (
-        <CheckCircle2 className="h-10 w-10 text-[var(--primary)]" />
-      ) : (
-        <AlertCircle className="h-10 w-10 text-[var(--danger)]" />
-      )}
-      <p className="max-w-sm text-sm text-[var(--muted)]">{message}</p>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2.5">
+        {tone === "wait" ? (
+          <span
+            className="istonk-spin inline-block"
+            style={{
+              width: 16,
+              height: 16,
+              borderRadius: "var(--r-pill)",
+              border: "2px solid var(--ink)",
+              borderTopColor: "transparent",
+            }}
+          />
+        ) : (
+          <span
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: "var(--r-pill)",
+              background: "var(--down)",
+            }}
+          />
+        )}
+        <h2 className="type-h1 font-text-face">{title}</h2>
+      </div>
+      <p
+        className="max-w-[340px]"
+        style={{
+          font: "var(--type-body-sm)",
+          color: tone === "error" ? "var(--down)" : "var(--text-secondary)",
+        }}
+      >
+        {message}
+      </p>
     </div>
   );
 }

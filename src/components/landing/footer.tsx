@@ -1,110 +1,150 @@
-"use client";
-
 import Link from "next/link";
-import { motion } from "framer-motion";
 
+import { Button, Mascot, MsgGlyph } from "@/components/ds";
 import { site } from "@/lib/site";
 
-import { Mascot } from "./mascot";
-import { Reveal, useLiteMotion } from "./motion";
-import { SendStocksButton } from "./send-stocks-button";
+type Col = { h: string; items: Array<{ label: string; href: string }> };
 
-function XIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
-      <path d="M18.9 2H22l-7.4 8.5L23 22h-6.8l-5.3-6.9L4.8 22H1.7l7.9-9.1L1 2h7l4.8 6.3L18.9 2Zm-1.2 18h1.9L7.4 3.9H5.4L17.7 20Z" />
-    </svg>
-  );
-}
-
-function TelegramIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
-      <path d="M21.9 4.3 18.7 19.6c-.2 1.1-.9 1.3-1.8.8l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.2-8.3c.4-.4-.1-.6-.6-.2L6 13.1 1.1 11.6c-1.1-.3-1.1-1.1.2-1.6L20.5 2.6c.9-.3 1.7.2 1.4 1.7Z" />
-    </svg>
-  );
-}
-
-const socials = [
-  { label: "Follow on X", href: site.links.x, Icon: XIcon },
-  { label: "Join the Telegram", href: site.links.telegram, Icon: TelegramIcon },
+const COLS: Col[] = [
+  {
+    h: "Product",
+    items: [
+      { label: "How it works", href: "/#how" },
+      { label: "Your account", href: site.links.app },
+      { label: "Dashboard", href: site.links.dashboard },
+      { label: "Stonks Exchange", href: site.links.stonks },
+    ],
+  },
+  {
+    h: "Company",
+    items: [
+      { label: `X · ${site.twitter}`, href: site.links.x },
+      { label: "Telegram", href: site.links.telegram },
+      { label: site.domain, href: site.url },
+    ],
+  },
 ];
 
-export function Footer({ signedIn = false }: { signedIn?: boolean }) {
-  const lite = useLiteMotion();
+/** Night is a secondary system. The footer is the one place it earns the page. */
+export function Footer() {
   return (
-    <>
-      <section className="relative mx-auto w-full max-w-6xl px-6 pb-16 pt-8 lg:pb-24">
-        <div className="relative flex flex-col items-center gap-8 overflow-hidden rounded-[36px] px-6 py-16 text-center sm:px-12 lg:py-24">
-          <div className="absolute inset-0 -z-10 aurora-wash rounded-[36px] opacity-90" />
-          <div className="absolute inset-0 -z-10 rounded-[36px] border border-white/80" />
-
-          <motion.div
-            animate={lite ? undefined : { y: [0, -10, 0] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <Mascot size={140} />
-          </motion.div>
-
-          <Reveal>
-            <h2 className="text-[34px] font-extrabold leading-[1] tracking-[-0.035em] sm:text-[52px]">
-              Send stocks
+    <footer style={{ background: "var(--ink)", color: "var(--text-on-ink)" }}>
+      <div className="mx-auto max-w-[var(--container)] px-[var(--gutter-mobile)] pt-16 pb-9 md:px-[var(--gutter-desktop)] lg:pt-18">
+        <div className="grid grid-cols-2 gap-10 sm:grid-cols-3 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,0.6fr))]">
+          <div className="col-span-2 sm:col-span-3 lg:col-span-1">
+            <h2 className="type-d3" style={{ color: "var(--text-on-ink)" }}>
+              Text a stock
               <br />
-              <span className="text-iris">anywhere.</span>
+              to anyone.
             </h2>
-          </Reveal>
-          <Reveal delay={0.08}>
-            <p className="max-w-[460px] text-[16px] leading-relaxed text-muted">
+            <p
+              className="mt-3.5 max-w-[320px]"
+              style={{ font: "var(--type-body-sm)", color: "var(--night-slate)" }}
+            >
               iMessage, text, or email. Pay with Apple Pay. They claim it.
             </p>
-          </Reveal>
-
-          <Reveal delay={0.14} className="flex flex-wrap items-center justify-center gap-3">
-            <SendStocksButton />
-            <Link
-              href={site.links.app}
-              className="glass inline-flex h-12 items-center rounded-full px-5 text-[15px] font-semibold text-foreground transition-transform hover:-translate-y-0.5"
-            >
-              {signedIn ? "Open account" : "Sign in with email"}
-            </Link>
-            {socials.map((s) => (
-              <a
-                key={s.label}
-                href={s.href}
-                target="_blank"
-                rel="noreferrer"
-                className="glass inline-flex h-12 items-center gap-2.5 rounded-full px-5 text-[15px] font-semibold text-foreground transition-transform hover:-translate-y-0.5"
-              >
-                <s.Icon className="h-4 w-4" />
-                {s.label}
+            <div className="mt-5.5">
+              <a href={site.bot.smsHref} className="no-underline">
+                <Button variant="accent" size="md" icon={<MsgGlyph />}>
+                  Text iStonk
+                </Button>
               </a>
-            ))}
-          </Reveal>
-        </div>
-      </section>
+            </div>
+          </div>
 
-      <footer className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 pb-10 text-[13px] text-muted sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2.5">
-          <Mascot size={24} track={false} />
-          <span className="font-bold text-foreground">iStonks</span>
-          <span className="text-faint">· {site.domain}</span>
+          {COLS.map((col) => (
+            <div key={col.h}>
+              <div
+                style={{
+                  font: "var(--type-micro)",
+                  letterSpacing: "var(--track-caps)",
+                  textTransform: "uppercase",
+                  color: "var(--night-slate)",
+                }}
+              >
+                {col.h}
+              </div>
+              <ul className="mt-3.5 flex list-none flex-col gap-2.25">
+                {col.items.map((i) => (
+                  <li key={i.label}>
+                    <FooterLink href={i.href}>{i.label}</FooterLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+
+          <div>
+            <div
+              style={{
+                font: "var(--type-micro)",
+                letterSpacing: "var(--track-caps)",
+                textTransform: "uppercase",
+                color: "var(--night-slate)",
+              }}
+            >
+              Legal
+            </div>
+            <ul className="mt-3.5 flex list-none flex-col gap-2.25">
+              {["Terms", "Privacy", "Not financial advice"].map((label) => (
+                <li
+                  key={label}
+                  style={{ font: "var(--type-body-sm)", color: "#cfcdc6" }}
+                >
+                  {label}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-        <nav className="flex flex-wrap items-center gap-x-5 gap-y-2">
-          <a href="/#how" className="hover:text-foreground">
-            How it works
-          </a>
-          <Link href={site.links.app} className="hover:text-foreground">
-            {signedIn ? "Account" : "Sign in"}
-          </Link>
-          <a href={site.links.x} target="_blank" rel="noreferrer" className="hover:text-foreground">
-            X
-          </a>
-          <a href={site.links.telegram} target="_blank" rel="noreferrer" className="hover:text-foreground">
-            Telegram
-          </a>
-        </nav>
-        <p className="text-faint">Not financial advice.</p>
-      </footer>
-    </>
+
+        <div className="mt-14 flex flex-col items-start justify-between gap-5 border-t border-[var(--night-rule)] pt-5.5 sm:flex-row sm:items-center">
+          <span className="inline-flex items-center gap-2.5">
+            <Mascot size={38} />
+            <span
+              style={{
+                font: "800 17px/1 var(--font-display)",
+                letterSpacing: "-0.04em",
+              }}
+            >
+              iStonk
+            </span>
+            <span
+              style={{ font: "var(--type-mono-sm)", color: "var(--night-slate)" }}
+            >
+              {site.domain}
+            </span>
+          </span>
+          <span
+            className="max-w-[520px] sm:text-right"
+            style={{ font: "var(--type-legal)", color: "var(--night-slate)" }}
+          >
+            iStonk does not trade. Markets live on Stonks Exchange. Tokenized stocks
+            are Base assets, not equity. Not financial advice.
+          </span>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+function FooterLink({ href, children }: { href: string; children: string }) {
+  const external = href.startsWith("http");
+  const style = {
+    font: "var(--type-body-sm)",
+    color: "#cfcdc6",
+    textDecoration: "none",
+  };
+  if (external) {
+    return (
+      <a href={href} target="_blank" rel="noreferrer" style={style}>
+        {children} ↗
+      </a>
+    );
+  }
+  return (
+    <Link href={href} style={style}>
+      {children}
+    </Link>
   );
 }

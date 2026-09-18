@@ -1,86 +1,74 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { MessageCircle } from "lucide-react";
 
+import { Button, MsgGlyph, Wordmark } from "@/components/ds";
 import { site } from "@/lib/site";
-
-import { Mascot } from "./mascot";
 
 const links = [
   { href: "/#how", label: "How it works" },
-  { href: "/#wallet", label: "Account" },
+  { href: "/#account", label: "Your account" },
   { href: site.links.dashboard, label: "Dashboard" },
-  { href: "/#next", label: "What's next" },
+  { href: site.links.stonks, label: "Stonks Exchange", external: true },
 ];
 
+/**
+ * A hairline rule on paper — never a floating glass capsule. The nav and the
+ * Messages header are the only fixed elements on the site.
+ */
 export function Nav({ signedIn = false }: { signedIn?: boolean }) {
-  // A single class toggle instead of interpolating backdrop-filter on every scroll frame.
-  const [scrolled, setScrolled] = useState(false);
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
   return (
-    <motion.header
-      initial={{ y: -16, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed inset-x-0 top-0 z-40 flex justify-center px-4 pt-4"
+    <header
+      className="sticky top-0 z-40 border-b border-rule"
+      style={{ background: "var(--paper-2)" }}
     >
-      <nav
-        className={`flex h-14 w-full max-w-6xl items-center justify-between rounded-full border px-3 pl-4 transition-colors duration-300 ${
-          scrolled ? "glass" : "border-transparent bg-transparent"
-        }`}
-      >
-        <Link href="/" className="flex items-center gap-2.5">
-          <Mascot size={34} track={false} />
-          <span className="text-iris text-[19px] font-extrabold tracking-tight">iStonks</span>
+      <div className="mx-auto flex h-[68px] max-w-[var(--container)] items-center gap-7 px-[var(--gutter-mobile)] md:px-[var(--gutter-desktop)]">
+        <Link href="/" className="shrink-0 no-underline" style={{ color: "var(--ink)" }}>
+          <Wordmark size={20} markSize={48} priority />
         </Link>
 
-        <div className="hidden items-center gap-1 lg:flex">
+        <nav className="hidden flex-1 items-center gap-[22px] lg:flex">
           {links.map((l) =>
-            l.href.startsWith("/") && !l.href.startsWith("/#") ? (
-              <Link
-                key={l.href}
-                href={l.href}
-                className="whitespace-nowrap rounded-full px-3.5 py-2 text-[13.5px] font-medium text-muted transition-colors hover:bg-white/60 hover:text-foreground"
-              >
-                {l.label}
-              </Link>
-            ) : (
+            l.external ? (
               <a
                 key={l.href}
                 href={l.href}
-                className="whitespace-nowrap rounded-full px-3.5 py-2 text-[13.5px] font-medium text-muted transition-colors hover:bg-white/60 hover:text-foreground"
+                target="_blank"
+                rel="noreferrer"
+                className="type-label no-underline transition-colors hover:text-ink"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                {l.label} ↗
+              </a>
+            ) : (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="type-label no-underline transition-colors hover:text-ink"
+                style={{ color: "var(--text-secondary)" }}
               >
                 {l.label}
-              </a>
+              </Link>
             ),
           )}
-        </div>
+        </nav>
 
-        <div className="flex items-center gap-2">
-          <Link
-            href={site.links.app}
-            className="hidden h-9 items-center whitespace-nowrap rounded-full px-4 text-[13px] font-semibold text-foreground/80 transition-colors hover:bg-white/60 sm:inline-flex"
-          >
-            {signedIn ? "Account" : "Sign in"}
+        <div className="ml-auto flex items-center gap-2.5 lg:ml-0">
+          <Link href={site.links.app} className="no-underline">
+            <Button variant="ghost" size="sm">
+              {signedIn ? "Your account" : "Sign in"}
+            </Button>
           </Link>
-          <a
-            href={site.bot.smsHref}
-            className="inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-full bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-[0_8px_24px_-8px_rgba(47,91,255,0.7)] transition-colors hover:bg-primary-hover"
-          >
-            <MessageCircle className="h-4 w-4" />
-            Text iStonk
+          {/*
+            Ink, not tangerine. The nav is always on screen, so an accent pill
+            here would mean two accents per view — the hero's CTA is the one
+            tangerine element in the first viewport.
+          */}
+          <a href={site.bot.smsHref} className="no-underline">
+            <Button variant="primary" size="sm" icon={<MsgGlyph size={15} />}>
+              Text iStonk
+            </Button>
           </a>
         </div>
-      </nav>
-    </motion.header>
+      </div>
+    </header>
   );
 }

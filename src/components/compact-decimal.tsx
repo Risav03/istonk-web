@@ -39,7 +39,7 @@ export function AmountWithUsd({
   className,
   prefix = "",
   as = "token",
-  usdClassName = "font-mono text-xs text-muted tabular",
+  usdClassName = "type-mono-sm",
 }: {
   value: number;
   usd?: number | null;
@@ -52,7 +52,11 @@ export function AmountWithUsd({
   return (
     <span className="inline-flex flex-col items-end gap-0.5">
       <CompactDecimal as={as} className={className} prefix={prefix} value={value} />
-      {usdLabel ? <span className={usdClassName}>{usdLabel}</span> : null}
+      {usdLabel ? (
+        <span className={usdClassName} style={{ color: "var(--text-tertiary)" }}>
+          {usdLabel}
+        </span>
+      ) : null}
     </span>
   );
 }
