@@ -39,7 +39,7 @@ export default async function DashboardPage() {
     <>
       <Nav signedIn={signedIn} />
       <main
-        className="mx-auto flex w-full max-w-[var(--container-app)] flex-col gap-8 px-[var(--gutter-mobile)] pt-8 pb-20 md:px-7"
+        className="mx-auto flex w-full max-w-[var(--container-wide)] flex-col gap-8 px-[var(--gutter-mobile)] pt-8 pb-20 md:px-7"
       >
         <header className="flex flex-col gap-2">
           <Eyebrow>iStonk · public board</Eyebrow>

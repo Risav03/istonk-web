@@ -13,7 +13,7 @@ import { stonksTokenUrl, type PublicLaunch } from "@/lib/launches";
 import { BarChart, ChartCard, ColumnChart, useDailyAmountSeries, useDailySeries } from "./charts";
 
 const POLL_MS = 15_000;
-const PAGE = 25;
+const PAGE = 10;
 
 type Feed = {
   items: PublicLaunch[];
@@ -152,7 +152,7 @@ export function DashboardLive({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="sticky top-[68px] z-20 flex justify-center xl:hidden">
+      <div className="flex justify-center xl:hidden">
         <Segmented
           value={panel}
           onChange={setPanel}
@@ -510,11 +510,11 @@ function LaunchFeed({
       </div>
 
       <TableHead
-        className="hidden grid-cols-[minmax(0,1fr)_82px_112px] gap-3 px-4 sm:grid [&>*:not(:first-child)]:text-right"
+        className="hidden grid-cols-[minmax(0,1fr)_88px_140px] gap-3 px-4 sm:grid [&>*:not(:first-child)]:text-right"
         cols={["Token", "24h vol", "Links"]}
       />
       <Panel>
-        <div className="sm:max-h-[560px] sm:overflow-y-auto">
+        <div>
           {ranked.length === 0 ? (
             <div className="px-4 py-6" style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}>
               {launches.length === 0 ? "No launches yet. Text iStonk and say launch." : "Nothing matches that search."}
@@ -589,7 +589,7 @@ function LaunchRow({
       animate={{ opacity: 1, y: 0, backgroundColor: isNew ? "rgba(255,90,20,0.06)" : "rgba(255,90,20,0)" }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-      className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-t border-rule px-4 py-3 first:border-t-0 sm:grid-cols-[minmax(0,1fr)_82px_112px]"
+      className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-t border-rule px-4 py-3 first:border-t-0 sm:grid-cols-[minmax(0,1fr)_88px_140px]"
     >
       <div className="flex min-w-0 items-center gap-3">
         <span className="type-mono-sm istonk-tabular w-5 shrink-0 text-right" style={{ color: "var(--text-tertiary)" }}>

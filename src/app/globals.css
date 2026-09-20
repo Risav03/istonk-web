@@ -157,6 +157,7 @@
   --container: 1120px;
   --container-narrow: 720px;
   --container-app: 1040px;
+  --container-wide: 1280px;
   --tap-min: 44px;
 
   /* ── shape hierarchy is meaning, not decoration ───────
