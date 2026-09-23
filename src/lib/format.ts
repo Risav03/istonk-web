@@ -72,6 +72,31 @@ export function formatTokenAmount(amount: string | number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
 }
 
+/**
+ * How many tokens, in the plainest form that survives a glance. Deliberately
+ * not `formatTokenAmount`: the 0.0ₙ subscript notation is illegible at small
+ * sizes, and this number is now the supporting detail under a dollar figure.
+ */
+export function formatTokenCount(amount: string | number): string {
+  const n = Number(amount);
+  if (!Number.isFinite(n) || n === 0) return "0";
+  const abs = Math.abs(n);
+  if (abs >= 1000) return n.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  if (abs >= 1) return n.toLocaleString("en-US", { maximumFractionDigits: 2 });
+  if (abs < 1e-6) return `${n < 0 ? "-" : ""}<0.000001`;
+  return n.toFixed(6).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+/**
+ * Coinbase tokenized stocks are B20 precompiles, and every one of them lives in
+ * the `0xb2` + 20 zeros address space. Matching that shape rather than a ticker
+ * list means a stock Coinbase lists tomorrow is recognised without a deploy.
+ */
+export function isB20StockAddress(address: string | null | undefined): boolean {
+  if (!address) return false;
+  return /^0xb20{20}[0-9a-f]{18}$/i.test(address.trim());
+}
+
 export function amountUsd(amount: number, priceUsd: number | undefined): number | null {
   if (priceUsd == null || !Number.isFinite(priceUsd) || !Number.isFinite(amount)) return null;
   return amount * priceUsd;

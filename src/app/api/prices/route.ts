@@ -4,7 +4,12 @@ import { fetchUsdPrices, isPriceId, normalizePriceId } from "@/lib/prices";
 
 export const runtime = "nodejs";
 
-const MAX_IDS = 40;
+/**
+ * Accounts accumulate a coin per fee collection, so 40 silently dropped the
+ * tail of a real holdings list — and an unpriced row is indistinguishable from
+ * a worthless one. DexScreener is batched 30 at a time underneath.
+ */
+const MAX_IDS = 120;
 
 export async function GET(req: NextRequest) {
   const raw = req.nextUrl.searchParams.get("ids") ?? "";

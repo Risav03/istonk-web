@@ -12,12 +12,21 @@ import {
   type LaunchRow,
   type WalletInfo,
 } from "@/lib/api";
-import { amountUsd, formatTokenAmount, formatUsd, shortAddr, timeAgo, weiToEth } from "@/lib/format";
+import {
+  amountUsd,
+  formatTokenAmount,
+  formatTokenCount,
+  formatUsd,
+  isB20StockAddress,
+  shortAddr,
+  timeAgo,
+  weiToEth,
+} from "@/lib/format";
 import { parseSendChannel } from "@/lib/send-channels";
 import { site } from "@/lib/site";
 import { useUsdPrices } from "@/lib/use-usd-prices";
 
-import { AmountWithUsd, CompactDecimal } from "./compact-decimal";
+import { AmountWithUsd, CompactDecimal, UsdWithAmount } from "./compact-decimal";
 import { ConnectHint } from "./connect-hint";
 import { ContactsCard } from "./contacts-card";
 import { LaunchCoinButton } from "./launch-coin-button";
@@ -179,7 +188,12 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
       <main className="relative mx-auto flex w-full max-w-[1040px] flex-col gap-7 px-[var(--gutter-mobile)] pt-9 pb-24 md:px-7">
         {wallet?.linked === false ? <LinkPhoneBanner /> : null}
 
-        <BalanceHero wallet={wallet} coinCount={held.length} totalUsd={totalUsd} />
+        <BalanceHero
+          wallet={wallet}
+          coinCount={held.length}
+          totalUsd={totalUsd}
+          ethUsd={ethUsd}
+        />
 
         <div
           role="tablist"
@@ -359,14 +373,17 @@ function BalanceHero({
   wallet,
   coinCount,
   totalUsd,
+  ethUsd,
 }: {
   wallet: WalletInfo | null;
   coinCount: number;
   /** Sum of the $ values shown in Holdings; null until wallet + prices load. */
   totalUsd: number | null;
+  ethUsd: number | null;
 }) {
   const [showDeposit, setShowDeposit] = useState(false);
   const totalLabel = formatUsd(totalUsd);
+  const gasLabel = formatUsd(ethUsd);
   return (
     <section className="flex flex-col gap-5">
       <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
@@ -389,20 +406,22 @@ function BalanceHero({
               <Figure value={totalLabel} size="hero" mono />
             ) : (
               <Figure
-                value={<CompactDecimal as="eth" value={weiToEth(wallet.ethWei)} />}
+                value={formatTokenCount(weiToEth(wallet.ethWei))}
                 suffix="ETH"
                 size="hero"
                 mono
               />
             )}
           </div>
-          {wallet && totalLabel ? (
+          {wallet ? (
             <span
-              className="type-mono inline-flex items-baseline gap-1.5"
-              style={{ color: "var(--text-secondary)" }}
+              className="inline-flex items-baseline gap-1.5"
+              style={{ font: "var(--type-body-sm)", color: "var(--text-secondary)" }}
             >
-              <CompactDecimal as="eth" value={weiToEth(wallet.ethWei)} />
-              <span>ETH for gas</span>
+              {gasLabel ? `${gasLabel} of ETH for gas` : "ETH for gas"}
+              <span className="type-mono-sm" style={{ color: "var(--text-tertiary)" }}>
+                {formatTokenCount(weiToEth(wallet.ethWei))} ETH
+              </span>
             </span>
           ) : null}
           <p
@@ -458,6 +477,26 @@ function BalanceHero({
   );
 }
 
+/**
+ * Coins worth less than this are folded away. Fee collection sprays a few units
+ * of every coin anyone ever traded into the account, so an unfiltered list is
+ * dozens of rows worth a hundredth of a cent each.
+ */
+const DUST_USD = 0.01;
+
+type HoldingRow = {
+  key: string;
+  logo: string | undefined;
+  /** Shown after the token count, so the raw ticker rather than the $ title. */
+  unit: string;
+  title: string;
+  note: string | null;
+  amount: number;
+  usd: number | null;
+  /** ETH, USDC and tokenized stocks always show, however small the balance. */
+  pinned: boolean;
+};
+
 function Holdings({
   wallet,
   held,
@@ -469,73 +508,106 @@ function Holdings({
   launches: LaunchRow[];
   prices: Record<string, number>;
 }) {
-  const pairFor = (token: string) => {
-    const launch = launches.find(
-      (row) => row.tokenAddress?.toLowerCase() === token.toLowerCase(),
-    );
-    if (!launch) return null;
-    return [
-      launch.tokenName,
-      launch.pairSymbol ? `vs ${launch.pairSymbol}` : null,
-    ]
-      .filter(Boolean)
-      .join(" · ");
-  };
+  const [showAll, setShowAll] = useState(false);
+
+  const rows = useMemo<HoldingRow[]>(() => {
+    const pairFor = (token: string) => {
+      const launch = launches.find(
+        (row) => row.tokenAddress?.toLowerCase() === token.toLowerCase(),
+      );
+      if (!launch) return null;
+      return [launch.tokenName, launch.pairSymbol ? `vs ${launch.pairSymbol}` : null]
+        .filter(Boolean)
+        .join(" · ");
+    };
+
+    const eth = weiToEth(wallet?.ethWei ?? "0");
+    const out: HoldingRow[] = [
+      {
+        key: "eth",
+        logo: ETH_LOGO_URL,
+        unit: "ETH",
+        title: "ETH",
+        note: "Covers gas to collect fees or withdraw",
+        amount: eth,
+        usd: amountUsd(eth, prices.eth),
+        pinned: true,
+      },
+    ];
+
+    for (const row of held) {
+      const isUsdc = row.symbol.toUpperCase() === "USDC";
+      const isStock = isB20StockAddress(row.token);
+      const amount = Number(row.amount);
+      out.push({
+        key: row.token,
+        logo: isUsdc ? row.logoUrl || USDC_LOGO_URL : row.logoUrl,
+        unit: row.symbol,
+        title: isUsdc ? "USDC" : `$${row.symbol}`,
+        note:
+          pairFor(row.token) ??
+          (isUsdc ? "USD Coin on Base" : isStock ? "Tokenized stock on Base" : null),
+        amount,
+        usd: amountUsd(amount, prices[row.token.toLowerCase()]),
+        pinned: isUsdc || isStock,
+      });
+    }
+
+    // ETH stays first; everything else falls by value, unpriced coins last.
+    const [ethRow, ...rest] = out;
+    rest.sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      return (b.usd ?? -1) - (a.usd ?? -1);
+    });
+    return [ethRow!, ...rest];
+  }, [wallet, held, launches, prices]);
+
+  const visible = showAll
+    ? rows
+    : rows.filter((row) => row.pinned || (row.usd != null && row.usd >= DUST_USD));
+  const hidden = rows.length - visible.length;
+
   return (
     <Panel>
       <PanelHead
         title="Holdings"
         action={
           <Eyebrow>
-            {held.length + 1} asset{held.length === 0 ? "" : "s"}
+            {hidden > 0 ? `${visible.length} of ${rows.length}` : `${rows.length} assets`}
           </Eyebrow>
         }
       />
-      <DataRow
-        leading={<TokenLogo src={ETH_LOGO_URL} symbol="ETH" size={34} />}
-        title="ETH"
-        note="Covers gas to collect fees or withdraw"
-        value={
-          wallet ? (
-            <AmountWithUsd
-              as="eth"
-              value={weiToEth(wallet.ethWei)}
-              usd={amountUsd(weiToEth(wallet.ethWei), prices.eth)}
-              className="type-mono"
-              usdClassName="type-mono-sm"
-            />
-          ) : (
-            <span className="type-mono" style={{ color: "var(--text-tertiary)" }}>
-              …
-            </span>
-          )
-        }
-      />
-      {held.map((row) => {
-        const isUsdc = row.symbol.toUpperCase() === "USDC";
-        return (
-          <DataRow
-            key={row.token}
-            leading={
-              <TokenLogo
-                src={isUsdc ? row.logoUrl || USDC_LOGO_URL : row.logoUrl}
-                symbol={row.symbol}
-                size={34}
-              />
-            }
-            title={isUsdc ? "USDC" : `$${row.symbol}`}
-            note={pairFor(row.token) ?? (isUsdc ? "USD Coin on Base" : null)}
-            value={
-              <AmountWithUsd
-                value={Number(row.amount)}
-                usd={amountUsd(Number(row.amount), prices[row.token.toLowerCase()])}
-                className="type-mono"
-                usdClassName="type-mono-sm"
-              />
-            }
-          />
-        );
-      })}
+      {visible.map((row) => (
+        <DataRow
+          key={row.key}
+          leading={<TokenLogo src={row.logo} symbol={row.unit} size={34} />}
+          title={row.title}
+          note={row.note}
+          value={
+            !wallet && row.key === "eth" ? (
+              <span className="type-mono" style={{ color: "var(--text-tertiary)" }}>
+                …
+              </span>
+            ) : (
+              <UsdWithAmount usd={row.usd} value={row.amount} symbol={row.unit} />
+            )
+          }
+        />
+      ))}
+      {hidden > 0 || showAll ? (
+        <Row>
+          <button
+            type="button"
+            onClick={() => setShowAll((prev) => !prev)}
+            className="cursor-pointer border-0 bg-transparent p-0 text-left"
+            style={{ font: "var(--type-micro)", color: "var(--text-secondary)" }}
+          >
+            {showAll
+              ? "Hide small balances"
+              : `Show ${hidden} small balance${hidden === 1 ? "" : "s"}`}
+          </button>
+        </Row>
+      ) : null}
     </Panel>
   );
 }
@@ -579,12 +651,11 @@ function CreatorFees({
             title={row.symbol}
             note={<Badge state="pending">ready to collect</Badge>}
             value={
-              <AmountWithUsd
+              <UsdWithAmount
                 prefix="+"
-                value={Number(row.amount)}
                 usd={amountUsd(Number(row.amount), prices[row.token.toLowerCase()])}
-                className="type-mono"
-                usdClassName="type-mono-sm"
+                value={Number(row.amount)}
+                symbol={row.symbol}
               />
             }
           />
